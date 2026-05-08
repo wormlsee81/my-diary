@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>단어 쏙쏙 마법 문장</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff8e8b;
+            --secondary: #ffc2c0;
+            --bg: #fff5f5;
+            --card: #ffffff;
+            --text-dark: #333333;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg);
+            font-family: 'Jua', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-dark);
+        }
+
+        .tablet-container {
+            width: 1024px;
+            height: 768px;
+            background-color: var(--bg);
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 8px solid #333;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 24px;
+        }
+
+        .btn {
+            background: rgba(255,255,255,0.3);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 18px;
+            transition: 0.2s;
+        }
+
+        .btn:hover { background: rgba(255,255,255,0.5); }
+        .btn.action { background-color: #ff6b68; font-size: 20px; padding: 12px 24px; width: 100%; margin-top: 20px;}
+        .btn.action:hover { background-color: #f25552; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        main {
+            display: flex;
+            flex: 1;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .panel {
+            flex: 1;
+            background: var(--card);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            border: 3px solid var(--secondary);
+        }
+
+        .panel-title {
+            text-align: center;
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: #d65a58;
+            border-bottom: 2px dashed var(--secondary);
+            padding-bottom: 10px;
+        }
+
+        /* 문장 조립 영역 */
+        .sentence-builder {
+            font-size: 24px;
+            line-height: 2;
+            text-align: center;
+            margin-top: 30px;
+            flex: 1;
+        }
+
+        .word-input {
+            width: 120px;
+            font-family: inherit;
+            font-size: 22px;
+            text-align: center;
+            border: 3px dashed var(--primary);
+            border-radius: 10px;
+            color: var(--primary);
+            background: #fffafa;
+            margin: 0 5px;
+            padding: 5px;
+            outline: none;
+        }
+
+        .word-input::placeholder { color: #ffa7a5; font-size: 18px; }
+        .word-input:focus { border-style: solid; background: white; }
+
+        /* 결과 그림 영역 */
+        .result-img-container {
+            flex: 1;
+            background-color: #f9f9f9;
+            border-radius: 15px;
+            border: 2px solid #eee;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .result-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .placeholder-text {
+            color: #aaa;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .final-sentence {
+            background: var(--secondary);
+            color: #333;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 20px;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+            word-break: keep-all;
+        }
+
+        /* 로딩 애니메이션 */
+        .loading-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        .spinner {
+            font-size: 50px;
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* 모달 */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 20px; width: 400px; text-align: center;
+        }
+        .modal input {
+            width: 100%; padding: 12px; margin: 15px 0; border: 2px solid var(--primary); border-radius: 10px; font-family: inherit; font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="modal" id="settingsModal">
+    <div class="modal-content">
+        <h3 style="color: var(--primary);">⚙️ 구글 Gemini API 키 설정</h3>
+        <input type="password" id="apiKeyInput" placeholder="AIzaSy...">
+        <button class="btn action" onclick="saveApiKey()">저장하기</button>
+    </div>
+</div>
+
+<div class="tablet-container">
+    <header>
+        ✨ 단어 쏙쏙 마법 문장
+        <div>
+            <button class="btn" onclick="getNewTemplate()">🎲 새로운 뼈대 뽑기</button>
+            <button class="btn" onclick="document.getElementById('settingsModal').style.display='flex'">⚙️</button>
+        </div>
+    </header>
+
+    <main>
+        <section class="panel">
+            <div class="panel-title">1단계: 문장의 빈칸을 채워봐!</div>
+            
+            <div class="sentence-builder" id="sentenceContainer">
+                <div style="color:#aaa; font-size:20px; margin-top:50px;">
+                    위의 [🎲 새로운 뼈대 뽑기] 버튼을 눌러서<br>AI가 만든 문장 구조를 불러와 보세요!
+                </div>
+            </div>
+
+            <button class="btn action" id="completeBtn" onclick="drawResult()" style="display: none;">🎨 마법 주문 외우기 (그림 그리기)</button>
+        </section>
+
+        <section class="panel">
+            <div class="panel-title">2단계: 마법의 결과물</div>
+            
+            <div class="result-img-container">
+                <div class="placeholder-text" id="imgPlaceholder">
+                    🪄<br>단어를 모두 채우고<br>주문을 외워보세요!
+                </div>
+                <img id="resultImg" class="result-img" alt="마법 그림">
+                
+                <div class="loading-overlay" id="loading">
+                    <div class="spinner">🌀</div>
+                    <div style="margin-top: 15px; color: var(--primary); font-size: 20px;" id="loadingMsg">그림을 그리는 중...</div>
+                </div>
+            </div>
+
+            <div class="final-sentence" id="finalSentence"></div>
+        </section>
+    </main>
+</div>
+
+<script>
+    let apiKey = localStorage.getItem('magic_sentence_key') || '';
+    let currentTemplate = ""; // AI가 만들어준 원본 문장 뼈대
+
+    if (apiKey) document.getElementById('apiKeyInput').value = apiKey;
+
+    function saveApiKey() {
+        const val = document.getElementById('apiKeyInput').value.trim();
+        if (val) {
+            apiKey = val;
+            localStorage.setItem('magic_sentence_key', apiKey);
+            document.getElementById('settingsModal').style.display = 'none';
+            alert('키가 저장되었습니다!');
+        }
+    }
+
+    // 제미나이 API 호출 공통 함수
+    async function callGemini(systemPrompt, userPrompt) {
+        if (!apiKey) throw new Error('NO_KEY');
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const combinedText = `[System Instruction]\n${systemPrompt}\n\n[User Input]\n${userPrompt}`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: combinedText }] }] })
+        });
+
+        if (!response.ok) throw new Error('API 호출 실패');
+        const data = await response.json();
+        return data.candidates[0].content.parts[0].text.trim();
+    }
+
+    // 1. AI에게 문장 뼈대 받아오기
+    async function getNewTemplate() {
+        if (!apiKey) {
+            alert("오른쪽 위 ⚙️ 버튼을 눌러 API 키를 먼저 입력해주세요!");
+            document.getElementById('settingsModal').style.display = 'flex';
+            return;
+        }
+
+        const container = document.getElementById('sentenceContainer');
+        container.innerHTML = "<span style='color:#aaa'>문장 뼈대를 불러오는 중... ⏳</span>";
+        document.getElementById('completeBtn').style.display = 'none';
+        resetResult();
+
+        try {
+            const systemPrompt = `너는 초등학교 국어 선생님이야. 아이들이 품사(명사, 형용사, 동사 등)와 문장 구조를 재미있게 익힐 수 있도록 엉뚱하고 상상력을 자극하는 짧은 문장 1개를 만들어줘.
+            
+조건:
+1. 문장 안에 딱 3~4개의 단어를 빈칸으로 만들어야 해.
+2. 빈칸은 반드시 중괄호 {} 안에 어떤 종류의 단어가 들어가야 할지 적어줘. (예: {맛있는 음식}, {동물 이름}, {이상한 장소}, {감정을 나타내는 형용사})
+3. 오직 생성된 문장 딱 하나만 출력해! 다른 설명은 절대 쓰지 마.
+
+예시 출력:
+어느 날, {크고 무서운 동물}이(가) {우리가 매일 가는 장소}에 나타나서 {가장 좋아하는 간식}을(를) 달라고 소리쳤다.`;
+
+            const template = await callGemini(systemPrompt, "재미있는 문장 뼈대를 하나 만들어줘.");
+            currentTemplate = template;
+            renderTemplate(template);
+
+        } catch (error) {
+            container.innerHTML = "<span style='color:red'>앗, 뼈대를 가져오는데 실패했어요. 다시 눌러주세요!</span>";
+        }
+    }
+
+    // 2. 화면에 빈칸(Input) 만들어주기
+    function renderTemplate(templateText) {
+        const container = document.getElementById('sentenceContainer');
+        
+        // 정규식을 사용해서 {빈칸설명} 부분을 <input> 태그로 교체
+        const regex = /\{([^}]+)\}/g;
+        const html = templateText.replace(regex, (match, p1) => {
+            return `<input type="text" class="word-input" placeholder="${p1}">`;
+        });
+
+        container.innerHTML = html;
+        document.getElementById('completeBtn').style.display = 'block';
+    }
+
+    // 결과 화면 초기화
+    function resetResult() {
+        document.getElementById('imgPlaceholder').style.display = 'block';
+        document.getElementById('resultImg').style.display = 'none';
+        document.getElementById('finalSentence').style.display = 'none';
+    }
+
+    // 3. 입력된 단어를 모아서 결과 확인 및 그림 그리기
+    async function drawResult() {
+        const inputs = document.querySelectorAll('.word-input');
+        let allFilled = true;
+        
+        inputs.forEach(input => {
+            if (!input.value.trim()) allFilled = false;
+        });
+
+        if (!allFilled) {
+            alert("빈칸을 모두 채워야 마법이 작동해요! ✨");
+            return;
+        }
+
+        const btn = document.getElementById('completeBtn');
+        const loading = document.getElementById('loading');
+        
+        btn.disabled = true;
+        loading.style.display = 'flex';
+        resetResult();
+        document.getElementById('imgPlaceholder').style.display = 'none';
+
+        // 사용자가 입력한 단어로 최종 문장 완성하기
+        let finalKoreanText = currentTemplate;
+        inputs.forEach(input => {
+            finalKoreanText = finalKoreanText.replace(/\{[^}]+\}/, `<b style="color:var(--primary)">${input.value}</b>`);
+        });
+
+        // HTML 태그 제거한 순수 텍스트 추출 (번역용)
+        const pureText = finalKoreanText.replace(/<[^>]*>?/gm, '');
+
+        try {
+            // AI에게 최종 문장을 영어 그림 프롬프트로 변환 요청 (어린이 동화 스타일)
+            const englishPrompt = await callGemini(
+                "Convert the user's silly Korean sentence into a short English image generation prompt. Style: cute children's book illustration, colorful, funny, magical. No text in image.",
+                pureText
+            );
+
+            // Pollinations AI로 그림 그리기
+            const seed = Math.floor(Math.random() * 100000);
+            const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(englishPrompt + ", cute children book illustration")}?width=640&height=640&nologo=true&seed=${seed}`;
+
+            const img = document.getElementById('resultImg');
+            img.src = imageUrl;
+            
+            img.onload = () => {
+                loading.style.display = 'none';
+                img.style.display = 'block';
+                
+                const finalSentenceBox = document.getElementById('finalSentence');
+                finalSentenceBox.innerHTML = finalKoreanText;
+                finalSentenceBox.style.display = 'block';
+                
+                btn.disabled = false;
+            };
+
+            img.onerror = () => throw new Error("이미지 로드 실패");
+
+        } catch (error) {
+            alert("그림을 그리는데 실패했어요. 다시 주문을 외워보세요!");
+            loading.style.display = 'none';
+            document.getElementById('imgPlaceholder').style.display = 'block';
+            btn.disabled = false;
+        }
+    }
+</script>
+</body>
+</html>
