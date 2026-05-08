@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>마술 그림일기</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+:root {
+  --mint:#62b3a4; --mint-light:#eaf6f4;
+  --bg:#fdf1ed; --card:#fff; --text:#333;
+  --orange:#f49f5a; --orange-dark:#e08a45;
+  --border:#f0dec5; --red:#e55;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'Jua',sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;color:var(--text);}
+
+/* ── 닉네임 설정 화면 ── */
+#setupScreen{position:fixed;inset:0;background:linear-gradient(135deg,#62b3a4,#4e9a8c);display:flex;justify-content:center;align-items:center;z-index:200;}
+.setup-card{background:white;border-radius:28px;padding:50px 44px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.2);width:380px;display:flex;flex-direction:column;align-items:center;gap:16px;}
+.setup-logo{font-size:64px;line-height:1;}
+.setup-card h1{font-size:28px;color:var(--mint);}
+.setup-card p{font-size:17px;color:#888;line-height:1.6;}
+.nick-input{width:100%;padding:13px 18px;border:2px solid #ddd;border-radius:12px;font-family:inherit;font-size:18px;text-align:center;outline:none;transition:border-color .2s;}
+.nick-input:focus{border-color:var(--mint);}
+.start-btn{width:100%;padding:14px;background:var(--mint);color:white;border:none;border-radius:12px;font-family:inherit;font-size:18px;cursor:pointer;transition:background .2s;}
+.start-btn:hover{background:#4e9a8c;}
+.setup-error{font-size:14px;color:var(--red);min-height:20px;}
+
+/* ── 앱 ── */
+#appScreen{display:none;}
+.tablet{width:1024px;height:768px;background:var(--bg);border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden;display:flex;flex-direction:column;}
+
+/* ── 헤더 ── */
+header{background:var(--mint);color:white;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+.h-left,.h-right{display:flex;align-items:center;gap:10px;}
+.logo{font-size:20px;}
+.date-badge{background:rgba(255,255,255,.2);padding:5px 12px;border-radius:20px;font-size:14px;}
+.user-chip{background:rgba(255,255,255,.2);padding:5px 14px;border-radius:20px;font-size:15px;}
+.btn{background:rgba(255,255,255,.2);border:none;color:white;padding:7px 13px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:14px;transition:background .2s,transform .1s;white-space:nowrap;}
+.btn:hover{background:rgba(255,255,255,.35);}
+.btn:active{transform:scale(.97);}
+.btn.orange{background:var(--orange);}
+.btn.orange:hover{background:var(--orange-dark);}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+/* ── 메인 ── */
+main{display:flex;flex:1;padding:14px;gap:14px;overflow:hidden;}
+.panel{flex:1;background:var(--card);border-radius:16px;padding:14px;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,.06);border:2px solid var(--border);overflow:hidden;}
+.panel-title{text-align:center;font-size:17px;margin-bottom:8px;color:#666;flex-shrink:0;}
+
+/* ── 원고지 ── */
+.manuscript{flex:1;width:100%;border:none;resize:none;font-family:inherit;font-size:19px;line-height:40px;background-image:repeating-linear-gradient(white 0,white 38px,var(--mint) 38px,var(--mint) 40px);outline:none;color:var(--text);overflow-y:auto;}
+
+/* ── 묘사력 바 ── */
+.richness-bar-wrap{margin-top:8px;flex-shrink:0;background:#f5f5f5;border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:10px;}
+.richness-label{font-size:14px;color:#999;white-space:nowrap;}
+.richness-track{flex:1;height:12px;background:#e0e0e0;border-radius:6px;overflow:hidden;}
+.richness-fill{height:100%;width:0%;border-radius:6px;background:linear-gradient(to right,#b0b0b0,var(--mint),var(--orange));transition:width .6s cubic-bezier(.34,1.56,.64,1);}
+.richness-score{font-size:14px;color:var(--mint);white-space:nowrap;min-width:60px;text-align:right;}
+
+/* ── 도장 ── */
+.stamp-wrap{display:flex;justify-content:center;align-items:center;margin-top:8px;flex-shrink:0;min-height:90px;}
+.stamp{
+  position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;
+  width:120px;height:84px;border-radius:12px;border:4px solid currentColor;
+  font-family:'Jua',sans-serif;text-align:center;padding:6px 10px;
+  opacity:0;transform:scale(1.6) rotate(-12deg);
+  transition:opacity .35s,transform .45s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;
+}
+.stamp.show{opacity:1;transform:scale(1) rotate(-8deg);}
+.stamp::before{content:'';position:absolute;inset:3px;border-radius:8px;border:2px solid currentColor;opacity:.35;}
+.stamp-icon{font-size:28px;line-height:1;}
+.stamp-text{font-size:13px;font-weight:bold;line-height:1.3;margin-top:2px;}
+/* 등급별 색상 */
+.stamp.s5{color:#e85c4a;background:rgba(232,92,74,.08);}   /* 참 잘했어요 */
+.stamp.s4{color:#f49f5a;background:rgba(244,159,90,.08);}  /* 잘했어요 */
+.stamp.s3{color:#62b3a4;background:rgba(98,179,164,.08);}  /* 보통 */
+.stamp.s2{color:#7a8fa6;background:rgba(122,143,166,.08);} /* 조금 더 노력해요 */
+.stamp.s1{color:#aaa;background:rgba(180,180,180,.08);}    /* 노력이 필요해요 */
+
+/* ── 힌트 요정 ── */
+.fairy-box{background:var(--mint-light);border:2px solid var(--mint);border-radius:14px;padding:10px 12px;display:flex;gap:10px;align-items:center;margin-top:8px;min-height:80px;flex-shrink:0;}
+.fairy-face{width:48px;height:48px;min-width:48px;background:white;border-radius:50%;display:flex;justify-content:center;align-items:center;font-size:24px;border:2px solid var(--mint);}
+.fairy-face.thinking{animation:fairyFloat .7s ease-in-out infinite alternate;}
+@keyframes fairyFloat{to{transform:translateY(-4px);}}
+.fairy-msg{font-size:15px;line-height:1.55;}
+.hi{color:var(--mint);font-weight:bold;}
+
+/* ── 오른쪽 ── */
+.panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-shrink:0;}
+.img-wrap{position:relative;flex:1;border-radius:12px;overflow:hidden;background:#f5f5f5;border:2px solid #e0e0e0;}
+.placeholder{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;color:#c0c0c0;gap:10px;text-align:center;padding:20px;}
+.placeholder .icon{font-size:52px;}
+.placeholder .mt{font-size:17px;color:#aaa;}
+.placeholder .st{font-size:13px;color:#ccc;}
+.di{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;}
+.di-before{filter:grayscale(100%) contrast(.75) brightness(1.15);}
+.di-after{clip-path:polygon(50% 0,100% 0,100% 100%,50% 100%);}
+.sl-bar{position:absolute;top:0;left:50%;width:3px;height:100%;background:var(--orange);transform:translateX(-50%);z-index:5;pointer-events:none;display:none;}
+.sl-knob{position:absolute;top:50%;left:50%;width:34px;height:34px;background:white;border:3px solid var(--orange);border-radius:50%;transform:translate(-50%,-50%);z-index:6;pointer-events:none;display:none;justify-content:center;align-items:center;font-size:13px;color:var(--orange);}
+.img-label{position:absolute;top:10px;background:rgba(0,0,0,.45);color:white;padding:3px 10px;border-radius:20px;font-size:12px;z-index:7;pointer-events:none;display:none;}
+.lbl-l{left:10px;}.lbl-r{right:10px;}
+.sl-input{position:absolute;inset:0;opacity:0;cursor:ew-resize;z-index:10;display:none;}
+.richness-badge{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);z-index:8;background:rgba(0,0,0,.55);color:white;padding:4px 14px;border-radius:20px;font-size:13px;pointer-events:none;display:none;white-space:nowrap;}
+.loading{position:absolute;inset:0;background:rgba(255,255,255,.9);display:none;flex-direction:column;justify-content:center;align-items:center;z-index:20;border-radius:12px;gap:14px;}
+.spinner{width:46px;height:46px;border:5px solid var(--border);border-top-color:var(--mint);border-radius:50%;animation:spin .9s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-msg{font-size:17px;color:var(--mint);text-align:center;padding:0 20px;line-height:1.6;}
+.error-overlay{position:absolute;inset:0;background:rgba(255,240,240,.95);display:none;flex-direction:column;justify-content:center;align-items:center;z-index:20;border-radius:12px;gap:10px;padding:20px;text-align:center;}
+.error-detail{font-size:13px;color:#888;background:white;padding:10px 14px;border-radius:8px;max-width:100%;word-break:break-all;border:1px solid #eee;line-height:1.6;font-family:monospace;}
+.err-btns{display:flex;gap:10px;margin-top:4px;}
+.ebtn{padding:8px 18px;border:none;border-radius:8px;font-family:inherit;font-size:15px;cursor:pointer;}
+.ebtn.retry{background:var(--mint);color:white;}
+.ebtn.dismiss{background:#eee;color:var(--text);}
+.sl-info{margin-top:8px;background:var(--mint-light);padding:8px;border-radius:10px;text-align:center;font-size:15px;color:var(--mint);flex-shrink:0;}
+
+/* ── 모달 ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;justify-content:center;align-items:center;z-index:100;}
+.modal-bg.open{display:flex;}
+.modal{background:white;border-radius:20px;padding:26px;width:480px;max-height:78vh;overflow-y:auto;font-family:'Jua',sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.2);}
+.modal h2{font-size:20px;color:var(--mint);margin-bottom:14px;}
+.modal-btns{display:flex;gap:10px;margin-top:14px;}
+.mbtn{flex:1;padding:10px;border:none;border-radius:10px;font-family:inherit;font-size:16px;cursor:pointer;transition:opacity .2s;}
+.mbtn:hover{opacity:.85;}
+.mbtn.primary{background:var(--mint);color:white;}
+.mbtn.ghost{background:#eee;color:var(--text);}
+.diary-list{display:flex;flex-direction:column;gap:10px;}
+.diary-item{border:2px solid var(--border);border-radius:12px;padding:10px;cursor:pointer;display:flex;gap:10px;align-items:center;transition:background .2s,border-color .2s;}
+.diary-item:hover{background:#fdf1ed;border-color:var(--orange);}
+.d-del{margin-left:auto;background:none;border:none;font-size:18px;cursor:pointer;color:#ccc;padding:4px 8px;border-radius:6px;transition:color .2s;}
+.d-del:hover{color:var(--red);}
+.diary-thumb{width:54px;height:54px;border-radius:8px;object-fit:cover;background:#eee;flex-shrink:0;display:flex;justify-content:center;align-items:center;font-size:26px;}
+.d-date{font-size:12px;color:#aaa;}
+.d-text{font-size:15px;margin-top:3px;}
+.d-richness{font-size:12px;color:var(--mint);margin-top:2px;}
+.empty-list{text-align:center;color:#bbb;font-size:17px;padding:28px;}
+
+/* ── API 키 입력 모달 ── */
+.api-input{width:100%;padding:11px 14px;border:2px solid #ddd;border-radius:10px;font-family:monospace;font-size:14px;outline:none;transition:border-color .2s;}
+.api-input:focus{border-color:var(--mint);}
+.api-note{font-size:13px;color:#aaa;line-height:1.6;margin-top:6px;}
+.api-status{font-size:14px;padding:6px 12px;border-radius:8px;margin-top:6px;text-align:center;}
+.api-status.ok{background:#eaf6f4;color:var(--mint);}
+.api-status.no{background:#fff3f3;color:var(--red);}
+
+/* ── 토스트 ── */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--mint);color:white;padding:12px 26px;border-radius:50px;font-size:16px;z-index:300;transition:transform .35s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- 닉네임 설정 -->
+<div id="setupScreen">
+  <div class="setup-card">
+    <div class="setup-logo">🧚</div>
+    <h1>마술 그림일기</h1>
+    <p>이름을 알려주세요!<br>매일매일 내 이야기를 그림으로!</p>
+    <input class="nick-input" id="nickInput" maxlength="10" placeholder="예: 민준, 서아, 하늘이..." autocomplete="off">
+    <button class="start-btn" onclick="startApp()">시작하기 ✨</button>
+    <div class="setup-error" id="setupError"></div>
+  </div>
+</div>
+
+<!-- 일기 목록 모달 -->
+<div class="modal-bg" id="listModal">
+  <div class="modal">
+    <h2>📖 나의 일기장</h2>
+    <div class="diary-list" id="diaryList"></div>
+    <div class="modal-btns">
+      <button class="mbtn ghost" onclick="closeModal('listModal')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- API 키 설정 모달 -->
+<div class="modal-bg" id="apiModal">
+  <div class="modal">
+    <h2>🔑 Claude API 키 설정</h2>
+    <p style="font-size:14px;color:#888;margin-bottom:10px;">API 키를 입력하면 묘사력 분석과 힌트 기능을 사용할 수 있어요.</p>
+    <input class="api-input" id="apiKeyInput" type="password" placeholder="sk-ant-api03-...">
+    <div class="api-note">
+      키는 이 기기의 브라우저에만 저장됩니다.<br>
+      <a href="https://console.anthropic.com" target="_blank" style="color:var(--mint);">console.anthropic.com</a>에서 발급받을 수 있어요.
+    </div>
+    <div class="api-status" id="apiStatus"></div>
+    <div class="modal-btns">
+      <button class="mbtn primary" onclick="saveApiKey()">저장</button>
+      <button class="mbtn ghost"  onclick="closeModal('apiModal')">취소</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 앱 -->
+<div id="appScreen">
+<div class="tablet">
+  <header>
+    <div class="h-left">
+      <button class="btn" onclick="newDiary()">✏️ 새 일기</button>
+      <span class="logo">🧚 마술 그림일기</span>
+    </div>
+    <div class="h-right">
+      <span class="date-badge" id="dateDisplay"></span>
+      <div class="user-chip" id="userChip"></div>
+      <button class="btn orange" onclick="saveDiary()">💾 저장</button>
+      <button class="btn" onclick="openList()">📖 일기장</button>
+
+    </div>
+  </header>
+
+  <main>
+    <!-- 왼쪽: 글쓰기 -->
+    <section class="panel">
+      <div class="panel-title">[ 오늘의 이야기 ]</div>
+      <textarea class="manuscript" id="diary"
+        placeholder="오늘 있었던 일을 자유롭게 적어보세요 🌟&#10;&#10;무슨 일이 있었나요?&#10;누구랑 있었나요?&#10;어떤 기분이었나요?&#10;어떻게 생겼나요?"></textarea>
+
+      <div class="richness-bar-wrap">
+        <span class="richness-label">✏️ 묘사력</span>
+        <div class="richness-track"><div class="richness-fill" id="richnessFill"></div></div>
+        <span class="richness-score" id="richnessScore">— 점수 대기중</span>
+      </div>
+      <div class="stamp-wrap">
+        <div class="stamp" id="stamp">
+          <div class="stamp-icon" id="stampIcon"></div>
+          <div class="stamp-text" id="stampText"></div>
+        </div>
+      </div>
+
+      <div class="fairy-box">
+        <div class="fairy-face" id="fairyFace">🧚‍♀️</div>
+        <div class="fairy-msg" id="fairyMsg">
+          <span class="hi">힌트 요정</span><br>
+          일기를 쓰면 묘사력 점수와 힌트를 알려드려요!<br>
+          자세히 쓸수록 더 예쁜 그림이 나와요 🌈
+        </div>
+      </div>
+    </section>
+
+    <!-- 오른쪽: 그림 -->
+    <section class="panel">
+      <div class="panel-header">
+        <div class="panel-title" style="margin:0;" id="imgTitle">[ 오늘의 그림 ]</div>
+        <button class="btn orange" id="genBtn" onclick="generateImage()" style="font-size:13px;">🎨 그림 그리기</button>
+      </div>
+
+      <div class="img-wrap">
+        <div class="placeholder" id="placeholder">
+          <div class="icon">🖼️</div>
+          <div class="mt">일기를 쓰고 그림을 그려보세요!</div>
+          <div class="st">자세히 쓸수록 더 컬러풀한 그림이 나와요 🌈</div>
+        </div>
+        <img class="di di-before" id="imgBefore" alt="스케치">
+        <img class="di di-after"  id="imgAfter"  alt="컬러">
+        <div class="sl-bar"  id="slBar"></div>
+        <div class="sl-knob" id="slKnob">⟺</div>
+        <div class="img-label lbl-l" id="lblL">✏️ 스케치</div>
+        <div class="img-label lbl-r" id="lblR">🎨 컬러</div>
+        <input type="range" min="0" max="100" value="50" class="sl-input" id="slInput">
+        <div class="richness-badge" id="richnessBadge"></div>
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <div class="loading-msg" id="loadingMsg">✨ 그림을 그리고 있어요...</div>
+        </div>
+        <div class="error-overlay" id="errorOverlay">
+          <div style="font-size:36px;">⚠️</div>
+          <div style="font-size:17px;color:var(--red);" id="errorTitle">오류 발생</div>
+          <div class="error-detail" id="errorDetail"></div>
+          <div class="err-btns">
+            <button class="ebtn retry"   onclick="retryGenerate()">🔄 다시 시도</button>
+            <button class="ebtn dismiss" onclick="hideError()">닫기</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sl-info" id="slInfo">✨ 자세히 쓸수록 더 컬러풀한 그림이 나와요!</div>
+    </section>
+  </main>
+</div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   상태
+══════════════════════════════════════════ */
+let currentNick   = '';
+let currentImgUrl = null;
+let currentRich   = 0;
+let lastText      = '';
+let currentId     = null;   // 현재 편집 중인 항목 ID (null = 새 일기)
+
+/* ── 스토리지 키 헬퍼 ── */
+const SK = {
+  nick:    'mdj_nick',
+  apiKey:  'mdj_api_key',
+  entries: uid => `mdj_entries_${uid}`
+};
+
+/* ── 유틸 ── */
+const $ = id => document.getElementById(id);
+
+/* ── 날짜 ── */
+const dateLabel = (() => {
+  const d = new Date(), days = ['일','월','화','수','목','금','토'];
+  return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 ${days[d.getDay()]}요일`;
+})();
+$('dateDisplay').textContent = dateLabel;
+
+/* ══════════════════════════════════════════
+   닉네임 / 시작
+══════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem(SK.nick);
+  if (saved) { currentNick = saved; launchApp(); }
+
+  $('nickInput').addEventListener('keydown', e => { if(e.key==='Enter') startApp(); });
+});
+
+function startApp() {
+  const v = $('nickInput').value.trim();
+  if (!v) { $('setupError').textContent = '이름을 입력해주세요!'; return; }
+  currentNick = v;
+  localStorage.setItem(SK.nick, v);
+  launchApp();
+}
+
+function launchApp() {
+  $('setupScreen').style.display = 'none';
+  $('appScreen').style.display   = 'block';
+  $('userChip').textContent = `👤 ${currentNick}`;
+  updateApiBtn();
+  loadEntries();
+}
+
+/* ══════════════════════════════════════════
+   API 키
+══════════════════════════════════════════ */
+// ★ Vercel 배포 후 실제 주소로 교체
+const PROXY_URL = 'https://magic-diary.vercel.app/api/proxy';
+function updateApiBtn() {}
+function saveApiKey() {}
+
+/* ══════════════════════════════════════════
+   일기 항목 저장소 (localStorage, 사용자별)
+══════════════════════════════════════════ */
+function getEntries() {
+  try { return JSON.parse(localStorage.getItem(SK.entries(currentNick)) || '[]'); }
+  catch { return []; }
+}
+function setEntries(arr) {
+  localStorage.setItem(SK.entries(currentNick), JSON.stringify(arr));
+}
+
+function saveDiary() {
+  const text = $('diary').value.trim();
+  if (!text) { toast('일기를 먼저 써보세요! ✏️'); return; }
+
+  const entries = getEntries();
+  const now = Date.now();
+  const title = $('imgTitle').textContent;
+
+  if (currentId) {
+    // 기존 항목 수정
+    const idx = entries.findIndex(e => e.id === currentId);
+    if (idx !== -1) {
+      entries[idx] = { ...entries[idx], text, imgUrl: currentImgUrl, title, richness: currentRich, dateLabel, updatedAt: now };
+    } else {
+      // 혹시 못 찾으면 새로 추가
+      entries.unshift({ id: currentId, text, imgUrl: currentImgUrl, title, richness: currentRich, dateLabel, createdAt: now, updatedAt: now });
+    }
+    setEntries(entries);
+    toast('💾 일기가 수정되었어요!');
+  } else {
+    // 새 항목
+    const id = `entry_${now}_${Math.random().toString(36).slice(2,7)}`;
+    entries.unshift({ id, text, imgUrl: currentImgUrl, title, richness: currentRich, dateLabel, createdAt: now, updatedAt: now });
+    setEntries(entries);
+    currentId = id;
+    toast('💾 일기가 저장되었어요!');
+  }
+}
+
+function loadEntries() { /* 이미 getEntries()로 실시간 읽음 */ }
+
+function openList() {
+  const entries = getEntries();
+  const list = $('diaryList');
+  if (!entries.length) {
+    list.innerHTML = '<div class="empty-list">아직 저장된 일기가 없어요 📝<br><small>일기를 쓰고 저장해보세요!</small></div>';
+  } else {
+    list.innerHTML = entries.map(e => `
+      <div class="diary-item" onclick="loadEntry('${e.id}')">
+        ${e.imgUrl
+          ? `<img src="${e.imgUrl}" class="diary-thumb" style="display:block" onerror="this.outerHTML='<div class=\\'diary-thumb\\'>📝</div>'">`
+          : `<div class="diary-thumb">📝</div>`}
+        <div style="flex:1;min-width:0;">
+          <div class="d-date">${e.dateLabel||''}</div>
+          <div class="d-text">${(e.text||'').substring(0,38)}${(e.text||'').length>38?'...':''}</div>
+          ${e.richness ? `<div class="d-richness">묘사력 ${e.richness}/10</div>` : ''}
+        </div>
+        <button class="d-del" onclick="deleteEntry(event,'${e.id}')">🗑️</button>
+      </div>`).join('');
+  }
+  openModal('listModal');
+}
+
+function loadEntry(id) {
+  const e = getEntries().find(x => x.id === id);
+  if (!e) return;
+  currentId = e.id;
+  $('diary').value = e.text || '';
+  $('imgTitle').textContent = e.title || '[ 오늘의 그림 ]';
+  currentRich = e.richness || 0;
+  currentImgUrl = e.imgUrl || null;
+  updateRichnessBar(currentRich);
+  if (e.imgUrl) {
+    const sty = getRichnessStyle(currentRich);
+    $('imgAfter').src  = e.imgUrl;
+    $('imgBefore').src = e.imgUrl;
+    showImages(e.imgUrl, sty.label);
+  } else {
+    resetImage();
+  }
+  closeModal('listModal');
+  toast('📖 일기를 불러왔어요!');
+}
+
+function deleteEntry(ev, id) {
+  ev.stopPropagation();
+  if (!confirm('이 일기를 삭제할까요?')) return;
+  const arr = getEntries().filter(e => e.id !== id);
+  setEntries(arr);
+  if (currentId === id) { currentId = null; newDiary(); }
+  openList(); // 목록 새로고침
+  toast('🗑️ 삭제됐어요.');
+}
+
+function newDiary() {
+  if ($('diary').value.trim() && !confirm('새 일기를 시작할까요?\n현재 내용은 사라져요.')) return;
+  currentId = null;
+  $('diary').value = '';
+  currentImgUrl = null; currentRich = 0;
+  $('imgTitle').textContent = '[ 오늘의 그림 ]';
+  updateRichnessBar(0);
+  $('richnessScore').textContent = '— 점수 대기중';
+  resetImage();
+  setFairy('idle');
+}
+
+/* ══════════════════════════════════════════
+   묘사력 분석
+══════════════════════════════════════════ */
+async function analyzeRichness(text) {
+  const raw = await callClaude({
+    model: 'claude-haiku-4-5-20251001', max_tokens: 300,
+    system: `You are analyzing a Korean children's diary entry.
+Return ONLY valid JSON, no extra text:
+{"richness":<int 1-10>,"hint":"<Korean tip 1-2 sentences>","prompt":"<English image prompt 30-50 words>"}
+Richness: 1-3=very plain(<50chars/no detail), 4-6=some description, 7-10=rich sensory/emotion detail`,
+    messages:[{role:'user',content:text}]
+  });
+  try {
+    return JSON.parse(raw.replace(/```json|```/g,'').trim());
+  } catch {
+    const r = text.length<50?2:text.length<150?5:8;
+    return { richness:r, hint:'더 자세히 적으면 더 예쁜 그림이 나와요! 색깔, 느낌, 감정을 넣어보세요 🌈', prompt:'Korean child in happy daily life scene' };
+  }
+}
+
+function getRichnessStyle(r) {
+  if (r<=3) return { modifier:'simple pencil sketch, black and white only, very minimal lines, child hand drawing, no color, monochrome', label:`✏️ 연필 스케치 (묘사력 ${r}/10)`, w:480, h:360 };
+  if (r<=5) return { modifier:'simple cute illustration, limited 3-4 colors, flat design, kawaii minimal style, light watercolor', label:`🖍️ 단순 컬러 (묘사력 ${r}/10)`, w:560, h:420 };
+  if (r<=7) return { modifier:'colorful watercolor illustration, bright colors, children book style, expressive, cute kawaii', label:`🎨 컬러 일러스트 (묘사력 ${r}/10)`, w:600, h:450 };
+  return { modifier:'detailed vibrant watercolor, rich full colors, highly detailed, children book masterpiece, vivid and lively', label:`🌈 풍부한 컬러 (묘사력 ${r}/10)`, w:640, h:480 };
+}
+
+/* 도장 등급 테이블 */
+const STAMP_GRADES = [
+  null,
+  { cls:'s1', icon:'📝', text:'노력이\n필요해요' },
+  { cls:'s1', icon:'📝', text:'노력이\n필요해요' },
+  { cls:'s2', icon:'🌱', text:'조금 더\n노력해요' },
+  { cls:'s2', icon:'🌱', text:'조금 더\n노력해요' },
+  { cls:'s3', icon:'⭐', text:'보통' },
+  { cls:'s3', icon:'⭐', text:'보통' },
+  { cls:'s4', icon:'👍', text:'잘했어요' },
+  { cls:'s4', icon:'👍', text:'잘했어요' },
+  { cls:'s5', icon:'🌟', text:'참 잘했어요' },
+  { cls:'s5', icon:'🌟', text:'참 잘했어요' },
+];
+
+function updateRichnessBar(r) {
+  $('richnessFill').style.width = `${r*10}%`;
+  const em = ['','😶','😐','🙂','😊','😄','😁','🤩','✨','🌟','🎆'];
+  const tx = ['','매우 단순','단순','조금 단순','보통','보통+','꽤 자세해','자세해!','매우 자세!','아주 풍부!','완벽!'];
+  $('richnessScore').textContent = r ? `${em[r]} ${tx[r]} (${r}/10)` : '— 점수 대기중';
+
+  const stamp = $('stamp');
+  stamp.classList.remove('show','s1','s2','s3','s4','s5');
+  if (r >= 1) {
+    const g = STAMP_GRADES[r];
+    $('stampIcon').textContent = g.icon;
+    $('stampText').textContent = g.text;
+    stamp.classList.add(g.cls);
+    // 살짝 딜레이 후 등장 (도장 찍히는 느낌)
+    requestAnimationFrame(() => requestAnimationFrame(() => stamp.classList.add('show')));
+  }
+}
+
+/* ── 힌트 요정 ── */
+let hintTimer;
+$('diary').addEventListener('input', () => {
+  clearTimeout(hintTimer);
+  const txt = $('diary').value.trim();
+  if (txt.length < 10) { setFairy('idle'); updateRichnessBar(0); return; }
+  setFairy('thinking');
+  hintTimer = setTimeout(() => runHintAnalysis(txt), 2500);
+});
+
+async function runHintAnalysis(text) {
+  const key = getApiKey();
+  if (key) {
+    try {
+      const r = await analyzeRichness(text);
+      currentRich = r.richness;
+      updateRichnessBar(r.richness);
+      setFairy('hint', r.hint, r.richness);
+    } catch(e) { setFairy('error', e.message); }
+  } else {
+    const r = text.length<50?2:text.length<150?5:8;
+    currentRich = r;
+    updateRichnessBar(r);
+    setFairy('hint', `API 키를 설정하면 정확한 힌트를 받을 수 있어요! (글자수 기반 추정 ${r}/10)`, r);
+  }
+}
+
+function setFairy(state, msg, r) {
+  const face=$('fairyFace'), msgEl=$('fairyMsg');
+  face.classList.remove('thinking');
+  if (state==='idle')    { msgEl.innerHTML=`<span class="hi">힌트 요정</span><br>일기를 쓰면 묘사력 점수와 힌트를 알려드려요!<br>자세히 쓸수록 더 예쁜 그림이 나와요 🌈`; }
+  else if (state==='thinking') { face.classList.add('thinking'); msgEl.innerHTML=`<span class="hi">힌트 요정</span><br>열심히 읽고 있어요... 💭`; }
+  else if (state==='hint')  { const s=r>=8?'🌟':r>=5?'✨':'💡'; msgEl.innerHTML=`<span class="hi">힌트 요정 ${s}</span><br>${msg}`; }
+  else if (state==='error') { msgEl.innerHTML=`<span class="hi">힌트 요정</span><br>⚠ 분석 오류: ${msg}`; }
+}
+
+/* ══════════════════════════════════════════
+   그림 생성
+══════════════════════════════════════════ */
+async function generateImage() {
+  const text = $('diary').value.trim();
+  if (!text) { toast('먼저 일기를 써보세요! ✏️'); return; }
+  lastText = text;
+  hideError();
+  const btn = $('genBtn');
+  btn.disabled = true;
+  showLoading('✨ 일기를 분석하고 있어요...');
+
+  try {
+    let analysis, sty;
+    const key = getApiKey();
+    if (key) {
+      updateLoading('💭 묘사력을 분석하고 있어요...');
+      analysis = await analyzeRichness(text);
+      currentRich = analysis.richness;
+      updateRichnessBar(analysis.richness);
+      setFairy('hint', analysis.hint, analysis.richness);
+      sty = getRichnessStyle(analysis.richness);
+      genTitle(text);
+    } else {
+      const r = text.length<50?2:text.length<150?5:8;
+      currentRich = r;
+      analysis = { richness:r, prompt:'Korean child in a happy daily scene, outdoors' };
+      sty = getRichnessStyle(r);
+      updateRichnessBar(r);
+    }
+
+    updateLoading(`🎨 그림을 그리고 있어요...\n(묘사력 ${analysis.richness}/10 → ${analysis.richness<=3?'흑백 스케치':analysis.richness<=6?'단순 컬러':'풍부한 컬러'} 스타일)`);
+    const prompt = `${analysis.prompt}, ${sty.modifier}, no text, no words, no letters`;
+    const seed   = Math.floor(Math.random()*99999);
+    const url    = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${sty.w}&height=${sty.h}&nologo=true&seed=${seed}`;
+
+    await loadImg(url);
+    showImages(url, sty.label);
+  } catch(err) {
+    hideLoading();
+    showError('그림 생성 실패', err.message);
+  }
+
+  hideLoading();
+  btn.disabled = false;
+}
+
+function loadImg(url) {
+  return new Promise((res, rej) => {
+    const af=$('imgAfter'), bf=$('imgBefore');
+    let done=false;
+    const t=setTimeout(()=>{if(done)return;done=true;rej(new Error('이미지 로딩 시간 초과. 다시 시도해보세요.'));},60000);
+    af.onload=()=>{if(done)return;done=true;clearTimeout(t);bf.src=url;res();};
+    af.onerror=()=>{if(done)return;done=true;clearTimeout(t);rej(new Error('Pollinations AI 이미지 오류. 다시 시도해보세요.'));};
+    af.src=url;
+  });
+}
+
+async function genTitle(text) {
+  try {
+    const t = await callClaude({ model:'claude-haiku-4-5-20251001', max_tokens:20,
+      system:'이 일기를 8글자 이하의 귀여운 한국어 제목으로. 제목만 출력.',
+      messages:[{role:'user',content:text}] });
+    $('imgTitle').textContent = `[ ${t.trim()} ]`;
+  } catch{}
+}
+
+async function retryGenerate() { hideError(); $('diary').value=lastText; await generateImage(); }
+
+function showImages(url, badge) {
+  currentImgUrl = url;
+  $('imgAfter').style.display=$('imgBefore').style.display='block';
+  $('placeholder').style.display='none';
+  ['slBar','slKnob','lblL','lblR','slInput'].forEach(id=>$(id).style.display=id==='slKnob'?'flex':'block');
+  $('richnessBadge').textContent=badge; $('richnessBadge').style.display='block';
+  $('slInput').value=50; moveSlider(50);
+  $('slInfo').textContent='◀ 스케치 필터   🔴   AI 컬러 그림 ▶  (드래그)';
+}
+
+$('slInput').addEventListener('input', e=>moveSlider(e.target.value));
+function moveSlider(v) {
+  $('imgAfter').style.clipPath=`polygon(${v}% 0,100% 0,100% 100%,${v}% 100%)`;
+  $('slBar').style.left=$('slKnob').style.left=`${v}%`;
+}
+
+function resetImage() {
+  ['imgBefore','imgAfter'].forEach(id=>{$(id).style.display='none';$(id).src='';});
+  $('placeholder').style.display='flex';
+  ['slBar','slKnob','lblL','lblR','slInput','richnessBadge'].forEach(id=>$(id).style.display='none');
+  $('slInfo').textContent='✨ 자세히 쓸수록 더 컬러풀한 그림이 나와요!';
+  hideError();
+}
+
+/* ══════════════════════════════════════════
+   Claude API
+══════════════════════════════════════════ */
+async function callClaude(body) {
+  let res;
+  try {
+    res = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+  } catch(e) {
+    throw new Error(`프록시 서버 연결 실패: ${e.message}`);
+  }
+
+  const raw = await res.text();
+  if (!raw || raw.trim() === '') throw new Error(`빈 응답 (HTTP ${res.status})`);
+
+  let data;
+  try { data = JSON.parse(raw); }
+  catch(e) { throw new Error(`응답 파싱 실패: ${raw.slice(0, 200)}`); }
+
+  if (!res.ok) throw new Error(data.error?.message || `API 오류 HTTP ${res.status}`);
+
+  const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+  if (!text) throw new Error('모델이 빈 응답을 반환했어요.');
+  return text;
+}
+
+/* ══════════════════════════════════════════
+   UI 유틸
+══════════════════════════════════════════ */
+function showLoading(m)   { $('loading').style.display='flex'; $('loadingMsg').textContent=m; }
+function updateLoading(m) { $('loadingMsg').textContent=m; }
+function hideLoading()    { $('loading').style.display='none'; }
+function showError(t,d)   { $('errorTitle').textContent=t; $('errorDetail').textContent=d; $('errorOverlay').style.display='flex'; }
+function hideError()      { $('errorOverlay').style.display='none'; }
+function openModal(id)    { $(id).classList.add('open'); }
+function closeModal(id)   { $(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-bg').forEach(bg=>
+  bg.addEventListener('click',e=>{ if(e.target===bg) bg.classList.remove('open'); }));
+
+let toastT;
+function toast(msg) {
+  const el=$('toast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>
