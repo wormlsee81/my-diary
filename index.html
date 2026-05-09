@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>지음 프로젝트</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --mint:#62b3a4;--mint-light:#eaf6f4;
+  --bg:#fdf1ed;--card:#fff;--text:#333;
+  --orange:#f49f5a;--orange-dark:#e08a45;
+  --border:#f0dec5;--red:#e55;
+  --teacher:#7a5c3a;--teacher-bg:#fffbf0;--teacher-border:#f0d99a;
+  --pink:#ff8e8b;--pink-light:#fff5f5;--pink-border:#ffc2c0;
+  --purple:#8a7ce8;--purple-light:#f3f0ff;--purple-bubble:#e0d8ff;
+  --blue:#4a90e2;--blue-light:#f0f7ff;--blue-border:#a4c8f0;
+  --poem:#e8a44a;--poem-light:#fffbf0;--poem-border:#f5d89a;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'Jua',sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;color:var(--text);}
+#homeScreen{position:fixed;inset:0;background:linear-gradient(160deg,#62b3a4 0%,#f49f5a 100%);display:flex;justify-content:center;align-items:center;z-index:300;}
+.home-card{background:white;border-radius:32px;padding:36px 44px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.22);width:640px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.home-logo{font-size:60px;line-height:1;margin-bottom:4px;}
+.home-card h1{font-size:32px;color:var(--mint);margin-bottom:2px;}
+.home-card p{font-size:16px;color:#888;margin-bottom:12px;}
+.home-nick-row{display:flex;gap:10px;width:100%;max-width:400px;}
+.nick-input{flex:1;padding:12px 16px;border:2px solid #ddd;border-radius:12px;font-family:inherit;font-size:18px;text-align:center;outline:none;transition:border-color .2s;}
+.nick-input:focus{border-color:var(--mint);}
+.nick-confirm-btn{padding:12px 18px;background:var(--mint);color:white;border:none;border-radius:12px;font-family:inherit;font-size:17px;cursor:pointer;}
+.nick-confirm-btn:hover{background:#4e9a8c;}
+.setup-error{font-size:14px;color:var(--red);min-height:18px;}
+.app-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;width:100%;margin-top:6px;}
+.app-card{background:linear-gradient(135deg,var(--c1),var(--c2));border-radius:18px;padding:18px 14px;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;transition:transform .18s,box-shadow .18s;border:none;font-family:inherit;color:white;box-shadow:0 4px 16px rgba(0,0,0,.12);}
+.app-card:hover{transform:translateY(-4px) scale(1.04);}
+.app-card .ac-step{font-size:12px;background:rgba(255,255,255,0.25);padding:3px 10px;border-radius:12px;}
+.app-card .ac-icon{font-size:38px;}
+.app-card .ac-name{font-size:19px;font-weight:bold;}
+.app-card .ac-desc{font-size:12px;opacity:.9;line-height:1.4;text-align:center;word-break:keep-all;}
+.app-card.dodum{--c1:#4a90e2;--c2:#357abd;}
+.app-card.ieum{--c1:#62b3a4;--c2:#4e9a8c;}
+.app-card.ttieum{--c1:#8a7ce8;--c2:#6a5cc8;}
+.app-card.jieum{--c1:#ff8e8b;--c2:#ff6b68;}
+.home-nick-label{font-size:14px;color:#888;align-self:flex-start;margin-left:68px;}
+#appWrapper{display:none;}
+.app-screen{display:none;}
+.app-screen.active{display:flex;flex-direction:column;}
+.tablet{width:1024px;height:768px;background:var(--bg);border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden;display:flex;flex-direction:column;}
+.hbtn{background:rgba(255,255,255,.22);border:none;color:white;padding:7px 13px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:14px;transition:background .2s;white-space:nowrap;}
+.hbtn:hover{background:rgba(255,255,255,.38);}
+.hbtn.orange{background:var(--orange);}
+.hbtn.orange:hover{background:var(--orange-dark);}
+.hbtn:disabled{opacity:.5;cursor:not-allowed;}
+.home-btn{background:rgba(255,255,255,.22);border:none;color:white;padding:6px 12px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:14px;}
+.home-btn:hover{background:rgba(255,255,255,.38);}
+/* 돋움 */
+#dodumApp .tablet{background:var(--blue-light);}
+#dodumApp header{background:var(--blue);color:white;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+#dodumApp main{display:flex;flex:1;padding:14px;gap:14px;overflow:hidden;}
+.m-panel{flex:1;background:white;border-radius:20px;padding:18px;display:flex;flex-direction:column;border:3px solid var(--blue-border);overflow:hidden;}
+.m-panel-title{text-align:center;font-size:17px;margin-bottom:10px;color:var(--blue);border-bottom:2px dashed var(--blue-border);padding-bottom:8px;flex-shrink:0;}
+.m-witness-box{flex:1;background:#f4f4f4;border-radius:12px;display:flex;justify-content:center;align-items:center;overflow:hidden;border:2px solid #ddd;position:relative;}
+.m-textarea{flex:1;resize:none;border:2px dashed var(--blue);border-radius:12px;padding:14px;font-family:inherit;font-size:17px;line-height:1.6;outline:none;background:#fcfdff;}
+.m-textarea:focus{border-style:solid;}
+.m-img-box{flex:1;background:#f4f4f4;border-radius:12px;border:2px solid #ddd;position:relative;overflow:hidden;}
+.m-action-btn{background:var(--blue);color:white;border:none;border-radius:12px;padding:11px 18px;font-family:inherit;font-size:17px;cursor:pointer;margin-top:10px;transition:0.2s;width:100%;}
+.m-action-btn:hover{background:#357abd;}
+.m-action-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.m-score-box{background:var(--blue-light);padding:10px;border-radius:12px;margin-top:10px;text-align:center;border:2px solid var(--blue-border);display:none;flex-shrink:0;}
+.m-score{font-size:22px;color:var(--blue);}
+.m-feedback{font-size:14px;color:#555;margin-top:4px;word-break:keep-all;}
+/* 이음 */
+#ieumApp header{background:var(--mint);color:white;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+.h-left,.h-right{display:flex;align-items:center;gap:8px;}
+.date-badge{background:rgba(255,255,255,.2);padding:4px 11px;border-radius:20px;font-size:13px;}
+.user-chip{background:rgba(255,255,255,.2);padding:4px 13px;border-radius:20px;font-size:14px;}
+#ieumApp main{display:flex;flex:1;padding:12px;gap:12px;overflow:hidden;}
+.panel{flex:1;background:var(--card);border-radius:16px;padding:13px;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,.06);border:2px solid var(--border);overflow:hidden;}
+.panel-title{text-align:center;font-size:16px;margin-bottom:8px;color:#666;flex-shrink:0;}
+.manuscript{flex:1;width:100%;border:none;resize:none;font-family:inherit;font-size:18px;line-height:40px;background-image:repeating-linear-gradient(white 0,white 38px,var(--mint) 38px,var(--mint) 40px);outline:none;color:var(--text);overflow-y:auto;}
+.richness-bar-wrap{margin-top:8px;flex-shrink:0;background:#f5f5f5;border-radius:10px;padding:7px 11px;display:flex;align-items:center;gap:8px;}
+.richness-label{font-size:13px;color:#999;white-space:nowrap;}
+.richness-track{flex:1;height:11px;background:#e0e0e0;border-radius:6px;overflow:hidden;}
+.richness-fill{height:100%;width:0%;border-radius:6px;background:linear-gradient(to right,#b0b0b0,var(--mint),var(--orange));transition:width .6s cubic-bezier(.34,1.56,.64,1);}
+.richness-score{font-size:13px;color:var(--mint);white-space:nowrap;min-width:58px;text-align:right;}
+.stamp-wrap{display:flex;justify-content:center;align-items:center;margin-top:5px;flex-shrink:0;min-height:74px;}
+.stamp{position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;width:104px;height:72px;border-radius:10px;border:4px solid currentColor;text-align:center;padding:3px 7px;opacity:0;transform:scale(1.6) rotate(-12deg);transition:opacity .35s,transform .45s cubic-bezier(.34,1.56,.64,1);pointer-events:none;}
+.stamp.show{opacity:1;transform:scale(1) rotate(-8deg);}
+.stamp::before{content:'';position:absolute;inset:3px;border-radius:6px;border:2px solid currentColor;opacity:.3;}
+.stamp-icon{font-size:22px;line-height:1;}
+.stamp-text{font-size:11px;font-weight:bold;line-height:1.3;margin-top:2px;}
+.stamp.s5{color:#e85c4a;background:rgba(232,92,74,.08);}
+.stamp.s4{color:#f49f5a;background:rgba(244,159,90,.08);}
+.stamp.s3{color:#62b3a4;background:rgba(98,179,164,.08);}
+.stamp.s2{color:#7a8fa6;background:rgba(122,143,166,.08);}
+.stamp.s1{color:#aaa;background:rgba(180,180,180,.08);}
+.teacher-box{background:var(--teacher-bg);border:2px solid var(--teacher-border);border-radius:13px;padding:9px 11px;display:flex;gap:9px;align-items:flex-start;margin-top:5px;min-height:66px;flex-shrink:0;position:relative;}
+.teacher-box::before{content:'선생님 한마디';position:absolute;top:-11px;left:13px;background:var(--teacher-bg);border:1.5px solid var(--teacher-border);border-radius:20px;padding:1px 9px;font-size:11px;color:var(--teacher);}
+.teacher-face{width:38px;height:38px;min-width:38px;background:white;border-radius:50%;display:flex;justify-content:center;align-items:center;font-size:19px;border:2px solid var(--teacher-border);flex-shrink:0;}
+.teacher-face.thinking{animation:teacherBob .8s ease-in-out infinite alternate;}
+@keyframes teacherBob{to{transform:translateY(-3px);}}
+.teacher-msg{font-size:12px;line-height:1.55;color:var(--teacher);padding-top:2px;}
+.teacher-hi{color:#c47d2a;font-weight:bold;}
+.panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;flex-shrink:0;}
+.img-wrap{position:relative;flex:1;border-radius:12px;overflow:hidden;background:#fdf5e6;border:3px solid #e8d5b0;}
+.placeholder{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;color:#c0c0c0;gap:8px;text-align:center;padding:20px;}
+.di-main{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none;background:#fdf5e6;}
+.d-loading{position:absolute;inset:0;background:rgba(255,251,240,.95);display:none;flex-direction:column;justify-content:center;align-items:center;z-index:20;border-radius:12px;gap:10px;padding:20px;}
+.progress-wrap{width:200px;background:#ecddb3;border-radius:20px;height:14px;overflow:hidden;border:2px solid #d4b87a;}
+.progress-fill{height:100%;width:0%;background:linear-gradient(to right,#f49f5a,#e85c4a);border-radius:20px;transition:width 1s linear;}
+.progress-label{font-size:12px;color:#c47d2a;}
+.richness-badge{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);z-index:8;background:rgba(0,0,0,.55);color:white;padding:3px 13px;border-radius:20px;font-size:12px;pointer-events:none;display:none;white-space:nowrap;}
+.error-overlay{position:absolute;inset:0;background:rgba(255,240,240,.95);display:none;flex-direction:column;justify-content:center;align-items:center;z-index:20;border-radius:12px;gap:9px;padding:18px;text-align:center;}
+.error-detail{font-size:12px;color:#888;background:white;padding:9px 12px;border-radius:8px;max-width:100%;word-break:break-all;border:1px solid #eee;line-height:1.5;}
+.ebtn{padding:7px 16px;border:none;border-radius:8px;font-family:inherit;font-size:14px;cursor:pointer;}
+.ebtn.dismiss{background:#eee;color:var(--text);}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;justify-content:center;align-items:center;z-index:400;}
+.modal-bg.open{display:flex;}
+.modal{background:white;border-radius:20px;padding:24px;width:480px;max-height:80vh;overflow-y:auto;font-family:'Jua',sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.2);}
+.modal h2{font-size:19px;color:var(--mint);margin-bottom:12px;}
+.modal-btns{display:flex;gap:10px;margin-top:12px;}
+.mbtn{flex:1;padding:9px;border:none;border-radius:10px;font-family:inherit;font-size:15px;cursor:pointer;}
+.mbtn.ghost{background:#eee;color:var(--text);}
+.mbtn.primary{background:var(--mint);color:white;}
+.diary-list{display:flex;flex-direction:column;gap:9px;}
+.diary-item{border:2px solid var(--border);border-radius:12px;padding:9px;display:flex;gap:9px;align-items:center;transition:all .15s;}
+.diary-item.clickable{cursor:pointer;}
+.diary-item.clickable:hover{background:#fdf1ed;border-color:var(--orange);}
+.diary-item.selected{background:#eaf6f4;border-color:var(--mint);}
+.check-box{width:24px;height:24px;border:2px solid #ccc;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .15s;cursor:pointer;user-select:none;}
+.diary-item.selected .check-box{background:var(--mint);border-color:var(--mint);color:white;}
+.d-del{margin-left:auto;background:none;border:none;font-size:17px;cursor:pointer;color:#ccc;padding:3px 7px;border-radius:6px;flex-shrink:0;}
+.d-del:hover{color:var(--red);}
+.diary-thumb{width:50px;height:50px;border-radius:8px;object-fit:cover;background:#eee;flex-shrink:0;display:flex;justify-content:center;align-items:center;font-size:24px;}
+.d-date{font-size:11px;color:#aaa;}
+.d-text{font-size:14px;margin-top:2px;}
+.d-richness{font-size:11px;color:var(--mint);margin-top:2px;}
+.empty-list{text-align:center;color:#bbb;font-size:16px;padding:24px;}
+/* 틔음 */
+#ttieumApp .tablet{background:var(--purple-light);display:flex;justify-content:center;align-items:center;}
+.story-phone{width:420px;height:700px;background:white;border-radius:28px;box-shadow:0 8px 32px rgba(0,0,0,.14);display:flex;flex-direction:column;overflow:hidden;border:6px solid #333;}
+#ttieumApp .st-header{background:var(--purple);color:white;padding:15px 18px;text-align:center;font-size:20px;flex-shrink:0;position:relative;}
+.chat-box{flex:1;padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:11px;background:#f8f9fa;}
+.bubble{max-width:80%;padding:12px 14px;border-radius:18px;font-size:16px;line-height:1.55;animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;}}
+.bubble.system{align-self:center;background:#eee;font-size:12px;border-radius:10px;color:#666;text-align:center;}
+.bubble.user{align-self:flex-end;background:white;border:2px solid var(--purple);border-bottom-right-radius:4px;}
+.bubble.ai{align-self:flex-start;background:var(--purple-bubble);border-bottom-left-radius:4px;}
+.question-highlight{display:block;margin-top:7px;padding-top:7px;border-top:1px dashed #bba8ff;color:#5544aa;font-weight:bold;}
+.story-input-area{padding:11px;background:white;border-top:1px solid #ddd;display:flex;gap:7px;flex-shrink:0;}
+.story-textarea{flex:1;resize:none;padding:9px;border:2px solid #ddd;border-radius:12px;font-family:inherit;font-size:14px;height:52px;outline:none;}
+.story-textarea:focus{border-color:var(--purple);}
+.story-send-btn{background:var(--purple);color:white;border:none;border-radius:12px;padding:0 16px;font-family:inherit;font-size:16px;cursor:pointer;}
+.story-send-btn:disabled{background:#ccc;cursor:not-allowed;}
+.story-new-btn{background:rgba(255,255,255,.22);border:none;color:white;padding:5px 10px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:12px;position:absolute;right:10px;top:50%;transform:translateY(-50%);}
+/* 지음 */
+#jieumApp .tablet{background:var(--pink-light);}
+#jieumApp header{background:var(--pink);color:white;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+.jieum-tabs{display:flex;padding:0 18px;background:var(--pink-light);border-bottom:3px solid var(--pink-border);flex-shrink:0;}
+.j-tab{padding:10px 26px;font-family:inherit;font-size:16px;background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-3px;cursor:pointer;color:#aaa;transition:all .2s;}
+.j-tab.active{color:var(--pink);border-bottom-color:var(--pink);}
+.j-tab-content{display:none;flex:1;overflow:hidden;}
+.j-tab-content.active{display:flex;}
+#jieumApp main{display:flex;flex-direction:column;flex:1;overflow:hidden;}
+.jieum-book-inner{display:flex;flex:1;padding:16px;gap:16px;overflow:hidden;}
+.b-panel{flex:1;background:white;border-radius:18px;padding:18px;display:flex;flex-direction:column;border:3px solid var(--pink-border);overflow:hidden;}
+.b-panel.viewer{flex:2;background:#fffaf9;}
+.b-panel-title{text-align:center;font-size:17px;margin-bottom:10px;color:var(--pink);border-bottom:2px dashed var(--pink-border);padding-bottom:7px;flex-shrink:0;}
+.b-textarea{flex:1;resize:none;border:2px dashed var(--pink);border-radius:12px;padding:14px;font-family:inherit;font-size:17px;line-height:1.6;outline:none;background:#fffdfd;}
+.b-textarea:focus{border-style:solid;}
+.b-action-btn{background:var(--pink);color:white;border:none;border-radius:12px;padding:11px 18px;font-family:inherit;font-size:17px;cursor:pointer;margin-top:9px;transition:0.2s;width:100%;}
+.b-action-btn:hover{background:#ff6b68;}
+.b-action-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.b-book-viewer{flex:1;display:flex;gap:18px;overflow-x:auto;padding:10px;align-items:center;}
+.b-page{width:280px;height:400px;flex-shrink:0;background:white;border:2px solid #eee;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.08);display:flex;flex-direction:column;overflow:hidden;}
+.b-page-img{width:100%;height:220px;object-fit:cover;border-bottom:2px solid #eee;}
+.b-page-text{padding:12px;font-size:14px;line-height:1.5;color:#333;flex:1;overflow-y:auto;word-break:keep-all;}
+.b-page-num{text-align:center;font-size:13px;color:#aaa;padding:7px;background:#fcfcfc;border-top:1px solid #eee;}
+.poem-inner{display:flex;flex:1;padding:16px;gap:16px;overflow:hidden;}
+.p-panel{flex:1;background:white;border-radius:18px;padding:18px;display:flex;flex-direction:column;border:3px solid var(--poem-border);overflow:hidden;}
+.p-panel.preview{flex:1.4;background:var(--poem-light);}
+.p-panel-title{text-align:center;font-size:17px;margin-bottom:10px;color:var(--poem);border-bottom:2px dashed var(--poem-border);padding-bottom:7px;flex-shrink:0;}
+.p-textarea{flex:1;resize:none;border:2px dashed var(--poem);border-radius:12px;padding:14px;font-family:inherit;font-size:17px;line-height:2;outline:none;background:#fffdf8;}
+.p-textarea:focus{border-style:solid;}
+.p-action-btn{background:var(--poem);color:white;border:none;border-radius:12px;padding:11px 18px;font-family:inherit;font-size:17px;cursor:pointer;margin-top:9px;transition:0.2s;width:100%;}
+.p-action-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.p-preview-wrap{flex:1;position:relative;border-radius:12px;overflow:hidden;background:#fff8ec;border:3px solid var(--poem-border);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+#poemCanvas{display:none;width:100%;height:100%;object-fit:contain;}
+.p-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#ccc;text-align:center;padding:20px;font-size:16px;}
+.p-loading{position:absolute;inset:0;background:rgba(255,251,240,.95);display:none;flex-direction:column;justify-content:center;align-items:center;z-index:10;gap:10px;border-radius:12px;}
+@keyframes spin{100%{transform:rotate(360deg);}}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--mint);color:white;padding:11px 24px;border-radius:50px;font-size:15px;z-index:500;transition:transform .35s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+#pdfOverlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:600;display:none;justify-content:center;align-items:center;flex-direction:column;gap:14px;color:white;font-size:20px;}
+#pdfOverlay.open{display:flex;}
+.retry-badge{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(255,150,50,.9);color:white;padding:3px 14px;border-radius:20px;font-size:12px;white-space:nowrap;pointer-events:none;}
+</style>
+</head>
+<body>
+
+<div id="homeScreen">
+  <div class="home-card">
+    <div class="home-logo">💡</div>
+    <h1>지음 프로젝트</h1>
+    <p>AI와 함께 상상력을 키우고 나만의 책을 완성해요!</p>
+    <div class="home-nick-label">내 이름:</div>
+    <div class="home-nick-row">
+      <input class="nick-input" id="nickInput" maxlength="10" placeholder="이름을 입력해주세요">
+      <button class="nick-confirm-btn" onclick="confirmNick()">확인 ✓</button>
+    </div>
+    <div class="setup-error" id="setupError"></div>
+    <div class="app-grid">
+      <button class="app-card dodum" onclick="launchApp('dodum')"><span class="ac-step">1단계</span><span class="ac-icon">🕵️</span><span class="ac-name">돋움</span><span class="ac-desc">사진을 보고 범인/괴물을 묘사해요!</span></button>
+      <button class="app-card ieum" onclick="launchApp('ieum')"><span class="ac-step">2단계</span><span class="ac-icon">🎨</span><span class="ac-name">이음</span><span class="ac-desc">글로 그리는 AI 그림일기장</span></button>
+      <button class="app-card ttieum" onclick="launchApp('ttieum')"><span class="ac-step">3단계</span><span class="ac-icon">🗣️</span><span class="ac-name">틔음</span><span class="ac-desc">AI와 대화하며 뒷이야기 상상하기</span></button>
+      <button class="app-card jieum" onclick="launchApp('jieum')"><span class="ac-step">4단계</span><span class="ac-icon">📖</span><span class="ac-name">지음</span><span class="ac-desc">그림책 & 시화 만들기!</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="pdfOverlay"><div style="font-size:36px;animation:spin 1s linear infinite;">⏳</div><div id="pdfOverlayMsg">만드는 중...</div></div>
+
+<div id="appWrapper">
+
+<!-- 돋움 -->
+<div class="app-screen" id="dodumApp">
+<div class="tablet">
+  <header>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="home-btn" onclick="goHome()">🏠 홈</button>
+      <span style="font-size:19px;">🕵️ [돋움] AI 명탐정 몽타주 그리기</span>
+    </div>
+    <button class="hbtn" id="witnessBtn" onclick="getWitnessReport()">📷 목격 사진 복원하기</button>
+  </header>
+  <main>
+    <section class="m-panel">
+      <div class="m-panel-title">1. CCTV에 찍힌 범인(괴물)</div>
+      <div class="m-witness-box" id="mWitnessBox">
+        <div id="mWitnessPlaceholder" style="text-align:center;color:#888;font-size:15px;">[목격 사진 복원하기]<br>버튼을 눌러 수사 시작!</div>
+      </div>
+    </section>
+    <section class="m-panel">
+      <div class="m-panel-title">2. 몽타주 묘사하기</div>
+      <textarea class="m-textarea" id="mMontageInput" placeholder="왼쪽 사진을 보고 생김새, 색깔, 특징을 자세히 묘사해주세요!"></textarea>
+      <button class="m-action-btn" id="mDrawBtn" onclick="drawMontage()" disabled>🎨 몽타주 스케치하기</button>
+    </section>
+    <section class="m-panel">
+      <div class="m-panel-title">3. 몽타주 결과 & 일치율</div>
+      <div class="m-img-box" id="mResultImgBox" style="flex:2;">
+        <div id="mImgPlaceholder" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#aaa;text-align:center;font-size:14px;padding:10px;">자세히 묘사할수록<br>원본과 비슷해져요!</div>
+        <img id="mResultImg" style="display:none;width:100%;height:100%;object-fit:contain;">
+        <div id="mLoading" style="display:none;position:absolute;inset:0;background:rgba(255,255,255,.9);flex-direction:column;justify-content:center;align-items:center;z-index:10;gap:8px;">
+          <div style="font-size:38px;animation:spin 1s linear infinite;">🌀</div>
+          <div id="mLoadingMsg" style="color:var(--blue);font-size:16px;">몽타주 스케치 중...</div>
+        </div>
+      </div>
+      <div class="m-score-box" id="mScoreBox">
+        <div class="m-score" id="mScoreText"></div>
+        <div class="m-feedback" id="mFeedbackText"></div>
+      </div>
+    </section>
+  </main>
+</div>
+</div>
+
+<!-- 이음 -->
+<div class="app-screen" id="ieumApp">
+<div class="tablet">
+  <header>
+    <div class="h-left">
+      <button class="home-btn" onclick="goHome()">🏠 홈</button>
+      <button class="hbtn" onclick="newDiary()">✏️ 새 일기</button>
+      <span style="font-size:17px;">🎨 [이음] AI 그림일기장</span>
+    </div>
+    <div class="h-right">
+      <span class="date-badge" id="dateDisplay"></span>
+      <div class="user-chip" id="userChip"></div>
+      <button class="hbtn orange" onclick="saveDiary()">💾 저장</button>
+      <button class="hbtn" onclick="openList()">📖 일기장</button>
+      <button class="hbtn" style="background:rgba(255,255,255,.3);" onclick="openPrintModal()">🖨️ 출력하기</button>
+    </div>
+  </header>
+  <main>
+    <section class="panel">
+      <div class="panel-title">[ 오늘의 이야기 ]</div>
+      <textarea class="manuscript" id="diary" placeholder="오늘 있었던 일을 자세히 적어보세요! 🌟"></textarea>
+      <div class="richness-bar-wrap">
+        <span class="richness-label">✏️ 묘사력</span>
+        <div class="richness-track"><div class="richness-fill" id="richnessFill"></div></div>
+        <span class="richness-score" id="richnessScore">— 대기중</span>
+      </div>
+      <div class="stamp-wrap"><div class="stamp" id="diaryStamp"><div class="stamp-icon" id="diaryStampIcon"></div><div class="stamp-text" id="diaryStampText"></div></div></div>
+      <div class="teacher-box">
+        <div class="teacher-face" id="teacherFace">👩‍🏫</div>
+        <div class="teacher-msg" id="teacherMsg"><span class="teacher-hi">선생님</span><br>일기를 쓰면 조언해드릴게요! 😊</div>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel-header">
+        <div class="panel-title" style="margin:0;" id="imgTitle">[ 오늘의 그림 ]</div>
+        <button class="hbtn orange" id="genBtn" onclick="generateImage()" style="font-size:13px;padding:9px;">🖍️ 그림 그리기</button>
+      </div>
+      <div class="img-wrap">
+        <div class="placeholder" id="placeholder"><div>🖼️</div><div style="font-size:16px;color:#aaa;">일기를 쓰고 그림을 그려보세요!</div></div>
+        <img class="di-main" id="imgMain" alt="그림일기">
+        <div class="richness-badge" id="richnessBadge"></div>
+        <div class="d-loading" id="dLoading">
+          <div style="font-size:30px;">🖍️</div>
+          <div id="loadingMsg" style="font-size:15px;color:var(--mint);">그림 그리는 중...</div>
+          <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-label" id="progressLabel">0%</div>
+        </div>
+        <div class="error-overlay" id="errorOverlay">
+          <div style="font-size:34px;">😢</div>
+          <div style="font-size:16px;color:var(--red);" id="errorTitle">오류 발생</div>
+          <div class="error-detail" id="errorDetail"></div>
+          <button class="ebtn dismiss" onclick="hideDiaryError()">닫기</button>
+        </div>
+      </div>
+      <div style="margin-top:7px;background:var(--mint-light);padding:7px;border-radius:9px;text-align:center;font-size:13px;color:var(--mint);">🖍️ 감각어를 쓰면 그림이 훨씬 다채로워요!</div>
+    </section>
+  </main>
+</div>
+
+<!-- 일기장 목록 모달 -->
+<div class="modal-bg" id="listModal">
+  <div class="modal">
+    <h2>📖 나의 일기장</h2>
+    <div class="diary-list" id="diaryList"></div>
+    <div class="modal-btns"><button class="mbtn ghost" onclick="closeModal('listModal')">닫기</button></div>
+  </div>
+</div>
+
+<!-- 출력 선택 모달 -->
+<div class="modal-bg" id="printModal">
+  <div class="modal" style="width:520px;">
+    <h2>🖨️ 출력할 일기 선택</h2>
+    <p style="font-size:13px;color:#aaa;margin-bottom:12px;">출력할 일기를 선택하세요 (복수 선택 가능)</p>
+    <div class="diary-list" id="printDiaryList"></div>
+    <div style="font-size:13px;color:var(--mint);margin-top:10px;" id="selectedCount">선택된 일기: 0개</div>
+    <div class="modal-btns">
+      <button class="mbtn ghost" onclick="closeModal('printModal')">취소</button>
+      <button class="mbtn primary" onclick="printSelectedDiaries()">📄 선택 출력</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- 틔음 -->
+<div class="app-screen" id="ttieumApp">
+<div class="tablet">
+  <div style="display:flex;align-items:center;justify-content:center;flex:1;">
+    <div class="story-phone">
+      <div class="st-header">
+        <button class="home-btn" onclick="goHome()" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;">🏠 홈</button>
+        🗣️ [틔음] 뒷이야기 상상하기
+        <button class="story-new-btn" onclick="resetStory()">🔄 새로하기</button>
+      </div>
+      <div class="chat-box" id="chatBox"></div>
+      <div class="story-input-area">
+        <textarea class="story-textarea" id="storyInput" placeholder="다음 이야기를 이어 적어주세요..."></textarea>
+        <button class="story-send-btn" id="storySendBtn" onclick="sendStory()">전송</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- 지음 -->
+<div class="app-screen" id="jieumApp">
+<div class="tablet">
+  <header>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="home-btn" onclick="goHome()">🏠 홈</button>
+      <span style="font-size:18px;">📖 [지음] 나만의 창작 공간</span>
+    </div>
+    <div style="display:flex;gap:7px;">
+      <button class="hbtn" id="bookPdfBtn" onclick="exportBookPDF()">📄 그림책 출력</button>
+      <button class="hbtn" id="poemPdfBtn" onclick="exportPoemPDF()" style="display:none;">📄 시화 출력</button>
+      <button class="hbtn" id="bookResetBtn" onclick="resetBook()">🔄 새 책</button>
+      <button class="hbtn" id="poemResetBtn" onclick="resetPoem()" style="display:none;">🔄 초기화</button>
+    </div>
+  </header>
+  <main>
+    <div class="jieum-tabs">
+      <button class="j-tab active" id="tabBook" onclick="switchJieumTab('book')">📖 나만의 그림책</button>
+      <button class="j-tab" id="tabPoem" onclick="switchJieumTab('poem')">🌸 나만의 시화</button>
+    </div>
+    <div class="j-tab-content active" id="tabContentBook">
+      <div class="jieum-book-inner">
+        <section class="b-panel">
+          <div class="b-panel-title">1. 그림책 장면 쓰기</div>
+          <textarea class="b-textarea" id="bookInput" placeholder="나만의 그림책 이야기를 적어주세요!"></textarea>
+          <button class="b-action-btn" id="bDrawBtn" onclick="addBookPage()">📖 이 내용으로 페이지 추가하기</button>
+        </section>
+        <section class="b-panel viewer">
+          <div class="b-panel-title">2. 내 그림책 미리보기</div>
+          <div class="b-book-viewer" id="bookViewer">
+            <div style="color:#aaa;font-size:15px;text-align:center;width:100%;margin-top:120px;">내용을 적고 <b>[페이지 추가하기]</b>를 누르면 그림책이 만들어져요! ✨</div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <div class="j-tab-content" id="tabContentPoem">
+      <div class="poem-inner">
+        <section class="p-panel">
+          <div class="p-panel-title">1. 시 쓰기</div>
+          <textarea class="p-textarea" id="poemInput" placeholder="🌸 나만의 시를 써보세요!"></textarea>
+          <button class="p-action-btn" id="pPaintBtn" onclick="createPoemArt()">🎨 시화로 꾸미기</button>
+        </section>
+        <section class="p-panel preview">
+          <div class="p-panel-title">2. 시화 미리보기</div>
+          <div class="p-preview-wrap">
+            <div class="p-placeholder" id="pPlaceholder"><div style="font-size:40px;">🌸</div><div>시를 쓰고 [시화로 꾸미기]를 누르면<br>아름다운 시화가 완성돼요!</div></div>
+            <img id="poemCanvas" alt="시화">
+            <div class="p-loading" id="pLoading">
+              <div style="font-size:34px;animation:spin 1s linear infinite;">🌀</div>
+              <div id="pLoadingMsg" style="font-size:15px;color:var(--poem);">시화를 그리고 있어요... 🎨</div>
+              <div class="progress-wrap"><div class="progress-fill" id="pProgressFill"></div></div>
+              <div class="progress-label" id="pProgressLabel">0%</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</div>
+</div><!-- appWrapper -->
+
+<script>
+/* ══════════════════════════════════════
+   핵심: 이미지 생성 안정화 유틸
+══════════════════════════════════════ */
+const IMG_HOSTS = [
+  (p,s) => `https://image.pollinations.ai/prompt/${p}?width=512&height=512&nologo=true&nofeed=true&seed=${s}&model=flux`,
+  (p,s) => `https://image.pollinations.ai/prompt/${p}?width=512&height=512&nologo=true&nofeed=true&seed=${s}&model=flux-schnell`,
+  (p,s) => `https://image.pollinations.ai/prompt/${p}?width=384&height=384&nologo=true&nofeed=true&seed=${s+1}`,
+];
+
+/**
+ * 이미지 URL을 fetch → Blob으로 변환.
+ * 타임아웃 20s, 최대 3가지 URL 변형으로 자동 재시도.
+ */
+async function fetchImgWithRetry(encodedPrompt, onRetry) {
+  const seed = rnd();
+  let lastErr;
+  for (let i = 0; i < IMG_HOSTS.length; i++) {
+    const url = IMG_HOSTS[i](encodedPrompt, seed);
+    if (i > 0 && onRetry) onRetry(i);
+    try {
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), 22000);
+      const res = await fetch(url, { signal: ctrl.signal });
+      clearTimeout(tid);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      if (blob.size < 800) throw new Error('빈 이미지');
+      // 실제로 이미지인지 확인
+      if (!blob.type.startsWith('image/')) throw new Error('이미지 형식 아님');
+      return blob;
+    } catch (e) {
+      lastErr = e;
+      await sleep(1200 * (i + 1)); // 점진적 딜레이
+    }
+  }
+  throw new Error(`이미지 생성 실패 (${lastErr?.message})`);
+}
+
+/* ══ 공통 유틸 ══ */
+const PROXY = 'https://magic-diary.vercel.app/api/proxy';
+let currentNick = '';
+const $ = id => document.getElementById(id);
+const SK = { nick: 'mdj_nick', entries: uid => `mdj_entries_${uid}` };
+const dateLabel = (() => {
+  const d = new Date(), days = ['일','월','화','수','목','금','토'];
+  return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 ${days[d.getDay()]}요일`;
+})();
+
+async function callClaude(body) {
+  const res = await fetch(PROXY, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+  const raw = await res.text();
+  if (!raw?.trim()) throw new Error(`빈 응답 ${res.status}`);
+  let d; try { d = JSON.parse(raw); } catch { throw new Error('파싱 실패'); }
+  if (!res.ok) throw new Error(d.error?.message || `HTTP ${res.status}`);
+  return (d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+}
+function parseJSON(s) { try { return JSON.parse(s.replace(/```json|```/g,'').trim()); } catch { return null; } }
+let toastT;
+function toast(msg) { const el=$('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'), 3200); }
+function showOverlay(msg='처리 중...') { $('pdfOverlayMsg').textContent=msg; $('pdfOverlay').classList.add('open'); }
+function hideOverlay() { $('pdfOverlay').classList.remove('open'); }
+function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
+function rnd() { return Math.floor(Math.random() * 99999); }
+function dl(canvas, name) { const a=document.createElement('a'); a.download=`${name}.png`; a.href=canvas.toDataURL('image/png'); a.click(); }
+function closeModal(id) { $(id).classList.remove('open'); }
+
+/* ══ 홈 ══ */
+window.addEventListener('DOMContentLoaded', () => {
+  try { const s=localStorage.getItem(SK.nick); if(s){currentNick=s;$('nickInput').value=s;} } catch {}
+  $('nickInput').addEventListener('keydown', e => { if(e.key==='Enter') confirmNick(); });
+  resetStory();
+  $('storyInput').addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendStory();} });
+  document.querySelectorAll('.modal-bg').forEach(bg => bg.addEventListener('click', e => { if(e.target===bg) bg.classList.remove('open'); }));
+  $('diary').addEventListener('input', onDiaryInput);
+});
+function confirmNick() {
+  const v = $('nickInput').value.trim(); if(!v){$('setupError').textContent='이름을 입력해주세요!';return;}
+  currentNick=v; try{localStorage.setItem(SK.nick,v);}catch{}
+  $('setupError').textContent='저장됐어요! 앱을 선택하세요 🎉';
+}
+function launchApp(n) {
+  if(!currentNick){const v=$('nickInput').value.trim();if(v)confirmNick();else{alert('이름을 먼저 입력해주세요!');$('nickInput').focus();return;}}
+  $('homeScreen').style.display='none'; $('appWrapper').style.display='block';
+  document.querySelectorAll('.app-screen').forEach(el=>el.classList.remove('active'));
+  $(`${n}App`).classList.add('active');
+  if(n==='ieum'){$('dateDisplay').textContent=dateLabel;$('userChip').textContent=`👤 ${currentNick}`;}
+}
+function goHome() {
+  $('appWrapper').style.display='none';
+  document.querySelectorAll('.app-screen').forEach(el=>el.classList.remove('active'));
+  $('homeScreen').style.display='flex';
+}
+
+/* ══════════════════════════════════════
+   돋움 — 이미지 재시도 + 상태 관리 개선
+══════════════════════════════════════ */
+let monsterFeatures = '', monsterImgPrompt = '';
+
+async function getWitnessReport() {
+  const box=$('mWitnessBox'), btn=$('witnessBtn'), drawBtn=$('mDrawBtn');
+  btn.disabled=true; drawBtn.disabled=true;
+  $('mMontageInput').value=''; $('mScoreBox').style.display='none';
+  $('mResultImg').style.display='none'; $('mImgPlaceholder').style.display='flex';
+
+  // 로딩 UI
+  box.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;gap:10px;">
+    <div style="font-size:32px;animation:spin 1s linear infinite;">⏳</div>
+    <div id="witnessStatus" style="color:#666;font-size:14px;">몬스터 정보 받는 중...</div>
+  </div>`;
+
+  try {
+    // 1) Claude로 몬스터 생성
+    const raw = await callClaude({
+      model:'claude-haiku-4-5-20251001', max_tokens:250,
+      system:`Create a random fun fantasy monster for Korean elementary students.
+Return ONLY valid JSON (no markdown):
+{"features":"한국어로 몬스터 외형 묘사 2~3문장","prompt":"detailed English image generation prompt: cute fantasy monster, thick cartoon outline, bright colors, white background, full body, no text"}`,
+      messages:[{role:'user',content:'Create a monster!'}]
+    });
+    const d = parseJSON(raw);
+    if(!d || !d.features || !d.prompt) throw new Error('몬스터 데이터 오류');
+    monsterFeatures = d.features;
+    monsterImgPrompt = d.prompt;
+
+    // 2) 이미지 생성 (재시도 포함)
+    updateWitnessStatus('CCTV 영상 복원 중... (시간이 걸릴 수 있어요)');
+    const ep = encodeURIComponent(monsterImgPrompt);
+    const blob = await fetchImgWithRetry(ep, (attempt) => {
+      updateWitnessStatus(`재시도 중... (${attempt+1}번째 시도)`);
+    });
+    const url = URL.createObjectURL(blob);
+
+    box.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:contain;border-radius:12px;">`;
+    drawBtn.disabled = false;
+    toast('🎉 목격 사진 복원 완료!');
+  } catch(e) {
+    box.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;gap:10px;padding:14px;">
+      <div style="font-size:30px;">😢</div>
+      <div style="color:#e55;font-size:14px;text-align:center;">복원 실패: ${e.message}</div>
+      <button onclick="getWitnessReport()" style="background:var(--blue);color:white;border:none;border-radius:8px;padding:8px 16px;font-family:inherit;font-size:14px;cursor:pointer;">🔄 다시 시도</button>
+    </div>`;
+  }
+  btn.disabled = false;
+}
+function updateWitnessStatus(msg) { const el=$('witnessStatus'); if(el) el.textContent=msg; }
+
+async function drawMontage() {
+  const input = $('mMontageInput').value.trim();
+  if(!input){toast('묘사를 입력해줘!');return;}
+  const btn=$('mDrawBtn'), loading=$('mLoading');
+  btn.disabled=true; loading.style.display='flex';
+  $('mImgPlaceholder').style.display='none'; $('mResultImg').style.display='none'; $('mScoreBox').style.display='none';
+  $('mLoadingMsg').textContent='분석 중...';
+  try {
+    // 점수 + 영어 프롬프트 동시 생성
+    const [scoreRaw, promptRaw] = await Promise.all([
+      callClaude({
+        model:'claude-haiku-4-5-20251001', max_tokens:150,
+        system:`Original monster: ${monsterFeatures}. Student description: ${input}. Return ONLY JSON: {"score":<0-100>,"feedback":"<Korean friendly 1 sentence>"}`,
+        messages:[{role:'user',content:'Evaluate'}]
+      }),
+      callClaude({
+        model:'claude-haiku-4-5-20251001', max_tokens:120,
+        system:`Convert this Korean monster description into a detailed English image generation prompt.
+Style: cute cartoon monster, thick outline, bright colors, white background, full body, no text.
+Return ONLY the prompt text, no explanation.`,
+        messages:[{role:'user',content:input}]
+      })
+    ]);
+    const sc = parseJSON(scoreRaw) || {score:75, feedback:'잘 묘사했어요!'};
+    $('mLoadingMsg').textContent='몽타주 그리는 중...';
+    const ep = encodeURIComponent(promptRaw.trim());
+    const blob = await fetchImgWithRetry(ep, (i)=>{ $('mLoadingMsg').textContent=`재시도 ${i+1}번째...`; });
+    const url = URL.createObjectURL(blob);
+    loading.style.display='none';
+    $('mResultImg').src=url; $('mResultImg').style.display='block';
+    $('mScoreText').textContent=`싱크로율: ${sc.score}% 🎯`;
+    $('mFeedbackText').textContent=sc.feedback;
+    $('mScoreBox').style.display='block';
+  } catch(e) {
+    loading.style.display='none'; $('mImgPlaceholder').style.display='flex';
+    toast('몽타주 생성 실패: '+e.message);
+  }
+  btn.disabled=false;
+}
+
+/* ══════════════════════════════════════
+   이음 — 일기 내용 기반 프롬프트 개선
+══════════════════════════════════════ */
+let currentImgUrl=null, currentImgBlob=null, currentRich=0, currentEntryId=null, progTimer=null;
+let currentTeacherAdvice='잘 썼어요!';
+
+const STAMPS = [null,
+  {cls:'s1',icon:'📝',text:'더 노력해봐요'}, {cls:'s1',icon:'📝',text:'더 노력해봐요'},
+  {cls:'s2',icon:'🌱',text:'조금 더\n노력해요'},  {cls:'s2',icon:'🌱',text:'조금 더\n노력해요'},
+  {cls:'s3',icon:'⭐',text:'보통이에요'},          {cls:'s3',icon:'⭐',text:'보통이에요'},
+  {cls:'s4',icon:'👍',text:'잘했어요'},            {cls:'s4',icon:'👍',text:'잘했어요'},
+  {cls:'s5',icon:'🌟',text:'참 잘했어요'},         {cls:'s5',icon:'🌟',text:'참 잘했어요'},
+];
+const STAMP_COLORS = {s1:'#aaa',s2:'#7a8fa6',s3:'#62b3a4',s4:'#f49f5a',s5:'#e85c4a'};
+
+function updateStamp(r) {
+  const el=$('diaryStamp'); el.classList.remove('show','s1','s2','s3','s4','s5');
+  if(r>=1){const g=STAMPS[r];$('diaryStampIcon').textContent=g.icon;$('diaryStampText').textContent=g.text;el.classList.add(g.cls);requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('show')));}
+}
+function getEntries() { try{return JSON.parse(localStorage.getItem(SK.entries(currentNick))||'[]');}catch{return[];} }
+function setEntries(a) { try{localStorage.setItem(SK.entries(currentNick),JSON.stringify(a));}catch{} }
+
+function saveDiary() {
+  const text=$('diary').value.trim(); if(!text){toast('일기를 먼저 써보세요!');return;}
+  const entries=getEntries(), now=Date.now(), title=$('imgTitle').textContent;
+  const entry={text,imgUrl:currentImgUrl,title,richness:currentRich,teacherAdvice:currentTeacherAdvice,dateLabel,updatedAt:now};
+  if(currentEntryId) {
+    const idx=entries.findIndex(e=>e.id===currentEntryId);
+    if(idx!==-1) entries[idx]={...entries[idx],...entry};
+    else entries.unshift({id:currentEntryId,createdAt:now,...entry});
+    setEntries(entries); toast('💾 일기 수정!');
+  } else {
+    const id=`e_${now}_${Math.random().toString(36).slice(2,6)}`;
+    entries.unshift({id,createdAt:now,...entry}); setEntries(entries); currentEntryId=id; toast('💾 일기 저장!');
+  }
+}
+
+function openList() {
+  const entries=getEntries(), el=$('diaryList');
+  el.innerHTML = !entries.length ? '<div class="empty-list">저장된 일기가 없어요 📝</div>'
+    : entries.map(e=>`
+    <div class="diary-item clickable" onclick="loadEntry('${e.id}')">
+      ${e.imgUrl?`<img src="${e.imgUrl}" class="diary-thumb" onerror="this.outerHTML='<div class=\\'diary-thumb\\'>📝</div>'">`:`<div class="diary-thumb">📝</div>`}
+      <div style="flex:1;min-width:0;">
+        <div class="d-date">${e.dateLabel||''}</div>
+        <div class="d-text">${(e.text||'').substring(0,34)}${(e.text||'').length>34?'...':''}</div>
+        ${e.richness?`<div class="d-richness">${STAMPS[e.richness]?.text||''} (${e.richness}/10)</div>`:''}
+      </div>
+      <button class="d-del" onclick="event.stopPropagation();deleteEntry('${e.id}')">🗑️</button>
+    </div>`).join('');
+  $('listModal').classList.add('open');
+}
+
+function loadEntry(id) {
+  const e=getEntries().find(x=>x.id===id); if(!e) return;
+  currentEntryId=e.id; $('diary').value=e.text||''; $('imgTitle').textContent=e.title||'[ 오늘의 그림 ]';
+  currentRich=e.richness||0; currentImgUrl=e.imgUrl||null; currentImgBlob=null;
+  currentTeacherAdvice=e.teacherAdvice||'잘 썼어요!';
+  $('richnessFill').style.width=`${currentRich*10}%`; $('richnessScore').textContent=`묘사력 ${currentRich}/10`;
+  updateStamp(currentRich); setTeacher('advice', currentTeacherAdvice);
+  if(e.imgUrl){$('imgMain').src=e.imgUrl;$('imgMain').style.display='block';$('placeholder').style.display='none';}
+  else{$('imgMain').style.display='none';$('placeholder').style.display='flex';}
+  closeModal('listModal'); toast('📖 불러왔어요!');
+}
+function deleteEntry(id) {
+  if(!confirm('삭제할까요?')) return;
+  const a=getEntries().filter(e=>e.id!==id); setEntries(a);
+  if(currentEntryId===id){currentEntryId=null;newDiary();}
+  openList(); toast('삭제됐어요.');
+}
+function newDiary() {
+  $('diary').value=''; $('imgTitle').textContent='[ 오늘의 그림 ]';
+  $('richnessFill').style.width='0%'; $('richnessScore').textContent='— 대기중';
+  $('imgMain').style.display='none'; $('imgMain').src=''; $('placeholder').style.display='flex';
+  $('richnessBadge').style.display='none';
+  const s=$('diaryStamp'); s.classList.remove('show','s1','s2','s3','s4','s5');
+  hideDiaryError(); $('dLoading').style.display='none'; clearInterval(progTimer);
+  setTeacher('idle'); currentEntryId=null; currentImgUrl=null; currentImgBlob=null; currentRich=0; currentTeacherAdvice='잘 썼어요!';
+}
+
+/**
+ * 핵심 개선: Claude에게 일기 전체 텍스트를 주고
+ * "가장 생생하게 묘사된 장면"을 직접 영어 이미지 프롬프트로 만들게 함
+ */
+async function analyzeDiary(text) {
+  const raw = await callClaude({
+    model: 'claude-haiku-4-5-20251001', max_tokens: 500,
+    system: `You analyze Korean elementary school diary entries.
+Read the diary carefully and identify the single most vividly described scene.
+Return ONLY valid JSON (no markdown):
+{
+  "richness": <1-10, based on sensory detail and descriptiveness>,
+  "advice": "<Korean warm teacher comment, 1-2 sentences, focusing on good points>",
+  "title": "<Korean diary title, max 8 chars>",
+  "imagePrompt": "<English image prompt: describe the most vividly written scene. Include: specific characters, location, action, colors/objects mentioned, mood. Style: simple crayon drawing by Korean 4th grader, thick black outlines, flat bright colors, child art style, white background. Be very specific about what is actually in the diary. Max 60 words.>"
+}`,
+    messages: [{ role:'user', content: `일기 내용:\n${text}` }]
+  });
+  return parseJSON(raw) || {
+    richness: text.length < 50 ? 3 : 6,
+    advice: '일기를 잘 썼어요!',
+    title: '오늘의 일기',
+    imagePrompt: 'Korean elementary school student doing activities, simple crayon drawing, thick outlines, bright colors, white background'
+  };
+}
+
+let hintTimer;
+function onDiaryInput() {
+  clearTimeout(hintTimer);
+  const txt = $('diary').value.trim();
+  if(txt.length < 10){ setTeacher('idle'); return; }
+  setTeacher('thinking');
+  hintTimer = setTimeout(async () => {
+    try {
+      const r = await analyzeDiary(txt);
+      currentRich=r.richness; currentTeacherAdvice=r.advice;
+      $('richnessFill').style.width=`${r.richness*10}%`;
+      $('richnessScore').textContent=`묘사력 ${r.richness}/10`;
+      updateStamp(r.richness); setTeacher('advice', r.advice);
+    } catch { setTeacher('idle'); }
+  }, 2500);
+}
+
+function setTeacher(state, msg) {
+  const face=$('teacherFace'), el=$('teacherMsg'); face.classList.remove('thinking');
+  if(state==='idle'){face.textContent='👩‍🏫';el.innerHTML=`<span class="teacher-hi">선생님</span><br>일기를 쓰면 조언해드릴게요! 😊`;}
+  else if(state==='thinking'){face.textContent='🤔';face.classList.add('thinking');el.innerHTML=`<span class="teacher-hi">선생님</span><br>열심히 읽는 중... 📖`;}
+  else{face.textContent='✨';el.innerHTML=`<span class="teacher-hi">선생님 한마디</span><br>${msg}`;}
+}
+function showDiaryError(t,d){$('errorTitle').textContent=t;$('errorDetail').textContent=d;$('errorOverlay').style.display='flex';}
+function hideDiaryError(){$('errorOverlay').style.display='none';}
+
+async function generateImage() {
+  const text = $('diary').value.trim();
+  if(!text){toast('일기를 먼저 써보세요!');return;}
+  const btn=$('genBtn');
+  hideDiaryError();
+  btn.disabled=true;
+  // 이전 이미지 유지 + 로딩 오버레이
+  $('dLoading').style.display='flex';
+  clearInterval(progTimer);
+  $('progressFill').style.width='0%'; $('progressLabel').textContent='0%';
+  startProgress(0, 75, 10000);
+  try {
+    $('loadingMsg').textContent='일기 분석 중...';
+    const a = await analyzeDiary(text);
+    currentRich=a.richness; currentTeacherAdvice=a.advice;
+    $('richnessFill').style.width=`${a.richness*10}%`;
+    $('richnessScore').textContent=`묘사력 ${a.richness}/10`;
+    updateStamp(a.richness); setTeacher('advice', a.advice);
+    if(a.title) $('imgTitle').textContent=`[ ${a.title} ]`;
+
+    $('loadingMsg').textContent='그림 그리는 중... (최대 1분)';
+    const ep = encodeURIComponent(a.imagePrompt);
+    const blob = await fetchImgWithRetry(ep, (attempt) => {
+      $('loadingMsg').textContent=`재시도 중... (${attempt+1}번째)`;
+      startProgress(Number($('progressLabel').textContent)||40, 90, 15000);
+    });
+    const blobUrl = URL.createObjectURL(blob);
+    currentImgBlob=blob; currentImgUrl=blobUrl;
+
+    clearInterval(progTimer);
+    $('progressFill').style.width='100%'; $('progressLabel').textContent='100%';
+    await sleep(250);
+    $('dLoading').style.display='none';
+    $('placeholder').style.display='none';
+    $('imgMain').src=blobUrl; $('imgMain').style.display='block';
+    $('richnessBadge').textContent=`🎨 묘사력 ${a.richness}/10`; $('richnessBadge').style.display='block';
+    toast('그림일기 완성! 🎉');
+  } catch(err) {
+    clearInterval(progTimer); $('dLoading').style.display='none';
+    // 이전 이미지가 있으면 되살리기
+    if(currentImgUrl){ $('placeholder').style.display='none'; $('imgMain').style.display='block'; }
+    showDiaryError('그림 생성 실패', err.message + '\n잠시 후 다시 눌러보세요.');
+  }
+  btn.disabled=false;
+}
+
+function startProgress(from, to, dur) {
+  clearInterval(progTimer);
+  const el=$('progressFill'), lbl=$('progressLabel');
+  const steps=30, ms=dur/steps, sv=(to-from)/steps; let cur=from;
+  progTimer=setInterval(()=>{cur+=sv;if(cur>=to){cur=to;clearInterval(progTimer);}el.style.width=`${cur}%`;lbl.textContent=`${Math.round(cur)}%`;}, ms);
+}
+
+/* ══ 출력 모달 — 체크박스 선택 수정 ══ */
+let printSelected = new Set();
+
+function openPrintModal() {
+  printSelected.clear();
+  const entries = getEntries();
+  const el = $('printDiaryList');
+  if(!entries.length){ el.innerHTML='<div class="empty-list">저장된 일기가 없어요 📝</div>'; }
+  else {
+    el.innerHTML = entries.map(e=>`
+      <div class="diary-item" id="pi_${e.id}" onclick="togglePrintSelect(event,'${e.id}')">
+        <div class="check-box" id="cb_${e.id}"></div>
+        ${e.imgUrl?`<img src="${e.imgUrl}" class="diary-thumb" onerror="this.outerHTML='<div class=\\'diary-thumb\\'>📝</div>'">`:`<div class="diary-thumb">📝</div>`}
+        <div style="flex:1;min-width:0;">
+          <div class="d-date">${e.dateLabel||''}</div>
+          <div class="d-text">${(e.text||'').substring(0,34)}${(e.text||'').length>34?'...':''}</div>
+          ${e.richness?`<div class="d-richness">${STAMPS[e.richness]?.text||''} (${e.richness}/10)</div>`:''}
+        </div>
+      </div>`).join('');
+  }
+  $('selectedCount').textContent='선택된 일기: 0개';
+  $('printModal').classList.add('open');
+}
+
+/* 이벤트 충돌 없이 토글만 처리 */
+function togglePrintSelect(event, id) {
+  event.stopPropagation();
+  if(printSelected.has(id)) printSelected.delete(id);
+  else printSelected.add(id);
+  const item = $(`pi_${id}`), cb = $(`cb_${id}`);
+  item.classList.toggle('selected', printSelected.has(id));
+  cb.textContent = printSelected.has(id) ? '✓' : '';
+  $('selectedCount').textContent = `선택된 일기: ${printSelected.size}개`;
+}
+
+async function printSelectedDiaries() {
+  if(!printSelected.size){toast('출력할 일기를 선택해주세요!');return;}
+  closeModal('printModal');
+  showOverlay('일기장 PDF 만드는 중...');
+  const entries = getEntries().filter(e=>printSelected.has(e.id));
+  try {
+    for(let i=0;i<entries.length;i++) await renderDiaryPage(entries[i], i+1);
+    toast(`📄 일기 ${entries.length}장 출력 완료!`);
+  } catch(err){ toast('출력 실패: '+err.message); }
+  hideOverlay();
+}
+
+async function renderDiaryPage(e, idx) {
+  const rich=e.richness||0, sd=STAMPS[rich], sc=STAMP_COLORS[sd?.cls||'s1']||'#aaa';
+  const label=(sd?.text||'더 노력해봐요').replace('\n',' ');
+  const advice=e.teacherAdvice||'일기를 잘 썼어요!';
+  const stampSvg=`<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="46" fill="none" stroke="${sc}" stroke-width="4.5"/>
+    <circle cx="50" cy="50" r="38" fill="none" stroke="${sc}" stroke-width="2" stroke-dasharray="4 3"/>
+    <text x="50" y="44" text-anchor="middle" font-size="24" font-family="sans-serif">${sd?.icon||'📝'}</text>
+    <text x="50" y="62" text-anchor="middle" font-size="12" font-family="Arial" fill="${sc}" font-weight="bold">${label}</text>
+    <text x="50" y="76" text-anchor="middle" font-size="9" font-family="Arial" fill="${sc}">선생님 도장</text>
+  </svg>`;
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:fixed;left:-9999px;top:0;width:794px;background:white;font-family:Jua,sans-serif;padding:0;';
+  wrap.innerHTML=`<div style="width:794px;background:white;padding:34px 42px 30px;">
+    <div style="text-align:center;border-bottom:4px double #62b3a4;padding-bottom:12px;margin-bottom:16px;">
+      <div style="font-size:11px;color:#aaa;letter-spacing:3px;margin-bottom:3px;">MY DIARY</div>
+      <div style="font-size:32px;color:#62b3a4;letter-spacing:2px;">그림 일기</div>
+      <div style="font-size:14px;color:#888;margin-top:5px;">${e.dateLabel||dateLabel}</div>
+    </div>
+    <div style="display:flex;gap:0;border:2px solid #ddd;border-radius:10px;overflow:hidden;margin-bottom:16px;">
+      <div style="flex:1;padding:8px 14px;border-right:2px solid #ddd;background:#fafafa;"><span style="font-size:11px;color:#aaa;">이름</span><div style="font-size:19px;color:#333;margin-top:2px;">${currentNick}</div></div>
+      <div style="flex:2;padding:8px 14px;background:#fafafa;"><span style="font-size:11px;color:#aaa;">제목</span><div style="font-size:17px;color:#333;margin-top:2px;">${(e.title||'').replace(/\[|\]/g,'').trim()||'오늘의 일기'}</div></div>
+      <div style="padding:8px 14px;background:#fafafa;border-left:2px solid #ddd;display:flex;align-items:center;justify-content:center;min-width:60px;"><div style="font-size:26px;">${['☀️','⛅','🌥️','🌦️','🌧️','❄️'][Math.floor(Math.random()*6)]}</div></div>
+    </div>
+    <div style="border:3px solid #e8d5b0;border-radius:12px;overflow:hidden;margin-bottom:16px;background:#fdf5e6;height:280px;display:flex;align-items:center;justify-content:center;position:relative;">
+      <div style="position:absolute;top:7px;left:12px;font-size:11px;color:#c8b090;letter-spacing:1px;">[ 오늘의 그림 ]</div>
+      ${e.imgUrl?`<img src="${e.imgUrl}" style="max-width:100%;max-height:260px;object-fit:contain;">`:`<div style="color:#ddd;font-size:15px;">그림이 없어요</div>`}
+    </div>
+    <div style="border:2px solid #ddd;border-radius:11px;padding:14px 18px;margin-bottom:16px;min-height:150px;background:#fffef8;position:relative;">
+      <div style="position:absolute;top:-10px;left:14px;background:white;padding:0 7px;font-size:11px;color:#aaa;">[ 오늘의 이야기 ]</div>
+      <div style="font-size:17px;line-height:2.2;color:#333;white-space:pre-wrap;word-break:keep-all;background-image:repeating-linear-gradient(transparent 0,transparent calc(2.2em - 1px),#e5e5e5 calc(2.2em - 1px),#e5e5e5 2.2em);padding-top:3px;">${e.text||''}</div>
+    </div>
+    <div style="display:flex;gap:14px;align-items:stretch;">
+      <div style="flex:1;border:2px solid #f0d99a;border-radius:11px;padding:13px 16px;background:#fffbf0;position:relative;">
+        <div style="position:absolute;top:-10px;left:12px;background:#fffbf0;border:1.5px solid #f0d99a;border-radius:20px;padding:1px 9px;font-size:10px;color:#c47d2a;">선생님 한마디</div>
+        <div style="font-size:14px;line-height:1.85;color:#b05a10;margin-top:7px;">${advice}</div>
+        <div style="font-size:11px;color:#c8a060;margin-top:7px;">묘사력 점수: ${rich}/10</div>
+      </div>
+      <div style="width:112px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid #eee;border-radius:11px;padding:9px;background:#fafafa;">${stampSvg}</div>
+    </div>
+  </div>`;
+  document.body.appendChild(wrap);
+  await sleep(350);
+  const canvas=await html2canvas(wrap,{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false});
+  document.body.removeChild(wrap);
+  const fname=`그림일기_${currentNick}_${idx}.png`;
+  dl(canvas,fname.replace(/\.png$/,''));
+  await sleep(350);
+}
+
+/* ══ 틔음 ══ */
+let fullStory='';
+function resetStory(){fullStory='';const box=$('chatBox');if(!box)return;box.innerHTML='';addBubble('AI 작가와 번갈아 이야기를 만들어보세요!<br>먼저 첫 문장을 써볼까요? ✨','system');}
+function addBubble(text,sender){const box=$('chatBox'),b=document.createElement('div');b.className=`bubble ${sender}`;let f=text.replace(/\n/g,'<br>');if(sender==='ai'&&text.includes('?')){const li=f.lastIndexOf('?');if(li>-1){const lb=f.slice(0,f.lastIndexOf('<br>',li)+4||0),la=f.slice(lb.length||0);f=lb+`<span class="question-highlight">💡 ${la.trim()}</span>`;}}b.innerHTML=f;box.appendChild(b);box.scrollTop=box.scrollHeight;}
+async function sendStory(){const input=$('storyInput'),text=input.value.trim(),btn=$('storySendBtn');if(!text)return;addBubble(text,'user');fullStory+=`\n[학생]: ${text}`;input.value='';btn.disabled=true;btn.textContent='...';const lid='l'+Date.now();$('chatBox').insertAdjacentHTML('beforeend',`<div class="bubble ai" id="${lid}">상상 중... 💭</div>`);$('chatBox').scrollTop=$('chatBox').scrollHeight;try{const t=await callClaude({model:'claude-haiku-4-5-20251001',max_tokens:300,system:`너는 5~6학년 학생과 릴레이 동화를 창작하는 다정한 AI 멘토야. 2~3문장으로 이어 쓰고 오감 질문 1개만 해줘.`,messages:[{role:'user',content:`지금까지:\n${fullStory}\n\nAI 다음:`}]});document.getElementById(lid)?.remove();addBubble(t,'ai');fullStory+=`\n[AI]: ${t}`;}catch{document.getElementById(lid)?.remove();addBubble('오류! 다시 시도해줘. 😢','system');}btn.disabled=false;btn.textContent='전송';input.focus();}
+
+/* ══ 지음 탭 ══ */
+function switchJieumTab(tab){['Book','Poem'].forEach(t=>{const lower=t.toLowerCase();$(`tab${t}`).classList.toggle('active',lower===tab);$(`tabContent${t}`).classList.toggle('active',lower===tab);});$('bookPdfBtn').style.display=tab==='book'?'':'none';$('bookResetBtn').style.display=tab==='book'?'':'none';$('poemPdfBtn').style.display=tab==='poem'?'':'none';$('poemResetBtn').style.display=tab==='poem'?'':'none';}
+
+/* ══ 지음: 그림책 ══ */
+let pageCount=0, bookPages=[];
+function resetBook(){if(pageCount>0&&!confirm('지금까지 만든 책이 지워져요. 새로 만들까요?'))return;pageCount=0;bookPages=[];$('bookViewer').innerHTML=`<div style="color:#aaa;font-size:15px;text-align:center;width:100%;margin-top:120px;">내용을 적고 <b>[페이지 추가하기]</b>를 누르면 그림책이 만들어져요! ✨</div>`;$('bookInput').value='';}
+async function addBookPage(){
+  const text=$('bookInput').value.trim();if(!text){toast('이야기를 적어주세요!');return;}
+  const btn=$('bDrawBtn'),viewer=$('bookViewer');
+  if(pageCount===0)viewer.innerHTML='';btn.disabled=true;btn.textContent='그림 그리는 중... ⏳';
+  try {
+    const raw=await callClaude({model:'claude-haiku-4-5-20251001',max_tokens:200,
+      system:`Convert this Korean children's story scene into an English image generation prompt.
+Style: simple children's book illustration, flat crayon colors, thick black outlines, cute, no text, no words.
+Return ONLY the prompt text.`,
+      messages:[{role:'user',content:text}]});
+    const ep=encodeURIComponent(raw.trim());
+    const blob=await fetchImgWithRetry(ep,(i)=>{btn.textContent=`재시도 ${i+1}번째... ⏳`;});
+    const blobUrl=URL.createObjectURL(blob);
+    pageCount++;bookPages.push({text,blobUrl,blob});
+    viewer.insertAdjacentHTML('beforeend',`<div class="b-page"><img src="${blobUrl}" class="b-page-img"><div class="b-page-text">${text}</div><div class="b-page-num">- ${pageCount} -</div></div>`);
+    viewer.scrollLeft=viewer.scrollWidth;$('bookInput').value='';toast(`${pageCount}페이지 완성! 🎉`);
+  }catch(e){toast('그림 생성 실패. 잠시 후 다시 눌러보세요!');}
+  btn.disabled=false;btn.textContent='📖 이 내용으로 페이지 추가하기';
+}
+async function exportBookPDF(){
+  if(!bookPages.length){toast('먼저 페이지를 만들어주세요!');return;}
+  showOverlay('그림책 출력 중...');
+  try{
+    const cover=document.createElement('div');
+    cover.style.cssText='position:fixed;left:-9999px;top:0;width:794px;height:560px;background:linear-gradient(160deg,#ff8e8b,#ffb347);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:16px;font-family:Jua,sans-serif;';
+    cover.innerHTML=`<div style="font-size:64px;">📖</div><div style="font-size:38px;color:white;">${currentNick}의 그림책</div><div style="font-size:17px;color:rgba(255,255,255,.85);">${dateLabel}</div>`;
+    document.body.appendChild(cover);await sleep(200);
+    const cc=await html2canvas(cover,{scale:1.5,backgroundColor:null});document.body.removeChild(cover);
+    dl(cc,'그림책_표지');await sleep(300);
+    for(let i=0;i<bookPages.length;i++){
+      const p=bookPages[i],pg=document.createElement('div');
+      pg.style.cssText='position:fixed;left:-9999px;top:0;width:794px;background:white;padding:38px;font-family:Jua,sans-serif;display:flex;flex-direction:column;gap:16px;';
+      pg.innerHTML=`<div style="text-align:center;font-size:15px;color:#aaa;">- ${i+1} -</div><div style="text-align:center;"><img src="${p.blobUrl}" style="max-width:460px;max-height:300px;border-radius:14px;border:2px solid #eee;"></div><div style="font-size:18px;line-height:2;color:#333;word-break:keep-all;text-align:center;">${p.text}</div>`;
+      document.body.appendChild(pg);await sleep(200);
+      const pc=await html2canvas(pg,{scale:1.5,useCORS:true,backgroundColor:'#ffffff'});document.body.removeChild(pg);
+      dl(pc,`그림책_${i+1}페이지`);await sleep(300);
+    }
+    toast(`그림책 ${bookPages.length+1}장 저장 완료!`);
+  }catch(e){toast('출력 실패: '+e.message);}
+  hideOverlay();
+}
+
+/* ══ 지음: 시화 ══ */
+let poemImgUrl=null;
+function resetPoem(){if(!confirm('시화를 초기화할까요?'))return;poemImgUrl=null;$('poemInput').value='';$('poemCanvas').style.display='none';$('pPlaceholder').style.display='flex';}
+const POEM_THEMES={spring:{bg:'linear-gradient(160deg,#fff0f8,#ffe8f0)',accent:'#e88ab4',lineColor:'#f5c0d8',emoji:'🌸'},summer:{bg:'linear-gradient(160deg,#e8f4ff,#d0edff)',accent:'#4a9fd4',lineColor:'#a0d4f0',emoji:'☀️'},autumn:{bg:'linear-gradient(160deg,#fff8e8,#ffe8c8)',accent:'#e8823a',lineColor:'#f5c88a',emoji:'🍂'},winter:{bg:'linear-gradient(160deg,#f0f4ff,#e0e8ff)',accent:'#6a7cd4',lineColor:'#b0c0f0',emoji:'❄️'},night:{bg:'linear-gradient(160deg,#1a1a2e,#2d2b55)',accent:'#e0c060',lineColor:'#4a4a6a',emoji:'🌙',dark:true},nature:{bg:'linear-gradient(160deg,#f0fff4,#d4f5e4)',accent:'#4ab87a',lineColor:'#98dbb8',emoji:'🌿'}};
+let poemProgTimer;
+function startPoemProgress(from,to,dur){clearInterval(poemProgTimer);const el=$('pProgressFill'),lbl=$('pProgressLabel');const steps=30,ms=dur/steps,sv=(to-from)/steps;let cur=from;poemProgTimer=setInterval(()=>{cur+=sv;if(cur>=to){cur=to;clearInterval(poemProgTimer);}el.style.width=`${cur}%`;if(!lbl.textContent.includes('완')&&!lbl.textContent.includes('중'))lbl.textContent=`${Math.round(cur)}%`;},ms);}
+async function createPoemArt(){
+  const text=$('poemInput').value.trim();if(text.length<5){toast('시를 먼저 써주세요! 🌸');return;}
+  const btn=$('pPaintBtn');btn.disabled=true;
+  $('pLoading').style.display='flex';$('pPlaceholder').style.display='none';$('poemCanvas').style.display='none';
+  startPoemProgress(0,75,12000);
+  try{
+    const raw=await callClaude({model:'claude-haiku-4-5-20251001',max_tokens:250,
+      system:`Analyze Korean poem and return ONLY JSON: {"mood":"<spring/summer/autumn/winter/night/nature>","scene":"<English watercolor background prompt, 6-8 words, no text, no people, nature scene>","title":"<Korean title max 8 chars>"}`,
+      messages:[{role:'user',content:text}]});
+    const a=parseJSON(raw)||{mood:'spring',scene:'cherry blossoms falling softly gentle breeze',title:'나의 시'};
+    const th=POEM_THEMES[a.mood]||POEM_THEMES.spring;
+    const isDark=!!th.dark;
+    $('pLoadingMsg').textContent='배경 그림 그리는 중...';
+    const bgEp=encodeURIComponent(`${a.scene}, dreamy watercolor painting, soft pastel colors, no text, no words, no people, artistic nature background`);
+    const bgBlob=await fetchImgWithRetry(bgEp,(i)=>{$('pLoadingMsg').textContent=`배경 재시도 ${i+1}번째...`;});
+    const bgUrl=URL.createObjectURL(bgBlob);
+    const tc=isDark?'#f0e8c0':'#2a1a0a';
+    const lines=text.split('\n');
+    const linesHtml=lines.map(l=>!l.trim()?`<div style="height:14px;"></div>`:`<div style="display:flex;align-items:center;gap:9px;margin-bottom:3px;"><span style="color:${th.accent};font-size:14px;">${th.emoji}</span><span style="font-size:20px;color:${tc};line-height:1.8;text-shadow:${isDark?'0 0 8px rgba(255,240,180,.4)':'1px 1px 3px rgba(255,255,255,.8)'};">${l}</span></div>`).join('');
+    const rd=document.createElement('div');
+    rd.style.cssText='position:fixed;left:-9999px;top:0;width:700px;height:520px;font-family:Jua,sans-serif;overflow:hidden;border-radius:20px;';
+    rd.innerHTML=`<div style="position:relative;width:700px;height:520px;overflow:hidden;border-radius:20px;">
+      <img src="${bgUrl}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.52;">
+      <div style="position:absolute;inset:0;background:${th.bg};opacity:0.58;"></div>
+      <div style="position:absolute;top:0;left:0;right:0;height:6px;background:${th.accent};opacity:.7;"></div>
+      <div style="position:absolute;top:0;left:0;bottom:0;width:5px;background:${th.accent};opacity:.5;"></div>
+      <div style="position:relative;z-index:2;padding:28px 34px 22px 42px;display:flex;flex-direction:column;height:100%;box-sizing:border-box;">
+        <div style="text-align:center;margin-bottom:6px;"><div style="display:inline-block;background:${th.accent};color:white;padding:5px 22px;border-radius:28px;font-size:18px;letter-spacing:2px;">${a.title}</div></div>
+        <div style="text-align:center;margin-bottom:4px;font-size:13px;color:${isDark?'#c0a060':'#9a7040'};">✍️ ${currentNick}</div>
+        <div style="width:100%;height:2px;background:${th.lineColor};margin-bottom:12px;border-radius:2px;"></div>
+        <div style="flex:1;">${linesHtml}</div>
+        <div style="display:flex;justify-content:flex-end;margin-top:10px;padding-top:9px;border-top:1px solid ${th.lineColor};font-size:11px;color:${isDark?'#a09060':'#aaa'};">${dateLabel}</div>
+      </div>
+    </div>`;
+    document.body.appendChild(rd);await sleep(400);
+    const canvas=await html2canvas(rd,{scale:2,useCORS:true,backgroundColor:null,allowTaint:true});
+    document.body.removeChild(rd);
+    clearInterval(poemProgTimer);$('pProgressFill').style.width='100%';$('pProgressLabel').textContent='완성!';
+    await sleep(300);
+    poemImgUrl=canvas.toDataURL('image/png');
+    $('pLoading').style.display='none';$('poemCanvas').src=poemImgUrl;$('poemCanvas').style.display='block';
+    toast('🌸 시화 완성!');
+  }catch(e){clearInterval(poemProgTimer);$('pLoading').style.display='none';$('pPlaceholder').style.display='flex';toast('시화 생성 실패: '+e.message);}
+  btn.disabled=false;
+}
+async function exportPoemPDF(){
+  if(!poemImgUrl){toast('먼저 시화를 만들어주세요! 🌸');return;}
+  showOverlay('시화 저장 중...');
+  try{
+    const wrap=document.createElement('div');
+    wrap.style.cssText='position:fixed;left:-9999px;top:0;width:794px;background:white;padding:40px;font-family:Jua,sans-serif;display:flex;flex-direction:column;align-items:center;gap:14px;';
+    wrap.innerHTML=`<div style="font-size:22px;color:#333;">${currentNick}</div><img src="${poemImgUrl}" style="width:700px;border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.12);"><div style="font-size:13px;color:#aaa;">${dateLabel}</div>`;
+    document.body.appendChild(wrap);await sleep(300);
+    const canvas=await html2canvas(wrap,{scale:2,useCORS:true,backgroundColor:'#ffffff'});
+    document.body.removeChild(wrap);
+    dl(canvas,`시화_${currentNick}`);toast('📄 시화 저장 완료!');
+  }catch(e){toast('저장 실패: '+e.message);}
+  hideOverlay();
+}
+</script>
+</body>
+</html>
