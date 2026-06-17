@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>지음 프로젝트</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/fonts.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+<div id="homeScreen">
+  <div class="home-card">
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="langKo" onclick="setLang('ko')">🇰🇷 한국어</button>
+      <button class="lang-btn" id="langEn" onclick="setLang('en')">🇺🇸 English</button>
+    </div>
+    <div class="home-logo" id="homeLogo">💡</div>
+    <h1 id="homeTitle">지음 프로젝트</h1>
+    <div class="creator-label">제작: 이재근 선생님 👨‍🏫</div>
+    <p id="homeDesc">AI와 함께 상상력을 키우고 나만의 책을 완성해요!</p>
+    <!-- ✅ [신규] 로그인 모드 토글: 자유 닉네임 / 익명 계정(Zero PII) -->
+    <div class="login-mode-toggle">
+      <button class="login-mode-btn active" id="loginModeNick" onclick="switchLoginMode('nick')">✏️ 자유 닉네임</button>
+      <button class="login-mode-btn" id="loginModeAnon" onclick="switchLoginMode('anon')">🔐 익명 계정 로그인</button>
+    </div>
+
+    <!-- 자유 닉네임 모드 -->
+    <div id="loginPanelNick" style="width:100%;max-width:400px;display:flex;flex-direction:column;gap:6px;">
+      <div class="home-nick-label" id="homeNickLabel">내 이름:</div>
+      <div class="home-nick-row">
+        <input class="nick-input" id="nickInput" maxlength="10" placeholder="이름을 입력해주세요">
+        <button class="nick-confirm-btn" onclick="confirmNick()">확인 ✓</button>
+      </div>
+    </div>
+
+    <!-- 익명 계정 모드 (Zero PII) -->
+    <div id="loginPanelAnon" style="width:100%;max-width:400px;display:none;flex-direction:column;gap:8px;">
+      <div class="anon-hint">🔒 선생님이 나눠준 코드와 비밀번호로 로그인해요.<br>이름, 학교, 이메일은 절대 입력하지 않아요!</div>
+      <div class="anon-input-row">
+        <input class="anon-code-input" id="anonCodeInput" maxlength="12" placeholder="학급 코드 (예: LION-42)" autocomplete="off" autocorrect="off" spellcheck="false">
+        <input class="anon-pw-input" id="anonPwInput" type="password" maxlength="12" placeholder="비밀번호" autocomplete="current-password">
+      </div>
+      <button class="anon-login-btn" onclick="loginAnonymous()" style="width:100%;padding:12px;">🔓 로그인하기</button>
+      <div class="anon-hint" style="color:var(--mint);">💡 코드를 잃어버렸다면 선생님께 문의하세요!</div>
+    </div>
+
+    <div class="setup-error" id="setupError"></div>
+    <div id="appGridKo" class="app-grid">
+      <button class="app-card dodum" onclick="launchApp('dodum')"><span class="ac-step">1단계</span><span class="ac-icon">🕵️</span><span class="ac-name">돋움</span><span class="ac-desc">본 것을 언어로 정확하게 표현해요!</span></button>
+      <button class="app-card ieum" onclick="launchApp('ieum')"><span class="ac-step">2단계</span><span class="ac-icon">🎨</span><span class="ac-name">이음</span><span class="ac-desc">감각어·감정·비유로 일기 쓰기</span></button>
+      <button class="app-card ttieum" onclick="launchApp('ttieum')"><span class="ac-step">3단계</span><span class="ac-icon">🗣️</span><span class="ac-name">틔음</span><span class="ac-desc">AI 질문에 내가 직접 이야기 써요</span></button>
+      <button class="app-card jieum" onclick="launchApp('jieum')"><span class="ac-step">4단계</span><span class="ac-icon">📖</span><span class="ac-name">지음</span><span class="ac-desc">나만의 그림책 & 시화 완성!</span></button>
+    </div>
+    <div id="appGridEn" class="app-grid" style="display:none;">
+      <button class="app-card dodum" onclick="launchApp('dodum')"><span class="ac-step">Step 1</span><span class="ac-icon">👾</span><span class="ac-name">Monster Maker</span><span class="ac-desc">Make your monster with adj+noun!</span></button>
+      <button class="app-card ieum" onclick="launchApp('ieum')"><span class="ac-step">Step 2</span><span class="ac-icon">✍️</span><span class="ac-name">Guided Writing</span><span class="ac-desc">Complete English sentences with templates!</span></button>
+      <button class="app-card ttieum" onclick="launchApp('ttieum')"><span class="ac-step">Step 3</span><span class="ac-icon">🗣️</span><span class="ac-name">AI Roleplay</span><span class="ac-desc">Have real English conversations with AI!</span></button>
+      <button class="app-card jieum" onclick="launchApp('jieum')"><span class="ac-step">Step 4</span><span class="ac-icon">📖</span><span class="ac-name">My English Book</span><span class="ac-desc">Create your very own picture book!</span></button>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;justify-content:center;">
+      <div id="homeInkDisplay" style="display:none;align-items:center;gap:6px;background:#eaf6f4;padding:6px 14px;border-radius:14px;border:2px solid #a8e0d6;font-size:13px;font-weight:bold;color:#3a8a7a;">
+        💧 <span id="homeInkCount">0</span> 잉크방울
+      </div>
+      <div id="homeStreakDisplay" style="display:none;"></div>
+      <button onclick="openHallModal()" style="background:linear-gradient(135deg,#f5c842,#e8a800);color:white;border:none;border-radius:14px;padding:6px 16px;font-family:inherit;font-size:13px;cursor:pointer;font-weight:bold;box-shadow:0 3px 10px rgba(232,168,0,.3);">🏆 이주의 명예의 전당</button>
+      <button onclick="openShopModal()" style="background:linear-gradient(135deg,#4a90e2,#357abd);color:white;border:none;border-radius:14px;padding:6px 16px;font-family:inherit;font-size:13px;cursor:pointer;font-weight:bold;box-shadow:0 3px 10px rgba(74,144,226,.3);">🛒 잉크 상점</button>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ [신규] 공용 기기 세션 방어 — 자동 로그아웃 경고 배너 (전역) -->
+<div id="sessionWarningBanner">
+  <div class="session-warn-msg">⏱️ <span id="sessionWarnText">10분 후 자동 로그아웃됩니다. 작업을 저장하세요!</span></div>
+  <button class="session-keep-btn" onclick="resetSessionTimer()">✅ 계속 사용하기</button>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="overlay"><div style="font-size:40px;animation:spin 1s linear infinite;">⏳</div><div id="overlayMsg">처리 중...</div></div>
+
+<!-- 🐾 펫 위젯 -->
+<div id="petWidget" onclick="petTap()" style="display:none;">
+
+<!-- ══════════════════════════════════════════════
+     파트 1 추가: 글로벌 SOS 영단어 도우미 — 전역 플로팅 챗봇
+     어떤 탭(돋움/이음/틔음/지음)에서든 우측 하단에 항상 표시
+══════════════════════════════════════════════ -->
+
+<!-- 🚨 SOS 플로팅 버튼 -->
+<button id="globalSosBtn" onclick="toggleGlobalSos()">
+  <span class="gsos-dot"></span>
+  🚨 <span id="globalSosBtnLabel">이거 영어로 뭐예요?</span>
+</button>
+
+<!-- 💬 SOS 챗봇 패널 -->
+<div id="globalSosPanel">
+  <div class="gsos-header">
+    <span>🚨 <span id="gsosPanelTitle">영단어 SOS 도우미</span></span>
+    <button class="gsos-close-btn" onclick="toggleGlobalSos()">✕</button>
+  </div>
+  <div class="gsos-hint" id="gsosPanelHint">
+    한글로 단어나 문장을 쓰면 영어로 알려드려요!<br>
+    결과를 클릭하면 글쓰기 창에 바로 입력돼요 ✍️
+  </div>
+  <div class="gsos-input-row">
+    <input class="gsos-input" id="gsosInput"
+      placeholder="예) 사과하다, 그리움..."
+      maxlength="40"
+      onkeydown="if(event.key==='Enter') askGlobalSos()">
+    <button class="gsos-ask-btn" id="gsosAskBtn" onclick="askGlobalSos()">
+      <span id="gsosAskBtnLabel">물어보기</span>
+    </button>
+  </div>
+  <div class="gsos-result-area" id="gsosResultArea">
+    <div style="color:#ccc;font-size:12px;text-align:center;padding:10px 0;" id="gsosPlaceholder">
+      모르는 단어를 한글로 써보세요 🔍
+    </div>
+  </div>
+  <div class="gsos-history" id="gsosHistory" style="display:none;"></div>
+</div>
+  <div class="pet-bubble" id="petBubble"></div>
+  <div class="pet-body" id="petBody">🥚</div>
+  <div class="pet-level" id="petLevel">Lv.1</div>
+  <div class="pet-exp-bar"><div class="pet-exp-fill" id="petExpFill" style="width:0%"></div></div>
+</div>
+
+<!-- 🎁 이스터에그 오버레이 -->
+<div id="easterOverlay">
+  <div class="emoji-rain" id="emojiRain"></div>
+  <div class="easter-box">
+    <div style="font-size:42px;" id="easterEmoji">🎉</div>
+    <div style="font-size:18px;font-weight:bold;color:var(--orange);margin:8px 0;" id="easterTitle">??? 숨겨진 단어 발견!</div>
+    <div id="easterRare" style="display:inline-block;padding:2px 12px;border-radius:14px;font-size:12px;font-weight:bold;color:white;background:#62b3a4;margin-bottom:6px;">일반</div>
+    <div style="font-size:13px;color:#666;line-height:1.6;" id="easterMsg"></div>
+    <button onclick="closeEaster()" style="margin-top:14px;background:var(--orange);color:white;border:none;border-radius:12px;padding:10px 28px;font-family:inherit;font-size:15px;cursor:pointer;">🎊 받기!</button>
+  </div>
+</div>
+
+<!-- 🏆 명예의 전당 모달 -->
+<div class="modal-bg" id="hallModal">
+  <div class="modal" style="max-width:700px;">
+    <h2>🏆 이주의 명예의 전당</h2>
+    <p style="font-size:12px;color:#aaa;margin-bottom:10px;">묘사력이 높은 베스트 작품들이 전시됩니다. 내 작품이 올라오면 정말 뿌듯하겠죠?</p>
+    <div class="hall-grid" id="hallContent"></div>
+    <div class="modal-btns"><button class="mbtn ghost" onclick="closeModal('hallModal')">닫기</button></div>
+  </div>
+</div>
+
+<!-- 🛒 잉크 상점 모달 -->
+<div class="modal-bg" id="shopModal">
+  <div class="modal" style="max-width:600px;">
+    <h2>🛒 잉크 상점</h2>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;background:#eaf6f4;padding:8px 12px;border-radius:10px;">
+      <span style="font-size:18px;">💧</span>
+      <span style="font-size:14px;color:#3a8a7a;font-weight:bold;">보유 잉크방울: <span id="shopInkDisplay">0</span>개</span>
+    </div>
+    <div class="shop-grid" id="shopContent"></div>
+    <div class="modal-btns"><button class="mbtn ghost" onclick="closeModal('shopModal')">닫기</button></div>
+  </div>
+</div>
+
+<div id="appWrapper">
+
+<div class="app-screen" id="dodumApp">
+<div class="tablet">
+  <header>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <button class="home-btn" onclick="goHome()">🏠 홈</button>
+      <!-- 돋움 탭 메뉴 -->
+      <div style="display:flex;gap:4px;margin-left:4px;">
+        <!-- 파트 3 수정: 돋움 탭 버튼 id 확인(기존 유지) -->
+        <button id="dodumTab_montage" class="hbtn" onclick="switchDodumTab('montage')" style="background:rgba(255,255,255,.9);color:var(--blue);font-weight:bold;border:2px solid white;">🕵️ <span id="dodumTabLabel_montage">몽타주</span></button>
+        <button id="dodumTab_word" class="hbtn" onclick="switchDodumTab('word')" style="background:rgba(255,255,255,.2);">🎰 <span id="dodumTabLabel_word">단어자판기</span></button>
+        <button id="dodumTab_poem" class="hbtn" onclick="switchDodumTab('poem')" style="background:rgba(255,255,255,.2);">💎 <span id="dodumTabLabel_poem">시어출력기</span></button>
+      </div>
+      <span id="dodumGoalBadge" style="font-size:11px;background:rgba(255,255,255,.2);padding:3px 10px;border-radius:20px;word-break:keep-all;">💡 <span id="dodumGoalBadgeText">오늘의 목표: 본 것을 언어로 정확하게 표현하기</span></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;" id="dodumHeaderRight_montage">
+      <div class="timer-wrap" id="timerWrap">
+        <span style="font-size:14px;">⏱️</span>
+        <div id="timerBar"></div>
+        <span id="timerDisplay">60</span>
+      </div>
+      <!-- 파트 3 수정: 타임어택/기억 되살리기 버튼 텍스트에 span id 추가 -->
+      <button class="hbtn" id="timeAttackBtn" onclick="toggleTimeAttack()" style="background:rgba(255,107,53,.7);">⚡ <span id="timeAttackBtnLabel">타임어택</span></button>
+      <button class="hbtn" id="witnessBtn" onclick="getWitnessReport()">📷 <span id="witnessBtnLabel">기억 되살리기</span></button>
+    </div>
+  </header>
+
+  <!-- 몽타주 탭 -->
+  <main id="dodumContent_montage">
+    <section class="m-panel">
+      <!-- 파트 3 수정: 몽타주 패널 제목에 id 추가 -->
+      <div class="m-panel-title" id="montagePanel1Title">1. 내가 본 모습</div>
+      <div class="m-witness-box" id="mWitnessBox"><div id="mWitnessMsg" style="text-align:center;color:#888;font-size:13px;">버튼을 눌러 시작!</div></div>
+      <div id="mCrimeDesc" style="margin-top:10px; font-size:14px; color:var(--red); font-weight:bold; text-align:center; min-height:20px;"></div>
+    </section>
+    <section class="m-panel">
+      <div class="m-panel-title" id="montagePanel2Title">2. 몽타주 묘사하기</div>
+      <div id="montageChecklistBox" style="background:#f0f7ff;border-radius:10px;padding:8px 12px;margin-bottom:8px;font-size:11px;color:var(--blue);line-height:1.6;flex-shrink:0;">
+        ✍️ <b id="montageChecklistTitle">묘사 체크리스트</b><br>
+        <span id="montageCheck1">□ 얼굴 생김새 (눈/코/입 모양)</span><br>
+        <span id="montageCheck2">□ 색깔 (머리, 피부, 옷 색)</span><br>
+        <span id="montageCheck3">□ 독특한 특징 (무늬, 액세서리, 분위기)</span>
+      </div>
+      <textarea class="m-textarea" id="mMontageInput" placeholder="예) 머리카락은 초록색이고 눈이 크며, 줄무늬 티셔츠를 입고 있어요. 귀가 뾰족하고 꼬리가 있어요..."></textarea>
+      <button class="m-action-btn" id="mDrawBtn" onclick="drawMontage()" disabled>🎨 <span id="mDrawBtnLabel">몽타주 스케치하기</span></button>
+    </section>
+    <section class="m-panel">
+      <div class="m-panel-title" id="montagePanel3Title">3. 몽타주 결과 & 일치율</div>
+      <div class="m-img-box">
+        <div id="mImgPlaceholder" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#aaa;text-align:center;font-size:12px;padding:10px;">자세히 묘사할수록 원본과 비슷해져요!<br><span style="font-size:11px;margin-top:6px;display:block;">색깔·모양·특징을 모두 써보세요 📝</span></div>
+        <img id="mResultImg" style="display:none;width:100%;height:100%;object-fit:contain;">
+        <div id="mLoading" style="display:none;position:absolute;inset:0;background:rgba(255,255,255,.9);flex-direction:column;justify-content:center;align-items:center;z-index:10;gap:8px;">
+          <div style="font-size:34px;animation:spin 1s linear infinite;">🌀</div>
+          <div id="mLoadingMsg" style="color:var(--blue);font-size:14px;">생성 중...</div>
+        </div>
+      </div>
+      <div class="m-score-box" id="mScoreBox">
+        <div style="display:flex; align-items:center; justify-content:center;">
+          <div style="font-size:18px;color:var(--blue);" id="mScoreText"></div>
+          <div id="mArrestStamp" class="arrest-stamp"></div>
+        </div>
+        <div style="font-size:12px;color:#555;margin-top:3px;word-break:keep-all;" id="mFeedbackText"></div>
+        <div id="mCoachText" style="display:none;margin-top:6px;background:#eef7ff;border-radius:8px;padding:7px 10px;font-size:11px;color:var(--blue);line-height:1.6;width:100%;text-align:left;"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 엉뚱 단어 자판기 탭 -->
+  <main id="dodumContent_word" style="display:none; flex-direction:column; padding:16px; gap:12px; overflow-y:auto;">
+    <div style="background:white;border-radius:16px;padding:18px;border:3px solid #f5d89a;">
+      <div style="text-align:center;margin-bottom:14px;">
+        <!-- 파트 3 수정: 단어자판기 섹션 텍스트에 id 추가 -->
+        <div id="wordGameBadge" style="display:inline-block;background:#ffecb3;color:#d84315;padding:4px 12px;border-radius:20px;font-size:12px;margin-bottom:8px;">시 쓰기 몸풀기 게임</div>
+        <h2 id="wordGameTitle" style="font-size:24px;color:#e8a44a;margin:0 0 4px;">엉뚱한 단어 자판기 🎰</h2>
+        <p id="wordGameDesc" style="font-size:13px;color:#888;margin:0;">전혀 안 어울리는 두 단어를 연결해 마법의 문장을 만들어봐요!</p>
+      </div>
+      <div style="display:flex;justify-content:center;align-items:center;gap:15px;margin:16px 0;padding:16px;background:#fffbf0;border-radius:14px;border:2px dashed #e8a44a;">
+        <div style="background:white;border:2px solid #e8a44a;border-radius:12px;padding:14px 20px;font-size:22px;font-weight:bold;color:#e8a44a;width:130px;text-align:center;box-shadow:inset 0 3px 6px rgba(0,0,0,0.05);"><span id="slotWordA">???</span></div>
+        <div style="font-size:18px;color:#aaa;">✖️</div>
+        <div style="background:white;border:2px solid #e8a44a;border-radius:12px;padding:14px 20px;font-size:22px;font-weight:bold;color:#e8a44a;width:130px;text-align:center;box-shadow:inset 0 3px 6px rgba(0,0,0,0.05);"><span id="slotWordB">???</span></div>
+      </div>
+      <button onclick="dodumSpinWords()" id="dodumDrawBtn" style="background:#e8a44a;color:white;border:none;border-radius:12px;padding:12px;font-family:inherit;font-size:18px;cursor:pointer;width:100%;transition:all 0.2s;" onmouseover="this.style.background='#d69339'" onmouseout="this.style.background='#e8a44a'"><span id="dodumDrawBtnLabel">단어 뽑기 🎲</span></button>
+      
+      <div id="dodumWordInputSection" style="display:none;margin-top:20px;">
+        <p id="dodumMissionLabel" style="font-size:14px;color:#555;margin-bottom:8px;font-weight:bold;">🎯 미션: 두 단어가 모두 들어간 한 줄 시 쓰기!</p>
+        <textarea id="dodumPoemInput" style="width:100%;height:90px;resize:none;border:2px solid #eee;border-radius:12px;padding:12px;font-family:'Nanum Pen Script',cursive;font-size:22px;line-height:1.5;outline:none;background:#fafafa;transition:border-color 0.3s;" placeholder="여기에 멋진 시를 적어주세요!" onfocus="this.style.borderColor='#e8a44a'" onblur="this.style.borderColor='#eee'"></textarea>
+        <button id="dodumCheckBtn" onclick="dodumCheckPoem()" style="background:#62b3a4;color:white;border:none;border-radius:12px;padding:10px;font-family:inherit;font-size:15px;cursor:pointer;width:100%;margin-top:8px;">AI 선생님에게 보여주기 ✨</button>
+      </div>
+      <div id="dodumWordFeedback" style="display:none;margin-top:14px;padding:14px;border-radius:12px;font-size:14px;animation:fadeIn 0.5s;line-height:1.6;"></div>
+    </div>
+  </main>
+
+  <!-- 시어 출력기 탭 -->
+  <main id="dodumContent_poem" style="display:none; flex-direction:column; padding:16px; gap:12px; overflow-y:auto;">
+    <div style="background:white;border-radius:16px;padding:18px;border:3px solid #bba8ff;height:auto;display:flex;flex-direction:column;">
+      <!-- 파트 3 수정: 시어출력기 섹션 텍스트에 id 추가 -->
+      <h2 id="poemGenTitle" style="font-size:20px;color:#8a7ce8;margin:0 0 4px;">💎 시어 출력기</h2>
+      <p id="poemGenDesc" style="font-size:13px;color:#888;margin:0 0 14px;">주제를 적으면 시 쓰기에 딱 맞는 단어들이 쏟아져요!</p>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <input id="poemThemeInput" type="text" placeholder="예: 봄, 여름, 엄마, 학교, 바다, 친구..." style="flex:1;border:2px solid #ddd;border-radius:10px;padding:10px 14px;font-family:inherit;font-size:16px;outline:none;" onfocus="this.style.borderColor='#8a7ce8'" onblur="this.style.borderColor='#ddd'">
+        <button onclick="dodumGetPoeticWords()" id="poemDrawBtn" style="background:#8a7ce8;color:white;border:none;border-radius:10px;padding:10px 16px;font-family:inherit;font-size:16px;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='#7264d6'" onmouseout="this.style.background='#8a7ce8'"><span id="poemDrawBtnLabel">뽑기 🎲</span></button>
+      </div>
+      <div id="poemWordContainer" style="flex:1;min-height:200px;display:flex;flex-wrap:wrap;content:start;gap:10px;padding:14px;background:#f8f5ff;border-radius:12px;border:2px dashed #bba8ff;overflow-y:auto;align-content:flex-start;">
+        <div style="width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:160px;color:#aaa;">
+          <div style="font-size:36px;margin-bottom:8px;">💜</div>
+          <p id="poemWordContainerEmpty" style="margin:0;font-size:14px;">주제를 입력하고 단어를 뽑아보세요!</p>
+        </div>
+      </div>
+      <p id="poemWordClickHint" style="font-size:11px;color:#aaa;margin:8px 0 0;text-align:center;">* 단어를 클릭하면 비유 징검다리 채팅창에서 활용할 수 있어요 🎯</p>
+    </div>
+
+    <!-- 비유 징검다리 (아래쪽 고정) -->
+    <div style="background:white;border-radius:16px;padding:18px;border:3px solid #bba8ff;display:flex;flex-direction:column;gap:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h2 id="poemBridgeTitle" style="font-size:18px;color:#8a7ce8;margin:0;">🪞 비유 징검다리</h2>
+        <button onclick="resetPoemChat()" id="poemChatResetBtn" style="font-size:11px;background:#eee;color:#666;border:none;border-radius:8px;padding:4px 10px;cursor:pointer;font-family:inherit;">초기화 🔄</button>
+      </div>
+      <p id="poemBridgeDesc" style="font-size:12px;color:#888;margin:0;">AI 선생님과 대화하며 시적인 표현을 만들어요!</p>
+      <div id="poemChatDisplay" style="height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:10px;background:#f8f5ff;border-radius:12px;border:2px dashed #e0d8ff;">
+        <div id="poemChatInitMsg" style="max-width:85%;padding:9px 14px;border-radius:16px;font-size:14px;line-height:1.5;background:#e0d8ff;color:#4a3e9c;">안녕! 네 생각을 멋진 비유로 바꿔줄게. 지금 어떤 기분이거나 무슨 생각이 드니?</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <input id="poemChatInput" type="text" placeholder="예: 나는 화가 나요." style="flex:1;border:2px solid #ddd;border-radius:10px;padding:9px 12px;font-family:inherit;font-size:15px;outline:none;" onfocus="this.style.borderColor='#8a7ce8'" onblur="this.style.borderColor='#ddd'">
+        <button id="poemChatBtn" onclick="sendPoemChat()" style="background:#8a7ce8;color:white;border:none;border-radius:10px;padding:9px 16px;font-family:inherit;font-size:15px;cursor:pointer;"><span id="poemChatBtnLabel">전송 🚀</span></button>
+      </div>
+    </div>
+  </main>
+
+</div>
+</div>
+
+<div class="app-screen" id="ieumApp">
+<div class="tablet">
+  <header>
+    <div class="h-left">
+      <button class="home-btn" onclick="goHome()">🏠 홈</button>
+      <!-- 파트 3 수정: 이음 헤더 버튼에 id 추가 -->
+      <button class="hbtn" onclick="newDiary()" id="ieumNewDiaryBtn">✏️ 새 일기</button>
+      <span id="ieumAppTitle" style="font-size:15px;">🎨 [이음] AI 그림일기장</span>
+      <span style="font-size:11px;background:rgba(255,255,255,.2);padding:3px 10px;border-radius:20px;word-break:keep-all;display:none;" class="goal-badge-ieum">💡 감각어·감정어·비유를 써볼수록 묘사력이 올라가요</span>
+    </div>
+    <div class="h-right">
+      <span class="date-badge" id="dateDisplay"></span>
+      <div class="user-chip" id="userChip"></div>
+      <button class="hbtn orange" onclick="openBadgeModal()" id="ieumBadgeBtn">🏆 내 뱃지</button>
+      <div class="ink-hud" id="ieumInkHud"><span class="ink-icon">💧</span><span id="ieumInkCount">0</span></div>
+      <button class="hbtn" style="background:rgba(255,255,255,.3);" onclick="openBackupRestoreModal()" title="데이터 백업/복원" id="ieumBackupBtn">💾 백업</button>
+      <button class="hbtn orange" onclick="saveDiary()" id="ieumSaveDiaryBtn">💾 저장</button>
+      <button class="hbtn" onclick="openRevisionModal()" id="revBtn" style="background:rgba(255,255,255,.3);">✍️ 퇴고</button>
+      <button class="hbtn" onclick="openListModal()" id="ieumDiaryListBtn">📖 일기장</button>
+      <button class="hbtn" style="background:rgba(255,255,255,.3);" onclick="openDiaryPrintModal()" id="ieumPrintBtn">🖨️ 그림일기 출력</button>
+      <button class="hbtn" style="background:rgba(255,200,100,.4);" onclick="openPortfolioModal()" id="ieumPortfolioBtn" title="글쓰기 성장 타임라인">📈 포트폴리오</button>
+      <button class="hbtn" style="background:rgba(255,255,255,.2);" onclick="openTeacherDashboard()" id="ieumTeacherDashBtn" title="교사 대시보드">📊 교사 대시보드</button>
+    </div>
+  </header>
+  <!-- ▼ 이음 탭 바 -->
+  <div class="ieum-tab-bar">
+    <button class="ieum-tab active" id="ieumTab_diary" onclick="switchIeumTab('diary')">📖 그림일기</button>
+    <button class="ieum-tab" id="ieumTab_essay" onclick="switchIeumTab('essay')">📝 Essay Builder</button>
+    <button class="ieum-tab" id="ieumTab_peer" onclick="switchIeumTab('peer')">🤝 동료 피드백</button>
+  </div>
+  <main id="ieumContent_diary">
+    <section class="panel" style="display:flex; flex-direction:column;">
+      <div class="panel-title" id="ieumDiaryPanelTitle">[ 오늘의 이야기 ]</div>
+      
+      <div class="mission-box" id="missionBox">
+        <div class="mission-text-area">
+          <div class="mission-title" id="mTitle">🎯 오늘의 미션</div>
+          <div class="mission-desc" id="mDesc">버튼을 눌러 재미있는 글쓰기 미션을 뽑아보세요!</div>
+        </div>
+        <button class="mission-btn" onclick="drawMission()" id="missionDrawBtn">미션 뽑기 🎲</button>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 6px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span id="diaryFreeWriteHint" style="font-size:12px; color:#999; padding-left:4px;">✏️ 자유롭게 적어보세요</span>
+          <!-- ✅ [신규] 스캐폴딩 레벨 + SOS 버튼 -->
+          <span class="scaffolding-level-badge" id="scaffoldingLevelBadge" style="display:none;"></span>
+          <button class="scaffolding-sos-btn" id="scaffoldingSosBtn" onclick="openScaffoldingHint()">🆘 힌트 보기</button>
+        </div>
+        <div style="display:flex; gap: 6px; align-items:center;">
+          <!-- ✅ [신규] 자동 저장 인디케이터 -->
+          <span class="autosave-indicator saved" id="autosaveIndicator">✅ 저장됨</span>
+          <button class="tool-btn dice" onclick="useStarter('diary')" title="랜덤으로 첫 문장을 만들어줘요!" id="diaryStarterBtn">🎲 첫 문장 도우미</button>
+          <button class="tool-btn voice" onclick="startSTT('diary')" title="마이크에 대고 말하면 글씨로 바뀌어요!">🎤 음성 입력</button>
+        </div>
+      </div>
+      
+      <!-- ✅ [신규] 형성 평가 발문 버블 (글 작성 중 AI 질문) -->
+      <div class="formative-prompt-bubble" id="formativePromptBubble">
+        <span class="formative-prompt-icon">💬</span>
+        <span class="formative-prompt-text" id="formativePromptText"></span>
+        <button class="formative-prompt-dismiss" onclick="dismissFormativePrompt()" title="닫기">✕</button>
+      </div>
+
+      <!-- ✅ [신규] Red Flag / PII 감지 배너 -->
+      <div class="redflag-banner" id="redflagBanner">
+        <span>🚨</span>
+        <span id="redflagBannerText"></span>
+      </div>
+      
+      <textarea class="manuscript" id="diary" placeholder="오늘 있었던 일을 자세히 적어보세요! 🌟"></textarea>
+      
+      <div class="richness-bar-wrap">
+        <span id="richnesBarLabel" style="font-size:12px;color:#999;white-space:nowrap;">✏️ 묘사력</span>
+        <div class="richness-track"><div class="richness-fill" id="richnessFill"></div></div>
+        <span class="richness-score" id="richnessScore">— 대기중</span>
+        <button class="xai-trigger-btn" onclick="openXaiModal()" title="점수 기준 보기" id="xaiTriggerBtn" style="display:none;">💡 왜?</button>
+      </div>
+      
+      <div class="mission-bar-wrap">
+        <span id="missionBarLabel" style="font-size:12px;color:#999;white-space:nowrap;">🎯 미션 달성</span>
+        <div class="mission-track"><div class="mission-fill" id="missionFill"></div></div>
+        <span class="mission-score" id="missionScoreText">— 대기중</span>
+      </div>
+
+      <div class="stamp-wrap"><div class="stamp" id="diaryStamp"><div class="stamp-icon" id="diaryStampIcon"></div><div class="stamp-text" id="diaryStampText"></div></div></div>
+      
+      <div class="teacher-box" style="flex-direction:column;gap:0;padding:0;min-height:auto;align-items:stretch;">
+        <div style="display:flex;gap:8px;align-items:center;padding:8px 10px 6px;">
+          <div class="teacher-face" id="teacherFace">👩‍🏫</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:10px;font-weight:bold;color:var(--teacher);margin-bottom:2px;" id="teacherLabel">선생님</div>
+            <div class="teacher-msg" id="teacherMsg">일기를 쓰면 조언해드릴게요! 😊</div>
+          </div>
+        </div>
+        <div id="teacherCoachWrap" style="display:none;">
+          <div id="teacherCoachEmpathy" style="display:none;"></div>
+          <div id="teacherCoachGood" style="display:none;"></div>
+          <div id="teacherCoachSpelling" style="display:none;"></div>
+          <div id="teacherCoachNext" style="display:none;"></div>
+          <div id="teacherCoachExpr" style="display:none;"></div>
+          <div id="teacherCoachContent" style="display:none;"></div>
+        </div>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel-header">
+        <div style="display:flex;align-items:center;">
+          <div class="panel-title" style="margin:0;" id="imgTitle">[ 오늘의 그림 ]</div>
+          <span class="quality-badge low" id="qualityBadge">묘사 부족</span>
+        </div>
+        <button class="hbtn orange" id="genBtn" onclick="generateImage()" style="font-size:12px;padding:8px;">🖍️ <span id="genBtnLabel">그림 그리기</span></button>
+      </div>
+      <div class="img-wrap">
+        <div class="placeholder" id="placeholder"><div>🖼️</div><div id="placeholderMsg" style="font-size:14px;color:#aaa;">일기를 쓰고 그림을 그려보세요!</div></div>
+        <img class="di-main" id="imgMain" alt="그림일기">
+        <div class="richness-badge" id="richnessBadge"></div>
+        <div class="d-loading" id="dLoading">
+          <div style="font-size:26px;">🎨</div>
+          <div id="loadingMsg" style="font-size:13px;color:var(--mint);">그림 생성 중...</div>
+          <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-label" id="progressLabel">0%</div>
+        </div>
+        <div class="error-overlay" id="errorOverlay">
+          <div style="font-size:28px;">😢</div>
+          <div style="font-size:14px;color:var(--red);" id="errorTitle">오류 발생</div>
+          <div class="error-detail" id="errorDetail"></div>
+          <button onclick="hideDiaryError()" id="errorCloseBtn" style="padding:6px 14px;border:none;border-radius:8px;background:#eee;font-family:inherit;font-size:13px;cursor:pointer;">닫기</button>
+        </div>
+      </div>
+      <div id="diaryDrawTipBox" style="margin-top:6px;background:var(--mint-light);padding:6px;border-radius:8px;text-align:center;font-size:11px;color:var(--mint);">🖍️ 감각어(보글보글, 차갑게, 눈부시게)와 비유(~처럼, ~같이)를 쓸수록 더 풍부한 그림이 나와요!</div>
+    </section>
+  </main>
+
+  <!-- ▼ Essay Builder 화면 (탭 2) — 기본 숨김 -->
+  <main id="ieumContent_essay" style="display:none;">
+
+    <!-- 왼쪽 패널: 주제·칩·작성 -->
+    <section class="panel" style="display:flex; flex-direction:column; position:relative;">
+      <div class="panel-title">[ ✍️ Essay Builder ]</div>
+
+      <!-- 주제 뽑기 / 뼈대 버튼 -->
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-shrink:0; flex-wrap:wrap;">
+        <button class="mission-btn" style="background:var(--mint);" onclick="openEssayTopicModal()">🎲 Topic Pick</button>
+        <button class="mission-btn" style="background:var(--orange);" onclick="insertEssaySkeleton()" id="btnEssaySkeleton">🍔 햄버거 뼈대</button>
+        <button class="mission-btn" style="background:#8a7ce8;" onclick="newEssay()" id="btnEssayNew">✏️ 새 에세이</button>
+      </div>
+
+      <!-- 현재 주제 표시 -->
+      <div class="essay-topic-box" id="essayTopicBox">주제를 뽑아주세요! 🎲</div>
+
+      <!-- 추천 단어/문법 칩 -->
+      <div style="margin:8px 0 4px; font-size:12px; color:#999; flex-shrink:0;" id="essayChipHint">💡 클릭하면 에세이에 바로 삽입돼요!</div>
+      <div id="essayChips" style="display:flex; flex-wrap:wrap; gap:7px; min-height:36px; flex-shrink:0; align-items:center;">
+        <span style="color:#ccc; font-size:13px;">주제를 뽑으면 추천 단어/문법이 나타나요 ✨</span>
+      </div>
+
+      <div style="height:1px; background:var(--border); margin:10px 0; flex-shrink:0;"></div>
+
+      <!-- 파트 1 추가: 모드 선택 토글 -->
+      <div class="essay-mode-toggle" id="essayModeToggle">
+        <button class="essay-mode-btn active" id="btnModeBasic" onclick="setEssayMode('basic')">
+          🧩 초급 모드<br><span style="font-size:10px;font-weight:normal;">빈칸 채우기 (3~4학년)</span>
+        </button>
+        <button class="essay-mode-btn advanced" id="btnModeAdvanced" onclick="setEssayMode('advanced')">
+          ✏️ 고급 모드<br><span style="font-size:10px;font-weight:normal;">자유 영작 (5~6학년)</span>
+        </button>
+      </div>
+
+      <!-- 에세이 작성 힌트 + 음성 입력 버튼 -->
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:6px; flex-shrink:0;">
+        <span style="font-size:12px; color:#999;" id="essayWriteHint">✏️ 영어 에세이를 써보세요!</span>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <!-- 기존 STT 음성 입력 버튼 -->
+          <button class="tool-btn" onclick="startSTT('essayTextarea')" title="음성 입력" id="btnEssayVoice">🎤 음성 입력</button>
+          <!-- 파트 4 추가: 내가 직접 읽어보기(쉐도잉) 버튼 — STT 마이크 옆 배치 -->
+          <button class="tool-btn" onclick="startEssayShadowing()" title="내 에세이를 소리내어 읽어보기" id="btnEssayShadow"
+            style="background:linear-gradient(135deg,var(--mint),#4e9a8c);color:white;border-color:transparent;">
+            🎤 내가 직접 읽어보기
+          </button>
+        </div>
+      </div>
+
+      <!-- 파트 4 추가: 원어민 발음 듣기(TTS) + 상태 표시 영역 -->
+      <div class="essay-tts-row" id="essayTtsRow" style="display:none;">
+        <button class="tts-listen-btn" id="btnTtsListen" onclick="toggleEssayTTS()">
+          🔊 원어민 발음 듣기
+        </button>
+        <span class="tts-status-label" id="ttsStatusLabel">에세이 완성 후 눌러보세요!</span>
+      </div>
+
+      <!-- 파트 1 추가: 초급 모드 — 서론/본론/결론 분리 입력창 -->
+      <div id="essayStepWrap">
+        <div class="essay-step-group">
+          <div class="essay-step-label intro" id="essayStepIntroLabel">🍞 [Intro] — <em>I think... / In my opinion...</em></div>
+          <textarea class="essay-step-input intro" id="essayStepIntro" rows="2"
+            placeholder="예) I think smartphones are very helpful."></textarea>
+        </div>
+        <div class="essay-step-group">
+          <div class="essay-step-label body" id="essayStepBody1Label">🥩 [Body 1] — <em>First, ... Because...</em></div>
+          <textarea class="essay-step-input body" id="essayStepBody1" rows="2"
+            placeholder="예) First, we can search for information easily."></textarea>
+        </div>
+        <div class="essay-step-group">
+          <div class="essay-step-label body" id="essayStepBody2Label">🥩 [Body 2] — <em>Second, ... For example...</em></div>
+          <textarea class="essay-step-input body" id="essayStepBody2" rows="2"
+            placeholder="예) Second, we can communicate with our friends."></textarea>
+        </div>
+        <div class="essay-step-group">
+          <div class="essay-step-label concl" id="essayStepConclLabel">🌟 [Conclusion] — <em>Therefore, ... In conclusion...</em></div>
+          <textarea class="essay-step-input concl" id="essayStepConcl" rows="2"
+            placeholder="예) In conclusion, I believe smartphones are very useful."></textarea>
+        </div>
+        <button class="essay-combine-btn" id="essayCombineBtn" onclick="combineEssaySteps()">
+          🪄 <span id="essayCombineBtnLabel">에세이 완성하기!</span>
+        </button>
+      </div>
+
+      <!-- 고급 모드: 기존 큰 textarea -->
+      <textarea class="essay-manuscript" id="essayTextarea"
+        placeholder="🍞 [Intro] 서론 — 나의 의견을 써보세요.&#10;예) I think smartphones are very helpful.&#10;&#10;🥩 [Body 1] 첫 번째 이유와 예시를 써보세요.&#10;예) First, we can search for information easily.&#10;&#10;🥩 [Body 2] 두 번째 이유와 예시를 써보세요.&#10;예) Second, we can communicate with friends.&#10;&#10;🍞 [Conclusion] 결론 — 의견을 다시 강조해보세요.&#10;예) In conclusion, I believe smartphones are useful."></textarea>
+
+      <!-- Writing 점수 바 -->
+      <div class="richness-bar-wrap">
+        <span style="font-size:12px;color:#999;white-space:nowrap;">✏️ Writing</span>
+        <div class="richness-track"><div class="richness-fill" id="essayRichnessFill"></div></div>
+        <span class="richness-score" id="essayRichnessScore">— waiting</span>
+      </div>
+      <!-- Bonus 잉크 바 -->
+      <div class="richness-bar-wrap" style="margin-top:4px;">
+        <span style="font-size:12px;color:var(--orange);white-space:nowrap;">💧 Bonus</span>
+        <div class="richness-track">
+          <div class="richness-fill" id="essayBonusFill" style="background:linear-gradient(to right,var(--orange),#f49f5a);"></div>
+        </div>
+        <span class="richness-score" id="essayBonusScore" style="color:var(--orange);">— waiting</span>
+      </div>
+
+      <!-- 도장 + 보너스 잉크 뱃지 -->
+      <div class="essay-stamp-wrap">
+        <div class="stamp" id="essayStamp">
+          <div class="stamp-icon" id="essayStampIcon"></div>
+          <div class="stamp-text"  id="essayStampText"></div>
+        </div>
+        <div class="bonus-ink-badge" id="essayBonusBadge" style="margin-left:12px;">
+          💧 +<span id="essayBonusInkNum">0</span> <span id="essayBonusLabel">보너스!</span>
+        </div>
+      </div>
+
+      <!-- 선생님 피드백 -->
+      <div class="teacher-box" style="flex-direction:column;gap:0;padding:0;min-height:auto;align-items:stretch;">
+        <div style="display:flex;gap:8px;align-items:center;padding:8px 10px 6px;">
+          <div class="teacher-face" id="essayTeacherFace">👩‍🏫</div>
+          <div style="flex:1;min-width:0;">
+            <div class="teacher-msg" id="essayTeacherMsg">
+              <span class="teacher-hi">Essay Coach</span><br>주제를 뽑고 에세이를 써보세요! 🌟
+            </div>
+          </div>
+        </div>
+        <div id="essayCoachWrap" style="display:none; padding:0 10px 10px;">
+          <div id="essayCoachStructure" style="display:none;"></div>
+          <div id="essayCoachWordUse"   style="display:none;"></div>
+          <div id="essayCoachGrammar"   style="display:none;"></div>
+          <div id="essayCoachNext"      style="display:none;"></div>
+        </div>
+      </div>
+
+      <!-- 파트 2 추가: SOS 영단어 도우미 플로팅 버튼 -->
+      <button id="sosDictBtn" onclick="toggleSosDict()" title="이거 영어로 뭐예요?">
+        <span class="sos-pulse"></span>
+        🚨 이거 영어로 뭐예요?
+      </button>
+
+      <!-- 파트 2 추가: SOS 미니 챗봇 팝업 패널 -->
+      <div id="sosDictPanel">
+        <div class="sos-header">
+          <span>🚨 영단어 SOS 도우미</span>
+          <button class="sos-close-btn" onclick="toggleSosDict()">✕ 닫기</button>
+        </div>
+        <div class="sos-input-row">
+          <input class="sos-input" id="sosInput"
+            type="text" maxlength="30"
+            placeholder="한글로 입력 (예: 사과하다)"
+            onkeydown="if(event.key==='Enter') askSosDict()">
+          <button class="sos-ask-btn" id="sosAskBtn" onclick="askSosDict()">찾기 🔍</button>
+        </div>
+        <div class="sos-result-area" id="sosResultArea">
+          <div style="color:#ccc; font-size:12px; text-align:center; padding:8px 0;">
+            궁금한 단어를 한글로 입력하세요! 🎯
+          </div>
+        </div>
+        <div class="sos-history" id="sosHistory" style="display:none;"></div>
+      </div>
+    </section>
+
+    <!-- 오른쪽 패널: 가이드 + 저장목록 -->
+    <section class="panel" style="display:flex; flex-direction:column;">
+      <div class="panel-header">
+        <div class="panel-title" style="margin:0;" id="essayGuideTitle">[ 📋 에세이 가이드 ]</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="hbtn" style="background:var(--orange);color:white;font-size:12px;padding:8px;border-radius:10px;" onclick="openSelfAssessModal()">📝 자기 평가</button>
+          <button class="hbtn orange" onclick="saveEssay()" style="font-size:12px;padding:8px;">💾 에세이 저장</button>
+        </div>
+      </div>
+
+      <!-- 햄버거 구조 가이드 -->
+      <div style="flex-shrink:0;margin-bottom:10px;">
+        <div style="background:#fff8f0;border:2px solid var(--orange);border-radius:10px;padding:8px 12px;font-size:12px;">
+          <b style="color:var(--orange);" id="essayStructureTitle">🍔 햄버거 에세이 구조</b>
+          <div style="margin-top:6px;display:flex;flex-direction:column;gap:4px;">
+            <div style="background:#eaf6f4;border-radius:7px;padding:5px 10px;font-size:11px;border-left:3px solid var(--mint);" id="essayIntroLabel"><b>🍞 Intro (서론)</b> — 나의 의견/주장 문장</div>
+            <div style="background:#fff5e0;border-radius:7px;padding:5px 10px;font-size:11px;border-left:3px solid var(--orange);" id="essayBody1Label"><b>🥩 Body 1</b> — 첫 번째 이유 + 예시</div>
+            <div style="background:#fff5e0;border-radius:7px;padding:5px 10px;font-size:11px;border-left:3px solid var(--orange);" id="essayBody2Label"><b>🥩 Body 2</b> — 두 번째 이유 + 예시</div>
+            <div style="background:#eaf6f4;border-radius:7px;padding:5px 10px;font-size:11px;border-left:3px solid var(--mint);" id="essayConcLabel"><b>🍞 Conclusion (결론)</b> — 의견 재확인</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 접속사 칩 모음 -->
+      <div style="flex-shrink:0;margin-bottom:10px;">
+        <div style="font-size:12px;color:#999;margin-bottom:6px;" id="essayConnLabel">🔗 유용한 접속사 (클릭하면 삽입):</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;">
+          <button class="essay-chip grammar" onclick="insertEssayChipText('First, ')">First,</button>
+          <button class="essay-chip grammar" onclick="insertEssayChipText('Second, ')">Second,</button>
+          <button class="essay-chip grammar" onclick="insertEssayChipText('However, ')">However,</button>
+          <button class="essay-chip grammar" onclick="insertEssayChipText('Because ')">Because</button>
+          <button class="essay-chip grammar" onclick="insertEssayChipText('Therefore, ')">Therefore,</button>
+          <button class="essay-chip grammar" onclick="insertEssayChipText('In conclusion, ')">In conclusion,</button>
+          <button class="essay-chip grammar" onclick="insertEssayChipText('I think ')">I think</button>
+          <button class="essay-chip grammar" onclick="insertEssayChipText('I believe ')">I believe</button>
+          <button class="essay-chip grammar" onclick="insertEssayChipText('For example, ')">For example,</button>
+          <button class="essay-chip grammar" onclick="insertEssayChipText('In addition, ')">In addition,</button>
+          <button class="essay-chip grammar" onclick="insertEssayChipText('On the other hand, ')">On the other hand,</button>
+          <button class="essay-chip grammar" onclick="insertEssayChipText('In my opinion, ')">In my opinion,</button>
+        </div>
+      </div>
+
+      <!-- 저장된 에세이 목록 -->
+      <div style="font-size:12px;color:#999;margin-bottom:6px;flex-shrink:0;" id="essaySavedLabel">📚 저장된 에세이:</div>
+      <div id="essayListWrap" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;">
+        <div style="color:#ccc;font-size:13px;text-align:center;padding:20px;">
+          저장된 에세이가 없어요.<br>에세이를 쓰고 저장해보세요! 📝
+        </div>
+      </div>
+    </section>
+
+  </main>
+  <!-- ▲ Essay Builder 화면 끝 -->
+
+  <!-- ▼ 동료 피드백 화면 (탭 3) — 기본 숨김 -->
+  <main id="ieumContent_peer" style="display:none;">
+    <section class="panel" style="display:flex; flex-direction:column;">
+      <div class="panel-title">[ 🤝 동료 피드백 — Peer Review ]</div>
+      <div style="font-size:12px;color:#888;margin-bottom:10px;word-break:keep-all;flex-shrink:0;">
+        같은 반 친구의 에세이를 읽고 따뜻한 댓글을 남겨보세요! 사회적 학습의 핵심이에요 💬
+      </div>
+      <!-- 내 에세이 공유 버튼 -->
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-shrink:0;flex-wrap:wrap;">
+        <button onclick="shareMeEssayForPeer()" style="background:var(--mint);color:white;border:none;border-radius:10px;padding:9px 16px;font-family:inherit;font-size:13px;cursor:pointer;font-weight:bold;">📤 내 최근 에세이 공유하기</button>
+        <button onclick="refreshPeerList()" style="background:#f0f0f0;color:#666;border:none;border-radius:10px;padding:9px 16px;font-family:inherit;font-size:13px;cursor:pointer;">🔄 새로고침</button>
+      </div>
+      <div id="peerReviewList" class="peer-review-wrap" style="flex:1;overflow-y:auto;">
+        <div class="peer-empty">아직 공유된 에세이가 없어요.<br>먼저 에세이를 쓰고 공유해보세요! ✍️</div>
+      </div>
+    </section>
+    <section class="panel" style="display:flex; flex-direction:column;">
+      <div class="panel-title">[ 📊 내가 받은 피드백 ]</div>
+      <div id="myReceivedFeedback" style="flex:1;overflow-y:auto;">
+        <div class="peer-empty">아직 받은 피드백이 없어요.<br>에세이를 공유하면 친구들의 피드백을 받을 수 있어요! 🌟</div>
+      </div>
+    </section>
+  </main>
+  <!-- ▲ 동료 피드백 화면 끝 -->
+
+</div>
+
+<div class="modal-bg" id="revisionModal">
+  <div class="modal revision-modal-wide">
+    <h2>✍️ 퇴고 — 내 글 다시 쓰기</h2>
+    <div class="rev-tabs">
+      <button class="rev-tab active" onclick="switchRevTab('write')">📝 수정하기</button>
+      <button class="rev-tab" onclick="switchRevTab('compare')">📊 전후 비교</button>
+    </div>
+    <!-- ④ 맞춤법 박스 (퇴고 모드에서만 표시) -->
+    <div id="revSpellingBox" style="display:none;background:#fff8f0;border-left:4px solid #e07040;border-radius:8px;padding:7px 12px;font-size:12px;color:#7a3010;margin-bottom:8px;line-height:1.6;"></div>
+
+    <div class="rev-tab-content active" id="revTabWrite">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div>
+          <div style="font-size:12px;font-weight:bold;color:var(--blue);margin-bottom:5px;">📄 1차 초고 (원본)</div>
+          <div id="revOriginalText" style="background:#f0f7ff;border-radius:10px;padding:10px;font-size:13px;line-height:1.8;color:#555;min-height:100px;white-space:pre-wrap;word-break:keep-all;border:2px solid #cde;"></div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:bold;color:var(--mint);margin-bottom:5px;">✏️ AI 조언 평가표 <span style="font-size:10px;color:#aaa;font-weight:normal;">(마음에 드는 표현을 골라봐요)</span></div>
+          <div id="revAiSuggestion" style="background:#eaf6f4;border-radius:10px;padding:10px;font-size:12px;line-height:1.8;color:#446;min-height:100px;border:2px solid #bde;">
+            <div style="color:#aaa;font-size:12px;text-align:center;padding-top:20px;">[AI 조언 받기] 버튼을 누르면 3가지 표현이 나타나요 🤔</div>
+          </div>
+          <!-- 재요청 입력창 (숨겨져 있다가 👎 눌리면 표시) -->
+          <div id="revRefinementBox" style="display:none;margin-top:8px;background:#fff8f0;border-radius:10px;padding:8px 10px;border:2px dashed var(--orange);">
+            <div style="font-size:11px;color:var(--orange);font-weight:bold;margin-bottom:4px;">💬 어떤 느낌으로 다시 만들어줄까요?</div>
+            <div style="display:flex;gap:6px;">
+              <input id="revRefinementInput" type="text" placeholder="예) 조금 더 무서운 느낌으로, 웃긴 느낌으로..." style="flex:1;padding:6px 10px;border:1px solid #ddd;border-radius:8px;font-family:inherit;font-size:12px;outline:none;">
+              <button onclick="requestRefinedAdvice()" style="padding:6px 12px;background:var(--orange);color:white;border:none;border-radius:8px;font-family:inherit;font-size:12px;cursor:pointer;white-space:nowrap;">다시 만들기</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;font-weight:bold;color:#333;margin-bottom:5px;">✍️ 2차 수정본 (직접 써보세요!)</div>
+      <!-- ① AI 힌트 박스 (참고해서 쓰기 클릭 시 표시) -->
+      <div id="revHintBox" style="display:none;background:#fffbea;border:2px dashed #f5c842;border-radius:10px;padding:8px 12px;margin-bottom:8px;">
+        <div style="font-size:11px;font-weight:bold;color:#a07820;margin-bottom:4px;">💡 AI 힌트 (직접 타이핑해보세요!)</div>
+        <div id="revHintText" style="font-size:13px;color:#7a5a10;line-height:1.6;"></div>
+        <button onclick="this.parentElement.style.display='none'" style="margin-top:6px;font-size:11px;background:#f0e0a0;border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit;color:#7a5a10;">힌트 닫기</button>
+      </div>
+      <textarea id="revEditText" style="width:100%;min-height:110px;border:2px dashed var(--mint);border-radius:10px;padding:10px;font-family:inherit;font-size:14px;line-height:1.8;outline:none;resize:vertical;background:#fcfffe;" placeholder="초고를 읽고 더 생생하게 고쳐써보세요!&#10;예) '재밌었다' → '운동장에서 땀이 뻘뻘 흐르도록 뛰어서 심장이 두근두근했다'"></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="mbtn primary" onclick="getAiRevisionTip()" id="revAiTipBtn">🤖 AI 조언 받기</button>
+        <button class="mbtn" style="background:var(--orange);color:white;" onclick="doCompare()">📊 비교 보기</button>
+        <button class="mbtn ghost" onclick="closeModal('revisionModal')">닫기</button>
+      </div>
+    </div>
+
+    <div class="rev-tab-content" id="revTabCompare">
+      <div class="rev-compare-grid" style="margin-bottom:12px;">
+        <div class="rev-col v1">
+          <div class="rev-col-title">📄 1차 초고</div>
+          <div class="rev-text" id="cmpText1" style="font-size:13px;color:#555;"></div>
+        </div>
+        <div class="rev-col v2">
+          <div class="rev-col-title">✍️ 2차 수정본</div>
+          <div class="rev-text" id="cmpText2" style="font-size:13px;color:#333;"></div>
+        </div>
+      </div>
+
+      <div class="rev-summary-box">
+        <div class="rev-summary-title">📊 표현력 변화 비교</div>
+        <div class="rev-stat-grid" id="revStatGrid">
+          <div class="rev-stat"><div class="rev-stat-num" id="statChars">—</div><div class="rev-stat-label">글자 수 변화</div></div>
+          <div class="rev-stat"><div class="rev-stat-num" id="statSense">—</div><div class="rev-stat-label">감각어 변화</div></div>
+          <div class="rev-stat"><div class="rev-stat-num" id="statEmotion">—</div><div class="rev-stat-label">감정어 변화</div></div>
+        </div>
+
+        <div class="sense-chart" id="senseChart" style="margin-top:12px;">
+          <div style="font-size:11px;font-weight:bold;color:#666;margin-bottom:6px;">📌 감각별 표현 수 (파랑=초고 / 초록=수정본)</div>
+          <div class="sense-row"><span class="sense-label">👁️ 시각</span><div class="sense-bar-bg"><div class="sense-bar-v1" id="bar1_sight"></div><div class="sense-bar-v2" id="bar2_sight"></div></div><span class="sense-nums" id="nums_sight">0→0</span><span class="sense-diff" id="diff_sight">—</span></div>
+          <div class="sense-row"><span class="sense-label">👂 청각</span><div class="sense-bar-bg"><div class="sense-bar-v1" id="bar1_sound"></div><div class="sense-bar-v2" id="bar2_sound"></div></div><span class="sense-nums" id="nums_sound">0→0</span><span class="sense-diff" id="diff_sound">—</span></div>
+          <div class="sense-row"><span class="sense-label">🤲 촉각</span><div class="sense-bar-bg"><div class="sense-bar-v1" id="bar1_touch"></div><div class="sense-bar-v2" id="bar2_touch"></div></div><span class="sense-nums" id="nums_touch">0→0</span><span class="sense-diff" id="diff_touch">—</span></div>
+          <div class="sense-row"><span class="sense-label">👃 후각</span><div class="sense-bar-bg"><div class="sense-bar-v1" id="bar1_smell"></div><div class="sense-bar-v2" id="bar2_smell"></div></div><span class="sense-nums" id="nums_smell">0→0</span><span class="sense-diff" id="diff_smell">—</span></div>
+          <div class="sense-row"><span class="sense-label">👅 미각</span><div class="sense-bar-bg"><div class="sense-bar-v1" id="bar1_taste"></div><div class="sense-bar-v2" id="bar2_taste"></div></div><span class="sense-nums" id="nums_taste">0→0</span><span class="sense-diff" id="diff_taste">—</span></div>
+          <div class="sense-row"><span class="sense-label">💭 비유</span><div class="sense-bar-bg"><div class="sense-bar-v1" id="bar1_simile"></div><div class="sense-bar-v2" id="bar2_simile"></div></div><span class="sense-nums" id="nums_simile">0→0</span><span class="sense-diff" id="diff_simile">—</span></div>
+        </div>
+
+        <div class="rev-ai-advice" id="revAiCompareFeedback" style="display:none;">
+          <b>🤖 AI 총평</b><br><span id="revAiCompareFeedbackText"></span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="mbtn primary" onclick="applyRevision()">✅ 수정본으로 업데이트</button>
+        <button class="mbtn ghost" onclick="closeModal('revisionModal')">닫기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="badgeModal">
+  <div class="modal">
+    <h2>🏆 나의 지음 뱃지</h2>
+    <div class="tree-progress-wrap">
+      <div style="font-size:14px; color:var(--blue); font-weight:bold; margin-bottom:6px;">🌳 나의 지음 나무 (<span id="badgeCountText">0</span>/<span id="badgeTotalText">52</span>)</div>
+      <div class="progress-wrap" style="width:100%; height:14px;"><div class="progress-fill" id="badgeProgressFill" style="background:linear-gradient(to right, #4a90e2, #62b3a4); width:0%;"></div></div>
+      <div style="font-size:11px; color:#666; margin-top:6px;">멋진 일기를 쓰면서 나무를 키워보세요! 🌱→🌲</div>
+    </div>
+    <div style="font-size:11px;color:#aaa;margin-bottom:8px;">🥉 브론즈→🥈 실버→🥇 골드→💎 다이아 순으로 성장해요!</div>
+    <div id="badgeListContent">
+      <!-- 기존 20종 -->
+      <div class="badge-item" id="badge_1"><div class="badge-icon">🐣</div><div class="badge-name">첫걸음</div><div class="badge-desc">일기 1개 작성</div></div>
+      <div class="badge-item" id="badge_2"><div class="badge-icon">📅</div><div class="badge-name">개근상</div><div class="badge-desc">일기 3개 작성</div></div>
+      <div class="badge-item" id="badge_3"><div class="badge-icon">🔥</div><div class="badge-name">꾸준함의 달인</div><div class="badge-desc">일기 10개 작성</div></div>
+      <div class="badge-item" id="badge_4"><div class="badge-icon">💬</div><div class="badge-name">수다쟁이</div><div class="badge-desc">글자수 150자 이상</div></div>
+      <div class="badge-item" id="badge_5"><div class="badge-icon">🎯</div><div class="badge-name">미션 클리어</div><div class="badge-desc">미션 10점 달성</div></div>
+      <div class="badge-item" id="badge_6"><div class="badge-icon">👑</div><div class="badge-name">미션 마스터</div><div class="badge-desc">미션 10점 5회</div></div>
+      <div class="badge-item" id="badge_7"><div class="badge-icon">🎨</div><div class="badge-name">묘사왕 피카소</div><div class="badge-desc">묘사력 10점 달성</div></div>
+      <div class="badge-item" id="badge_8"><div class="badge-icon">👀</div><div class="badge-name">오감술사</div><div class="badge-desc">감각어 5개 이상</div></div>
+      <div class="badge-item" id="badge_9"><div class="badge-icon">💖</div><div class="badge-name">감정의 마술사</div><div class="badge-desc">풍부한 감정 표현</div></div>
+      <div class="badge-item" id="badge_10"><div class="badge-icon">💡</div><div class="badge-name">상상력 대장</div><div class="badge-desc">창의적인 상상/비유</div></div>
+      <div class="badge-item" id="badge_11"><div class="badge-icon">☀️</div><div class="badge-name">긍정왕</div><div class="badge-desc">긍정적인 단어 가득</div></div>
+      <div class="badge-item" id="badge_12"><div class="badge-icon">🔎</div><div class="badge-name">세밀한 관찰자</div><div class="badge-desc">사물/자연 정밀묘사</div></div>
+      <div class="badge-item" id="badge_13"><div class="badge-icon">🙈</div><div class="badge-name">솔직담백</div><div class="badge-desc">부끄러움/잘못 고백</div></div>
+      <div class="badge-item" id="badge_14"><div class="badge-icon">🗺️</div><div class="badge-name">위대한 모험가</div><div class="badge-desc">새로운 경험 이야기</div></div>
+      <div class="badge-item" id="badge_15"><div class="badge-icon">👨‍👩‍👧</div><div class="badge-name">가족 사랑</div><div class="badge-desc">가족과의 따뜻한 일화</div></div>
+      <div class="badge-item" id="badge_16"><div class="badge-icon">🤝</div><div class="badge-name">우정 지킴이</div><div class="badge-desc">친구와의 소중한 우정</div></div>
+      <div class="badge-item" id="badge_17"><div class="badge-icon">🌿</div><div class="badge-name">꼬마 자연인</div><div class="badge-desc">동식물, 날씨 이야기</div></div>
+      <div class="badge-item" id="badge_18"><div class="badge-icon">😋</div><div class="badge-name">먹방 요정</div><div class="badge-desc">침 고이는 음식 묘사</div></div>
+      <div class="badge-item" id="badge_19"><div class="badge-icon">😂</div><div class="badge-name">유머러스</div><div class="badge-desc">재미있고 웃긴 일화</div></div>
+      <div class="badge-item" id="badge_20"><div class="badge-icon">⭐</div><div class="badge-name">꿈꾸는 별</div><div class="badge-desc">나의 미래와 꿈 이야기</div></div>
+      <!-- 누적 작가 등급 -->
+      <div class="badge-item" id="badge_21"><div class="badge-icon">🥉</div><div class="badge-name">브론즈 작가</div><div class="badge-desc">일기 5개 달성</div></div>
+      <div class="badge-item" id="badge_22"><div class="badge-icon">🥈</div><div class="badge-name">실버 작가</div><div class="badge-desc">일기 20개 달성</div></div>
+      <div class="badge-item" id="badge_23"><div class="badge-icon">🥇</div><div class="badge-name">골드 작가</div><div class="badge-desc">일기 50개 달성</div></div>
+      <div class="badge-item" id="badge_24"><div class="badge-icon">💎</div><div class="badge-name">다이아 작가</div><div class="badge-desc">일기 100개 달성</div></div>
+      <!-- 미션 등급 -->
+      <div class="badge-item" id="badge_25"><div class="badge-icon">🥉</div><div class="badge-name">브론즈 미션러</div><div class="badge-desc">미션 8점+ 3회</div></div>
+      <div class="badge-item" id="badge_26"><div class="badge-icon">🥈</div><div class="badge-name">실버 미션러</div><div class="badge-desc">미션 8점+ 10회</div></div>
+      <div class="badge-item" id="badge_27"><div class="badge-icon">🥇</div><div class="badge-name">골드 미션러</div><div class="badge-desc">미션 8점+ 25회</div></div>
+      <div class="badge-item" id="badge_28"><div class="badge-icon">💎</div><div class="badge-name">다이아 미션러</div><div class="badge-desc">미션 8점+ 50회</div></div>
+      <!-- 퇴고 등급 -->
+      <div class="badge-item" id="badge_29"><div class="badge-icon">🥉</div><div class="badge-name">브론즈 퇴고왕</div><div class="badge-desc">퇴고 3회 감각어 증가</div></div>
+      <div class="badge-item" id="badge_30"><div class="badge-icon">🥈</div><div class="badge-name">실버 퇴고왕</div><div class="badge-desc">퇴고 10회 감각어 증가</div></div>
+      <div class="badge-item" id="badge_31"><div class="badge-icon">🥇</div><div class="badge-name">골드 퇴고왕</div><div class="badge-desc">퇴고 25회 감각어 증가</div></div>
+      <div class="badge-item" id="badge_32"><div class="badge-icon">💎</div><div class="badge-name">다이아 퇴고왕</div><div class="badge-desc">퇴고 50회 감각어 증가</div></div>
+      <!-- 감각별 전문가 -->
+      <div class="badge-item" id="badge_33"><div class="badge-icon">👁️</div><div class="badge-name">시각 마법사</div><div class="badge-desc">시각 표현의 달인</div></div>
+      <div class="badge-item" id="badge_34"><div class="badge-icon">👂</div><div class="badge-name">청각 마법사</div><div class="badge-desc">청각 표현의 달인</div></div>
+      <div class="badge-item" id="badge_35"><div class="badge-icon">🤲</div><div class="badge-name">촉각 마법사</div><div class="badge-desc">촉각 표현의 달인</div></div>
+      <div class="badge-item" id="badge_36"><div class="badge-icon">👃</div><div class="badge-name">후각 마법사</div><div class="badge-desc">후각 표현의 달인</div></div>
+      <div class="badge-item" id="badge_37"><div class="badge-icon">👅</div><div class="badge-name">미각 마법사</div><div class="badge-desc">미각 표현의 달인</div></div>
+      <div class="badge-item" id="badge_38"><div class="badge-icon">💭</div><div class="badge-name">비유 마법사</div><div class="badge-desc">비유 표현의 달인</div></div>
+      <!-- 이스터에그 -->
+      <div class="badge-item" id="badge_39"><div class="badge-icon">🥚</div><div class="badge-name">이스터에그 헌터</div><div class="badge-desc">숨겨진 단어 3개 발견</div></div>
+      <div class="badge-item" id="badge_40"><div class="badge-icon">💜</div><div class="badge-name">희귀 발굴가</div><div class="badge-desc">희귀 이스터에그 발견</div></div>
+      <div class="badge-item" id="badge_41"><div class="badge-icon">🌟</div><div class="badge-name">전설 발굴가</div><div class="badge-desc">전설 이스터에그 발견</div></div>
+      <!-- 스트릭 -->
+      <div class="badge-item" id="badge_42"><div class="badge-icon">🔥</div><div class="badge-name">3일 불꽃</div><div class="badge-desc">3일 연속 글쓰기</div></div>
+      <div class="badge-item" id="badge_43"><div class="badge-icon">🔥🔥</div><div class="badge-name">7일 불꽃</div><div class="badge-desc">7일 연속 글쓰기</div></div>
+      <div class="badge-item" id="badge_44"><div class="badge-icon">🔥🔥🔥</div><div class="badge-name">14일 불꽃</div><div class="badge-desc">14일 연속 글쓰기</div></div>
+      <div class="badge-item" id="badge_45"><div class="badge-icon">🌋</div><div class="badge-name">30일 불꽃</div><div class="badge-desc">30일 연속 글쓰기</div></div>
+      <!-- 특별 활동 -->
+      <div class="badge-item" id="badge_46"><div class="badge-icon">⚖️</div><div class="badge-name">토론왕</div><div class="badge-desc">토론 5회 참가</div></div>
+      <div class="badge-item" id="badge_47"><div class="badge-icon">📚</div><div class="badge-name">이야기꾼</div><div class="badge-desc">릴레이 동화 5회 참가</div></div>
+      <div class="badge-item" id="badge_48"><div class="badge-icon">🌸</div><div class="badge-name">시인</div><div class="badge-desc">시화 3개 완성</div></div>
+      <div class="badge-item" id="badge_49"><div class="badge-icon">📖</div><div class="badge-name">그림책 작가</div><div class="badge-desc">그림책 3권 완성</div></div>
+      <div class="badge-item" id="badge_50"><div class="badge-icon">🏅</div><div class="badge-name">올라운더</div><div class="badge-desc">모든 앱 5회 이상 활용</div></div>
+      <div class="badge-item" id="badge_51"><div class="badge-icon">🌱</div><div class="badge-name">꾸준함의 달인 브론즈</div><div class="badge-desc">3일 연속 달성</div></div>
+      <div class="badge-item" id="badge_52"><div class="badge-icon">🌲</div><div class="badge-name">꾸준함의 달인 실버</div><div class="badge-desc">7일 연속 달성</div></div>
+    </div>
+    <div class="modal-btns"><button class="mbtn ghost" onclick="closeModal('badgeModal')">닫기</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="listModal">
+  <div class="modal"><h2>📖 나의 일기장</h2><div class="sel-list" id="listModalContent"></div>
+    <div class="modal-btns"><button class="mbtn ghost" onclick="closeModal('listModal')">닫기</button></div></div>
+</div>
+
+<!-- 🖨️ 이음 전용: 그림일기 출력 모달 — ieumApp 내부에 위치 (지음 탭과 완전 독립) -->
+<div class="modal-bg" id="diaryPrintModal">
+  <div class="modal" style="max-width:520px;">
+    <h2>🖨️ 그림일기 출력</h2>
+    <p style="font-size:12px;color:#888;margin-bottom:10px;">출력할 일기를 선택하세요. 선택 후 바로 다운로드됩니다!</p>
+    <div style="display:flex;gap:6px;margin-bottom:10px;">
+      <button onclick="diaryPrintSelectAll()" style="font-size:12px;padding:5px 12px;border:1.5px solid var(--mint);background:white;color:var(--mint);border-radius:8px;cursor:pointer;font-family:inherit;">전체 선택</button>
+      <button onclick="diaryPrintClearAll()" style="font-size:12px;padding:5px 12px;border:1.5px solid #ddd;background:white;color:#aaa;border-radius:8px;cursor:pointer;font-family:inherit;">전체 해제</button>
+      <span id="diaryPrintCount" style="font-size:12px;color:var(--mint);font-weight:bold;align-self:center;margin-left:4px;">선택: 0개</span>
+    </div>
+    <div id="diaryPrintList" style="max-height:46vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:2px;"></div>
+    <div class="modal-btns" style="margin-top:14px;">
+      <button class="mbtn ghost" onclick="closeModal('diaryPrintModal')">취소</button>
+      <button class="mbtn primary" id="diaryPrintBtn" onclick="doDiaryPrint()" style="background:var(--mint);">🖨️ JPG 저장하기</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="app-screen" id="ttieumApp">
+<div class="tablet">
+  <header>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <button class="home-btn" onclick="goHome()">🏠 홈</button>
+      <div class="jieum-tabs" style="background:transparent; border:none; padding:0; gap:4px; margin-left:8px;">
+        <button class="j-tab active" id="tabTtieumStory" onclick="switchTtieumTab('story')" style="color:white; border-color:white; font-size:15px;">📚 릴레이 동화</button>
+        <button class="j-tab" id="tabTtieumDebate" onclick="switchTtieumTab('debate')" style="color:#d0c4ff; border-color:transparent; font-size:15px;">⚖️ 100분 토론</button>
+      </div>
+      <span id="ttieumGoalBadge" style="font-size:11px;background:rgba(255,255,255,.2);padding:3px 10px;border-radius:20px;word-break:keep-all;">💡 AI의 질문에 내 이야기로 답해보세요</span>
+    </div>
+    <div style="display:flex;gap:7px;">
+      <button class="hbtn orange" id="btnDebateTopic" style="display:none;" onclick="drawDebateTopic()">🎲 주제 뽑기</button>
+      <button class="hbtn" onclick="saveStory()" id="btnStorySave">💾 저장</button>
+      <button class="hbtn" onclick="openStoryListModal()" id="btnStoryList">📚 저장목록</button>
+      <button class="hbtn" onclick="resetStory()" id="btnStoryReset">🔄 새로하기</button>
+    </div>
+  </header>
+  <div class="story-phone">
+    <div class="chat-box" id="chatBox"></div>
+    <div class="story-input-area">
+      <button class="tool-btn voice" style="margin-right:6px;" onclick="startSTT('storyInput')" title="음성 입력">🎤</button>
+      <textarea class="story-textarea" id="storyInput" placeholder="여기에 적어주세요..."></textarea>
+      <button class="story-send-btn" id="storySendBtn" onclick="sendStory()">전송</button>
+    </div>
+  </div>
+</div>
+<div class="modal-bg" id="storyListModal">
+  <div class="modal">
+    <h2 id="storyListModalTitle">📚 저장된 이야기 &amp; 토론</h2>
+    <div id="storyListContent"></div>
+    <div class="modal-btns"><button class="mbtn ghost" onclick="closeModal('storyListModal')" id="btnStoryListClose">닫기</button></div>
+  </div>
+</div>
+</div>
+
+<div class="app-screen" id="jieumApp">
+<div class="tablet">
+  <header>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="home-btn" onclick="goHome()">🏠 홈</button>
+      <div class="jieum-tabs">
+        <button class="j-tab active" id="tabBook" onclick="switchTab('book')">📖 그림책</button>
+        <button class="j-tab" id="tabPoem" onclick="switchTab('poem')">🌸 시화</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;" id="jieumHeaderBtns">
+      <button class="hbtn" id="bookSaveBtn" onclick="saveCurrentBook()">💾 저장</button>
+      <button class="hbtn" id="bookJpgBtn" onclick="openBookJpgModal()">🖼️ JPG 저장</button>
+      <button class="hbtn" id="bookPrintBtn" onclick="openPrintModal('book')">📄 PDF 출력</button>
+      <button class="hbtn" id="bookLoadBtn" onclick="openBookListModal()">📂 불러오기</button>
+      <button class="hbtn" id="bookResetBtn" onclick="resetBook()">🔄 새 책</button>
+      <button class="hbtn" id="poemSaveBtn" onclick="savePoem()" style="display:none;">💾 저장</button>
+      <button class="hbtn" id="poemPrintBtn" onclick="openPoemJpgSave()" style="display:none;">🖼️ 시화 JPG 저장</button>
+      <button class="hbtn" id="poemLoadBtn" onclick="openPoemListModal()" style="display:none;">📂 목록</button>
+      <button class="hbtn" id="poemResetBtn" onclick="resetPoem()" style="display:none;">🔄 초기화</button>
+    </div>
+  </header>
+  <main>
+    <div class="j-tab-content active" id="tabContentBook">
+      <div class="jieum-book-inner">
+        <section class="b-panel">
+          <!-- 파트 3 수정: 지음 그림책 패널 텍스트에 id 추가 -->
+          <div class="b-panel-title" id="bookPanel1Title">1. 그림책 장면 쓰기</div>
+          <div id="bookWriteTipBox" style="background:#fff5f5;border-radius:10px;padding:7px 11px;margin-bottom:8px;font-size:11px;color:var(--pink);line-height:1.6;flex-shrink:0;">
+            💡 <b id="bookWriteTipTitle">좋은 장면 쓰기 팁</b>: <span id="bookWriteTipDesc">누가, 무엇을, 어떻게 했는지 + 그때의 기분을 담아보세요!</span>
+          </div>
+          <div style="display:flex; justify-content:flex-end; margin-bottom: 6px;">
+            <button class="tool-btn voice" onclick="startSTT('bookInput')">🎤 음성 입력</button>
+          </div>
+          <textarea class="b-textarea" id="bookInput" placeholder="예) 토끼는 숲 속 오솔길을 달리다가 커다란 버섯 아래에서 잠든 여우를 발견했어요. 살금살금 다가가서 살짝 건드려 보았더니..."></textarea>
+          <button class="b-action-btn" id="bDrawBtn" onclick="addBookPage()">📖 <span id="bDrawBtnLabel">이 내용으로 페이지 추가하기</span></button>
+        </section>
+        <section class="b-panel viewer">
+          <div class="b-panel-title" id="bookPanel2Title">2. 내 그림책 미리보기</div>
+          <div class="b-book-viewer" id="bookViewer">
+            <div style="color:#aaa;font-size:13px;text-align:center;width:100%;margin-top:100px;">내용을 적고 [페이지 추가하기]를 눌러보세요! ✨</div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <div class="j-tab-content" id="tabContentPoem">
+      <div class="poem-inner">
+        <section class="p-panel">
+          <!-- 파트 3 수정: 지음 시화 패널 텍스트에 id 추가 -->
+          <div class="p-panel-title" id="poemPanel1Title">1. 시 쓰기</div>
+          <div id="poemWriteTipBox" style="background:#fffbf0;border-radius:10px;padding:7px 11px;margin-bottom:8px;font-size:11px;color:var(--poem);line-height:1.6;flex-shrink:0;">
+            💡 <b id="poemWriteTipTitle">시 쓰기 팁</b>: <span id="poemWriteTipDesc">마음속 느낌을 짧은 문장으로, 비슷한 것에 빗대어 써보세요 (예: 엄마 손은 따뜻한 햇살 같아)</span>
+          </div>
+          <!-- 시 제목 입력 -->
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-shrink:0;">
+            <label id="poemTitleLabel" style="font-size:12px;color:var(--poem);white-space:nowrap;font-weight:bold;">📌 제목</label>
+            <input id="poemTitleInput" type="text" maxlength="16" placeholder="제목을 직접 입력하거나 AI가 만들어줘요" 
+              style="flex:1;padding:6px 10px;border:2px dashed var(--poem-border);border-radius:10px;font-family:inherit;font-size:14px;outline:none;background:var(--poem-pastel1);color:#333;"
+              onfocus="this.style.borderStyle='solid'" onblur="this.style.borderStyle='dashed'">
+          </div>
+          <!-- 글자 크기 조정 -->
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-shrink:0;">
+            <span id="poemFontSizeTitle" style="font-size:12px;color:var(--poem);font-weight:bold;">🔡 글자 크기</span>
+            <button onclick="adjustPoemFontSize(-2)" style="background:var(--poem-pastel2);border:1.5px solid var(--poem-border);border-radius:8px;padding:3px 10px;font-family:inherit;font-size:14px;cursor:pointer;color:#7a5a8a;">－</button>
+            <span id="poemFontSizeLabel" style="font-size:12px;color:#666;min-width:36px;text-align:center;">28px</span>
+            <button onclick="adjustPoemFontSize(2)" style="background:var(--poem-pastel2);border:1.5px solid var(--poem-border);border-radius:8px;padding:3px 10px;font-family:inherit;font-size:14px;cursor:pointer;color:#7a5a8a;">＋</button>
+          </div>
+          <div style="display:flex; justify-content:flex-end; margin-bottom: 6px;">
+            <button class="tool-btn voice" onclick="startSTT('poemInput')">🎤 음성 입력</button>
+          </div>
+          <textarea class="p-textarea" id="poemInput" placeholder="나만의 시를 써보세요!&#10;&#10;봄날 벚꽃이&#10;눈처럼 흩날려..."></textarea>
+          <button class="p-action-btn" id="pPaintBtn" onclick="createPoemArt()">🎨 <span id="pPaintBtnLabel">시화로 꾸미기</span></button>
+        </section>
+        <section class="p-panel preview">
+          <div class="p-panel-title" id="poemPanel2Title">2. 시화 미리보기</div>
+          <div class="p-preview-wrap" id="pPreviewWrap">
+            <div class="p-placeholder" id="pPlaceholder"><div style="font-size:36px;">🌸</div><div>시를 쓰고 [시화로 꾸미기]를 누르면<br>시화가 완성돼요!</div></div>
+            <img id="poemCanvas" alt="시화">
+            <div class="p-loading" id="pLoading">
+              <div style="font-size:30px;animation:spin 1s linear infinite;">🌀</div>
+              <div id="pLoadingMsg" style="font-size:13px;color:var(--poem);">시화 생성 중... 🎨</div>
+              <div class="progress-wrap"><div class="progress-fill" id="pProgressFill"></div></div>
+              <div class="progress-label" id="pProgressLabel">0%</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+<div class="modal-bg" id="bookListModal"><div class="modal"><h2>📚 저장된 그림책</h2><div id="bookListContent"></div><div class="modal-btns"><button class="mbtn ghost" onclick="closeModal('bookListModal')">닫기</button></div></div></div>
+<div class="modal-bg" id="poemListModal"><div class="modal"><h2>🌸 저장된 시화</h2><div id="poemListContent"></div><div class="modal-btns"><button class="mbtn ghost" onclick="closeModal('poemListModal')">닫기</button></div></div></div>
+
+<!-- 🎨 그림 프롬프트 조율소 모달 -->
+<div class="modal-bg" id="promptWorkshopModal">
+  <div class="modal" style="max-width:560px;">
+    <h2>🎨 AI의 그림 설계도</h2>
+    <p style="font-size:12px;color:#888;margin-bottom:12px;word-break:keep-all;">AI가 내 글에서 뽑은 핵심 요소들이에요. 추가 지시를 내려서 원하는 그림을 완성해봐요!</p>
+    <div id="pwTags" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;min-height:36px;"></div>
+    <div style="background:#f8f8f8;border-radius:12px;padding:10px 12px;margin-bottom:12px;">
+      <div style="font-size:12px;font-weight:bold;color:#555;margin-bottom:6px;">✏️ 추가 요구사항 적기</div>
+      <textarea id="pwUserRequest" placeholder="예) 비가 내리게 해줘, 토끼가 빨간 모자를 써줘, 밤 배경으로 해줘..." style="width:100%;height:70px;border:2px dashed var(--mint);border-radius:10px;padding:8px;font-family:inherit;font-size:14px;resize:none;outline:none;background:white;"></textarea>
+    </div>
+    <div id="pwFinalPromptBox" style="display:none;background:#eaf6f4;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:#3a8a7a;">
+      <b>🤖 최종 그림 지시:</b> <span id="pwFinalPromptText"></span>
+    </div>
+    <div class="modal-btns">
+      <button class="mbtn ghost" onclick="closeModal('promptWorkshopModal')">취소</button>
+      <button class="mbtn primary" id="pwDrawBtn" onclick="executePromptWorkshop()" style="background:var(--pink);">🖌️ 이대로 그려줘!</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="printModal"><div class="modal"><h2 id="printModalTitle">📄 저장 방식 선택</h2><p style="font-size:11px;color:#aaa;margin-bottom:8px;">항목을 선택하면 다운로드가 시작됩니다.</p><div class="sel-list" id="printModalContent"></div><div style="font-size:12px;color:var(--mint);margin-top:7px;" id="printSelCount">선택: 0개</div><div class="modal-btns"><button class="mbtn ghost" onclick="closeModal('printModal')">취소</button><button class="mbtn primary" onclick="doPrint()" id="doPrintBtn">📄 저장하기</button></div></div></div>
+
+<!-- 🖼️ 그림책 JPG 저장 모달 -->
+<div class="modal-bg" id="bookJpgModal">
+  <div class="modal" style="max-width:520px;">
+    <h2>📖 그림책 JPG 저장</h2>
+    <p style="font-size:12px;color:#888;margin-bottom:10px;">저장할 페이지를 선택하세요. 선택 후 바로 다운로드됩니다!</p>
+    <div style="display:flex;gap:6px;margin-bottom:10px;">
+      <button onclick="bookJpgSelectAll()" style="font-size:12px;padding:5px 12px;border:1.5px solid var(--pink);background:white;color:var(--pink);border-radius:8px;cursor:pointer;font-family:inherit;">전체 선택</button>
+      <button onclick="bookJpgClearAll()" style="font-size:12px;padding:5px 12px;border:1.5px solid #ddd;background:white;color:#aaa;border-radius:8px;cursor:pointer;font-family:inherit;">전체 해제</button>
+      <span id="bookJpgCount" style="font-size:12px;color:var(--pink);font-weight:bold;align-self:center;margin-left:4px;">선택: 0개</span>
+    </div>
+    <div id="bookJpgList" style="max-height:46vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:2px;"></div>
+    <div class="modal-btns" style="margin-top:14px;">
+      <button class="mbtn ghost" onclick="closeModal('bookJpgModal')">취소</button>
+      <button class="mbtn primary" id="bookJpgBtn2" onclick="doBookJpgPrint()" style="background:var(--pink);">🖼️ JPG 저장하기</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script src="js/01-core-init.js"></script>
+<script src="js/02-core-utils.js"></script>
+<script src="js/03-dodum.js"></script>
+<script src="js/04-ieum-diary.js"></script>
+<script src="js/05-shared-builders.js"></script>
+<script src="js/06-ttieum.js"></script>
+<script src="js/07-jieum.js"></script>
+<script src="js/08-ieum-essay.js"></script>
+<script src="js/09-sos-dict.js"></script>
+<script src="js/10-i18n.js"></script>
+<script src="js/11-teacher-extras.js"></script>
+<!-- ✅ [신규] 스캐폴딩 힌트 팝업 (SOS 버튼 누를 때) -->
+<div class="scaffolding-hint-popup" id="scaffoldingHintPopup">
+  <div class="scaffolding-hint-card">
+    <h3>🆘 힌트 팝업</h3>
+    <p style="font-size:13px;color:#666;line-height:1.6;margin-bottom:10px;" id="scaffoldingHintMsg">
+      어떻게 시작할지 모르겠나요? 아래 표현들을 참고해 보세요!
+    </p>
+    <div class="scaffolding-chip-list" id="scaffoldingChipList"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button onclick="closeScaffoldingHint()" style="flex:1;padding:10px;background:#eee;border:none;border-radius:10px;font-family:inherit;font-size:14px;cursor:pointer;">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ [신규] 인지적 마찰 AI 피드백 — Diff 비교 뷰 오버레이 -->
+<div class="friction-diff-overlay" id="frictionDiffOverlay">
+  <div class="friction-diff-panel">
+    <div class="friction-diff-header">
+      <div class="friction-diff-title">✍️ AI 퇴고 제안 — 직접 비교하기</div>
+      <button class="friction-diff-close" onclick="closeFrictionDiff()">✕ 닫기</button>
+    </div>
+    <p style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.6;word-break:keep-all;">
+      ⚠️ AI의 제안을 <b>그대로 복사하지 마세요!</b> 왼쪽과 오른쪽을 <b>직접 비교</b>하며 마음에 드는 표현만 <b>에디터에 직접 다시 타이핑</b>해야 진짜 내 실력이 늘어요. 👇
+    </p>
+    <div class="friction-cols">
+      <div>
+        <div class="friction-col-label original">📝 내가 쓴 원문</div>
+        <div class="friction-text-box" id="frictionOriginalText"></div>
+      </div>
+      <div>
+        <div class="friction-col-label suggested">✨ AI 개선 제안</div>
+        <div class="friction-text-box suggested-box" id="frictionSuggestedText"></div>
+      </div>
+    </div>
+    <div class="friction-retype-hint">
+      💡 <b>사용 방법:</b> 오른쪽에서 마음에 드는 표현을 찾았다면, <b>에디터로 돌아가 직접 다시 타이핑</b>해보세요. AI가 제안한 문장을 그대로 붙여넣는 버튼은 의도적으로 없습니다. 이게 진짜 실력 향상의 비결이에요! ✨
+    </div>
+    <p style="font-size:12px;color:#aaa;margin-top:10px;">💬 AI 피드백:</p>
+    <div id="frictionFeedbackText" style="font-size:13px;color:#555;line-height:1.7;background:#f9f9f9;border-radius:10px;padding:10px 12px;"></div>
+    <div style="font-size:12px;color:#bbb;margin-top:10px;word-break:keep-all;">
+      문장 단위로 수용이 필요하다면 아래에서 한 문장씩 확인하고 직접 입력창에 타이핑 해보세요:
+    </div>
+    <div class="friction-accept-sentence-list" id="frictionSentenceList"></div>
+    <div class="friction-action-row">
+      <button onclick="closeFrictionDiff()" style="flex:1;padding:10px;background:var(--mint);color:white;border:none;border-radius:12px;font-family:inherit;font-size:15px;cursor:pointer;font-weight:bold;">✅ 에디터로 돌아가기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ [신규] 교사용 개요 패널 (미구현 시에도 레이아웃 준비) -->
+
+<!-- 에세이 주제 선택 모달 -->
+<div class="modal-bg" id="essayTopicModal">
+  <div class="modal" style="max-width:420px;">
+    <h2 id="essayModalTitle">🎯 Essay 주제 선택</h2>
+    <p style="font-size:13px;color:#888;margin-bottom:14px;word-break:keep-all;" id="essayModalDesc">랜덤으로 주제를 뽑거나, 원하는 주제를 직접 써서 설정할 수 있어요!</p>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <button onclick="drawRandomEssayTopic()" style="padding:14px;background:linear-gradient(135deg,var(--mint),#4e9a8c);color:white;border:none;border-radius:12px;font-family:inherit;font-size:15px;cursor:pointer;font-weight:bold;" id="essayModalRandomBtn">
+        🎲 랜덤 주제 뽑기
+      </button>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="flex:1;height:1px;background:#eee;"></div>
+        <span style="font-size:13px;color:#aaa;" id="essayModalOrText">또는</span>
+        <div style="flex:1;height:1px;background:#eee;"></div>
+      </div>
+      <div>
+        <div style="font-size:13px;color:#555;font-weight:bold;margin-bottom:6px;" id="essayModalInputLabel">✏️ 주제 직접 입력:</div>
+        <input id="customTopicInput" type="text" maxlength="60"
+          placeholder="예) Should students have homework every day?"
+          style="width:100%;padding:11px 14px;border:2px dashed var(--mint);border-radius:10px;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box;"
+          onfocus="this.style.borderStyle='solid'" onblur="this.style.borderStyle='dashed'"
+          onkeydown="if(event.key==='Enter')confirmCustomTopic()">
+        <div style="font-size:11px;color:#aaa;margin-top:5px;word-break:keep-all;" id="essayModalInputHint">💡 한국어 또는 영어로 자유롭게 입력하세요!</div>
+      </div>
+      <button onclick="confirmCustomTopic()" style="padding:12px;background:var(--orange);color:white;border:none;border-radius:12px;font-family:inherit;font-size:15px;cursor:pointer;font-weight:bold;" id="essayModalConfirmBtn">
+        ✅ 이 주제로 시작하기
+      </button>
+    </div>
+    <div class="modal-btns"><button class="mbtn ghost" onclick="closeEssayTopicModal()" id="essayModalCancelBtn">취소</button></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     파트 4 추가: 쉐도잉 완료 보너스 팝업
+══════════════════════════════════════════════ -->
+<div class="shadow-bonus-pop" id="shadowBonusPop">
+  <div class="pop-icon">🎤✨</div>
+  <div class="pop-title">브라보! 직접 읽기 성공!</div>
+  <div style="font-size:13px;color:#888;margin-bottom:8px;word-break:keep-all;">
+    원어민처럼 읽어보는 연습을 했어요! 🌟
+  </div>
+  <div class="pop-ink">+50 💧 보너스 잉크!</div>
+  <button class="pop-close" onclick="closeShadowBonusPop()">🎉 받기!</button>
+</div>
+
+<!-- ⑤ 백업/복원 모달 -->
+<div class="modal-bg" id="backupRestoreModal">
+
+<!-- ══════ 교사 대시보드 모달 ══════ -->
+<div class="teacher-dash-modal" id="teacherDashModal">
+  <div class="teacher-dash-panel">
+    <div class="teacher-dash-header">
+      <div class="teacher-dash-title">📊 교사 대시보드 — 실시간 학생 현황</div>
+      <button class="teacher-dash-close" onclick="closeTeacherDashboard()">✕ 닫기</button>
+    </div>
+    <!-- Explainable AI 안내 -->
+    <div class="dash-explainer-box">
+      <div class="dash-explainer-title">💡 AI 피드백 채점 기준 (Explainable AI)</div>
+      묘사력 점수(1~10): <b>오감 표현 +3점</b>, <b>감정 표현 +2점</b>, <b>비유 표현 +2점</b>, <b>구체적 묘사 +2점</b>, <b>독특한 관점 +1점</b><br>
+      미션 점수(0~10): 지정된 미션 요소 포함 여부로 자동 측정. 점수 기준은 항상 학생에게도 동일하게 공개됩니다.
+    </div>
+    <!-- 통계 요약 -->
+    <div class="dash-stat-row" id="dashStatRow">
+      <div class="dash-stat-card"><div class="dash-stat-num" id="dashTotalStudents">0</div><div class="dash-stat-label">참여 학생</div></div>
+      <div class="dash-stat-card"><div class="dash-stat-num" id="dashAvgScore">—</div><div class="dash-stat-label">평균 묘사력</div></div>
+      <div class="dash-stat-card"><div class="dash-stat-num" id="dashHighCount">0</div><div class="dash-stat-label">상위(7+)</div></div>
+      <div class="dash-stat-card"><div class="dash-stat-num" id="dashLowCount">0</div><div class="dash-stat-label">지원 필요(3-)</div></div>
+      <div class="dash-stat-card"><div class="dash-stat-num" id="dashTodayCount">0</div><div class="dash-stat-label">오늘 작성</div></div>
+    </div>
+    <!-- 필터 -->
+    <div class="dash-filter-row">
+      <span style="font-size:12px;color:#888;">필터:</span>
+      <button class="dash-filter-btn active" onclick="filterDash('all', this)">전체</button>
+      <button class="dash-filter-btn" onclick="filterDash('high', this)">상위 (7+)</button>
+      <button class="dash-filter-btn" onclick="filterDash('mid', this)">중위 (4~6)</button>
+      <button class="dash-filter-btn" onclick="filterDash('low', this)">지원 필요 (3-)</button>
+      <button class="dash-filter-btn" onclick="filterDash('today', this)">오늘 작성</button>
+    </div>
+    <!-- 학생 목록 -->
+    <div class="dash-student-list" id="dashStudentList">
+      <div style="color:#ccc;font-size:13px;text-align:center;padding:20px;">
+        일기 데이터가 공유된 학생이 없어요.<br>학생들이 일기를 저장하면 여기에 나타납니다.
+      </div>
+    </div>
+    <!-- 교사 댓글 입력 -->
+    <div id="dashCommentArea" style="display:none;margin-top:14px;background:var(--teacher-bg);border:2px solid var(--teacher-border);border-radius:14px;padding:12px;">
+      <div style="font-size:13px;font-weight:bold;color:var(--teacher);margin-bottom:8px;">✍️ <span id="dashCommentNick"></span>에게 피드백 남기기</div>
+      <textarea id="dashCommentInput" placeholder="학생에게 개인 피드백을 남겨주세요..." style="width:100%;padding:9px 12px;border:2px dashed var(--teacher-border);border-radius:10px;font-family:inherit;font-size:13px;outline:none;resize:none;min-height:64px;box-sizing:border-box;background:white;" onfocus="this.style.borderStyle='solid'" onblur="this.style.borderStyle='dashed'"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button onclick="submitTeacherComment()" style="flex:1;padding:10px;background:var(--teacher);color:white;border:none;border-radius:10px;font-family:inherit;font-size:14px;cursor:pointer;font-weight:bold;">💬 피드백 전송</button>
+        <button onclick="$('dashCommentArea').style.display='none'" style="padding:10px 16px;background:#eee;border:none;border-radius:10px;font-family:inherit;font-size:13px;cursor:pointer;">취소</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ 자기 평가 모달 ══════ -->
+<div class="self-assess-modal" id="selfAssessModal">
+  <div class="self-assess-panel">
+    <div class="sa-title">📝 자기 평가 — 내 에세이 돌아보기</div>
+    <div style="font-size:12px;color:#888;margin-bottom:14px;word-break:keep-all;">
+      AI의 점수와 비교하며 스스로를 평가해보세요. 성장 마인드셋을 키우는 핵심 활동입니다! 🌱
+    </div>
+    <!-- Q1: 나 잘 쓴 것 같아? -->
+    <div class="sa-question">1. 오늘 내 글, 어떻게 생각해?</div>
+    <div class="sa-options" id="saQ1Options">
+      <button class="sa-option-btn" onclick="selectSaOption('q1','😄 아주 잘 쓴 것 같아', this)">😄 아주 잘 쓴 것 같아</button>
+      <button class="sa-option-btn" onclick="selectSaOption('q1','🙂 나쁘지 않아', this)">🙂 나쁘지 않아</button>
+      <button class="sa-option-btn" onclick="selectSaOption('q1','😐 보통이야', this)">😐 보통이야</button>
+      <button class="sa-option-btn" onclick="selectSaOption('q1','😔 좀 아쉬워', this)">😔 좀 아쉬워</button>
+    </div>
+    <!-- Q2: 더 잘할 수 있었던 것 -->
+    <div class="sa-question">2. 더 잘 할 수 있었던 점은?</div>
+    <div class="sa-options" id="saQ2Options">
+      <button class="sa-option-btn" onclick="selectSaOption('q2','감각어 표현', this)">감각어 표현</button>
+      <button class="sa-option-btn" onclick="selectSaOption('q2','감정 표현', this)">감정 표현</button>
+      <button class="sa-option-btn" onclick="selectSaOption('q2','비유 사용', this)">비유 사용</button>
+      <button class="sa-option-btn" onclick="selectSaOption('q2','구체적 내용', this)">구체적 내용</button>
+      <button class="sa-option-btn" onclick="selectSaOption('q2','문법 정확성', this)">문법 정확성</button>
+      <button class="sa-option-btn" onclick="selectSaOption('q2','분량', this)">분량</button>
+    </div>
+    <!-- Q3: 다음 목표 -->
+    <div class="sa-question">3. 다음에는 어떤 것을 도전해볼 거야?</div>
+    <textarea class="sa-textarea" id="saGoalInput" placeholder="예) 다음에는 비유 표현을 꼭 3개 이상 써볼 거야!" maxlength="100"></textarea>
+    <!-- AI 점수 vs 자기 예상 비교 -->
+    <div id="saScoreCompare" style="margin-top:12px;padding:10px 14px;background:#f0f7ff;border-radius:12px;border:2px solid var(--blue-border);display:none;">
+      <div style="font-size:12px;font-weight:bold;color:var(--blue);margin-bottom:6px;">🤖 AI 점수와 비교해봐요!</div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div style="font-size:24px;font-weight:bold;color:var(--mint);" id="saAiScore">—</div>
+          <div style="font-size:11px;color:#888;">AI 점수</div>
+        </div>
+        <div style="font-size:18px;color:#ddd;">vs</div>
+        <div style="text-align:center;">
+          <div style="font-size:24px;font-weight:bold;color:var(--orange);" id="saMySelfScore">—</div>
+          <div style="font-size:11px;color:#888;">내 예상</div>
+        </div>
+        <div style="flex:1;font-size:12px;color:#666;line-height:1.5;min-width:120px;" id="saCompareMsg"></div>
+      </div>
+    </div>
+    <button class="sa-submit-btn" onclick="submitSelfAssessment()">✅ 자기 평가 완료!</button>
+    <button onclick="closeSelfAssessModal()" style="width:100%;margin-top:8px;padding:10px;background:#eee;border:none;border-radius:12px;font-family:inherit;font-size:13px;cursor:pointer;">취소</button>
+  </div>
+</div>
+
+<!-- ══════ 포트폴리오 타임라인 모달 ══════ -->
+<div class="portfolio-modal" id="portfolioModal">
+  <div class="portfolio-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <div class="portfolio-title">📈 나의 글쓰기 성장 타임라인</div>
+      <button onclick="closePortfolioModal()" style="background:#eee;border:none;border-radius:10px;padding:6px 14px;font-family:inherit;font-size:13px;cursor:pointer;">✕ 닫기</button>
+    </div>
+    <!-- 성장 요약 -->
+    <div class="portfolio-growth-summary" id="portfolioGrowthSummary">
+      <div class="portfolio-growth-title">🌱 나의 성장 그래프</div>
+      <div class="portfolio-growth-bar-row">
+        <span class="portfolio-growth-label">묘사력</span>
+        <div class="portfolio-growth-track"><div class="portfolio-growth-fill" id="pgFillRichness" style="width:0%"></div></div>
+        <span style="font-size:12px;color:var(--mint);min-width:40px;text-align:right;" id="pgLabelRichness">—</span>
+      </div>
+      <div class="portfolio-growth-bar-row">
+        <span class="portfolio-growth-label">미션 달성</span>
+        <div class="portfolio-growth-track"><div class="portfolio-growth-fill" id="pgFillMission" style="width:0%;background:linear-gradient(to right,var(--purple),var(--pink));"></div></div>
+        <span style="font-size:12px;color:var(--purple);min-width:40px;text-align:right;" id="pgLabelMission">—</span>
+      </div>
+      <div style="font-size:11px;color:#888;margin-top:8px;" id="portfolioGrowthNote">일기를 더 써보면 성장 추이를 볼 수 있어요! 📊</div>
+    </div>
+    <!-- 타임라인 -->
+    <div id="portfolioTimeline" class="portfolio-timeline">
+      <div style="color:#ccc;font-size:13px;text-align:center;padding:24px;">
+        저장된 일기가 없어요.<br>일기를 쓰고 저장하면 여기에 성장 기록이 쌓여요! 🌱
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ AI 피드백 투명화(XAI) 모달 ══════ -->
+<div class="xai-overlay" id="xaiOverlay">
+  <div class="xai-panel">
+    <div class="xai-title">💡 묘사력 점수 — 이렇게 계산됐어요!</div>
+    <div style="font-size:12px;color:#888;margin-bottom:10px;word-break:keep-all;">
+      AI가 어떤 기준으로 점수를 줬는지 투명하게 보여드릴게요. 다음에 더 높은 점수를 받으려면 어떻게 써야 할지 알 수 있어요! 🎯
+    </div>
+    <div class="xai-score-big" id="xaiScoreBig">—</div>
+    <div style="font-size:12px;color:#888;text-align:center;margin-bottom:14px;">/ 10점</div>
+    <div class="xai-criteria" id="xaiCriteria">
+      <!-- JS로 동적 렌더링 -->
+    </div>
+    <button class="xai-close-btn" onclick="closeXaiModal()">✅ 알겠어요!</button>
+  </div>
+</div>
+  <div class="modal" style="max-width:400px;">
+    <h2>💾 데이터 백업 / 복원</h2>
+    <p style="font-size:12px;color:#888;margin-bottom:14px;word-break:keep-all;">교실 공용 기기를 사용할 때, 내 데이터를 파일로 저장하고 나중에 불러올 수 있어요!</p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button onclick="backupData()" style="padding:14px;background:var(--mint);color:white;border:none;border-radius:12px;font-family:inherit;font-size:15px;cursor:pointer;font-weight:bold;">
+        📤 내 데이터 백업하기 (JSON 다운로드)
+      </button>
+      <button onclick="triggerRestoreUpload()" style="padding:14px;background:var(--orange);color:white;border:none;border-radius:12px;font-family:inherit;font-size:15px;cursor:pointer;font-weight:bold;">
+        📥 백업 파일 불러오기 (복원)
+      </button>
+    </div>
+    <p style="font-size:11px;color:#aaa;margin-top:12px;word-break:keep-all;">⚠️ 복원 시 현재 기기의 데이터에 덮어씌워집니다. 먼저 백업을 해두세요!</p>
+    <div class="modal-btns"><button class="mbtn ghost" onclick="closeModal('backupRestoreModal')">닫기</button></div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,194 @@
+/* ============================================================
+ * 변수(:root) · 전역 리셋 · 홈 화면 · 핵심 레이아웃 6단 flex 체인 · 반응형 미디어쿼리
+ * ⚠️ 이 파일의 레이아웃 체인(#appWrapper > .app-screen > .tablet > main > .panel)은
+ * 수정 시 반드시 주석의 3원칙을 지킬 것 (고정높이 체인 / flex-shrink:0 / overflow 규칙)
+ * ============================================================ */
+:root{
+  --mint:#62b3a4;--mint-light:#eaf6f4;--bg:#fdf1ed;--card:#fff;--text:#333;
+  --orange:#f49f5a;--orange-dark:#e08a45;--border:#f0dec5;--red:#e55;
+  --teacher:#7a5c3a;--teacher-bg:#fffbf0;--teacher-border:#f0d99a;
+  --pink:#ff8e8b;--pink-light:#fff5f5;--pink-border:#ffc2c0;
+  --purple:#8a7ce8;--purple-light:#f3f0ff;--purple-bubble:#e0d8ff;
+  --blue:#4a90e2;--blue-light:#f0f7ff;--blue-border:#a4c8f0;
+  --poem:#e8a44a;--poem-light:#fffbf0;--poem-border:#f5d89a;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+
+body { background:var(--bg); font-family:'Jua',sans-serif; color:var(--text); height: 100vh; overflow-y: auto; display: flex; align-items: flex-start; justify-content: center; }
+#homeScreen { position:fixed; inset:0; background:linear-gradient(160deg,#62b3a4,#f49f5a); display:flex; justify-content:center; align-items:center; z-index:300; padding: 20px; overflow-y:auto; }
+/* 홈 화면 가로모드: 카드가 화면 높이에 맞게 */
+@media (min-width: 768px) and (orientation: landscape) {
+  #homeScreen { align-items: flex-start; padding: 10px 20px; }
+  .home-card { max-height: calc(100vh - 20px); overflow-y: auto; }
+}
+.home-card { background:white; border-radius:32px; padding: clamp(20px, 5vw, 36px) clamp(20px, 5vw, 44px); text-align:center; box-shadow:0 24px 64px rgba(0,0,0,.22); width: 100%; max-width:800px; display:flex; flex-direction:column; align-items:center; gap:10px; }
+.home-logo { font-size: clamp(40px, 10vw, 60px); line-height:1; margin-bottom:4px; }
+.home-card h1 { font-size: clamp(24px, 6vw, 32px); color:var(--mint); margin-bottom:2px; }
+.creator-label { font-size: clamp(14px, 4vw, 18px); color:var(--mint); background:var(--mint-light); padding:4px 16px; border-radius:20px; font-weight:bold; border:2px dashed var(--mint); margin-bottom:8px; word-break: keep-all; }
+.home-card p { font-size: clamp(13px, 3.5vw, 15px); color:#888; margin-bottom:8px; word-break: keep-all; }
+.home-nick-row { display:flex; gap:10px; width:100%; max-width:400px; }
+.nick-input { flex:1; padding:12px 16px; border:2px solid #ddd; border-radius:12px; font-family:inherit; font-size:18px; text-align:center; outline:none; min-width: 0; }
+.nick-input:focus { border-color:var(--mint); }
+.nick-confirm-btn { padding:12px 18px; background:var(--mint); color:white; border:none; border-radius:12px; font-family:inherit; font-size:17px; cursor:pointer; white-space: nowrap; }
+.setup-error { font-size:14px; color:var(--red); min-height:18px; }
+
+.app-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; width:100%; margin-top:6px; }
+@media (max-width: 650px) { .app-grid { grid-template-columns: repeat(2, 1fr); } }
+
+/* 홈 카드: 태블릿 가로 모드에서 컴팩트하게 */
+@media (min-width: 768px) and (orientation: landscape) {
+  .home-card { padding: 16px clamp(20px, 4vw, 36px); gap: 7px; }
+  .home-logo { font-size: clamp(30px, 6vw, 48px); margin-bottom:0; }
+  .home-card h1 { font-size: clamp(20px, 4vw, 26px); margin-bottom:0; }
+  .home-card p { margin-bottom:4px; }
+  .creator-label { margin-bottom:4px; }
+  .app-grid { gap: 8px; margin-top: 4px; }
+  .app-card { padding: 12px 8px; gap: 5px; }
+  .app-card .ac-icon { font-size: clamp(22px, 3.5vw, 30px); }
+}
+
+.app-card { background:linear-gradient(135deg,var(--c1),var(--c2)); border-radius:18px; padding:18px 8px; display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; transition:transform .18s; border:none; font-family:inherit; color:white; box-shadow:0 4px 16px rgba(0,0,0,.12); }
+.app-card:hover { transform:translateY(-4px) scale(1.04); }
+.app-card .ac-step { font-size:12px; background:rgba(255,255,255,.25); padding:3px 10px; border-radius:12px; white-space:nowrap; }
+.app-card .ac-icon { font-size:clamp(28px, 5vw, 38px); }
+.app-card .ac-name { font-size:clamp(15px, 3vw, 19px); font-weight:bold; white-space:nowrap; }
+.app-card .ac-desc { font-size:11px; opacity:.9; line-height:1.4; text-align:center; word-break:keep-all; }
+.app-card.dodum{--c1:#4a90e2;--c2:#357abd;}.app-card.ieum{--c1:#62b3a4;--c2:#4e9a8c;}.app-card.ttieum{--c1:#8a7ce8;--c2:#6a5cc8;}.app-card.jieum{--c1:#ff8e8b;--c2:#ff6b68;}
+
+/* ════════════════════════════════════════════════════
+   레이아웃 핵심 블록
+   수정 원칙:
+   ① body → #appWrapper → .app-screen → .tablet → main → .panel
+      이 6단 flex 체인 전체가 고정 높이를 가져야 내부 스크롤이 동작한다.
+   ② 가로모드에서 .tablet에 고정 높이를 주고,
+      header/탭바는 flex-shrink:0, main은 flex:1 + overflow:hidden,
+      패널은 min-height:0 + overflow-y:auto 여야 넘침이 생기지 않는다.
+   ③ min-height 값이 있으면 flex 자식이 부모를 뚫고 나가므로 제거한다.
+   ════════════════════════════════════════════════════ */
+
+/* ── 모바일 기본 ── */
+#appWrapper {
+  display: none;
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+}
+.app-screen {
+  display: none;
+  width: 100%;
+  align-items: flex-start;
+  justify-content: center;
+}
+.app-screen.active { display: flex; }
+
+/* 모바일: 세로 스택, 자연 높이 */
+.tablet {
+  width: 100%;
+  max-width: 1024px;
+  background: var(--bg);
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.15);
+  display: flex;
+  flex-direction: column;
+  /* 모바일에서는 높이 고정 없이 자연 흐름 */
+}
+main {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 10px;
+  overflow-y: auto;
+}
+.m-panel, .panel, .b-panel, .p-panel {
+  width: 100%;
+  background: white;
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── 태블릿 이상(768px+) 공통: 가로 배치 + 높이 고정 체인 ── */
+@media (min-width: 768px) {
+  /* ① body: 넘침 숨김, 자녀 세로 중앙 */
+  body {
+    overflow: hidden;
+    align-items: center;
+    height: 100vh;
+  }
+
+  /* ② appWrapper: 뷰포트 전체를 flex 컨테이너로 */
+  #appWrapper {
+    display: flex !important;
+    height: 100vh;
+    padding: 8px;
+    align-items: center;
+    box-sizing: border-box;
+  }
+
+  /* ③ app-screen: appWrapper를 가득 채움 */
+  .app-screen {
+    height: 100%;
+    align-items: center;
+  }
+
+  /* ④ tablet: 부모 높이를 꽉 채우되 패딩 감산 */
+  .tablet {
+    max-width: 100%;
+    height: calc(100vh - 16px); /* appWrapper padding 8px × 2 */
+    max-height: none;
+    border-radius: 20px;
+    /* flex-direction:column은 기본값 유지 */
+  }
+
+  /* ⑤ header / 탭바: 고정 높이, 절대 줄어들지 않음 */
+  .tablet > header,
+  .ieum-tab-bar,
+  .j-tab-bar {
+    flex-shrink: 0;
+  }
+
+  /* ⑥ main: 남은 높이를 전부 차지하고, 자식에게 넘기기 위해 overflow:hidden */
+  main {
+    flex: 1;
+    min-height: 0;       /* ★ flex 자식이 부모를 뚫지 못하게 하는 핵심 */
+    overflow: hidden;    /* 패널 각자가 스크롤 담당 */
+    flex-direction: row;
+    padding: 8px;
+    gap: 8px;
+  }
+
+  /* ⑦ 패널: 남은 폭/높이를 균등 분배, 내부 스크롤 */
+  .m-panel, .panel, .b-panel, .p-panel {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;       /* ★ min-height 제거가 핵심 — 이것 때문에 넘쳤음 */
+    height: 100%;
+    overflow-y: auto;
+  }
+}
+
+/* ── 가로 모드 추가 최적화 (landscape) ── */
+@media (min-width: 768px) and (orientation: landscape) {
+  /* appWrapper 패딩 최소화로 글쓰기 공간 최대화 */
+  #appWrapper { padding: 4px 6px; }
+  .tablet { height: calc(100vh - 8px); border-radius: 14px; }
+  main { padding: 6px 8px; gap: 8px; }
+
+  /* 헤더 패딩 축소 */
+  .app-screen header { padding: 6px 12px !important; }
+  .ieum-tab-bar { padding: 4px 12px 0; }
+  .ieum-tab { padding: 5px 12px; font-size: 12px; }
+  .j-tab { padding: 5px 10px; font-size: 13px; }
+
+  /* 틔움 story-phone */
+  .story-phone { margin: 6px; border-radius: 16px; min-height: 0; }
+}
+
+/* ── 대형 데스크탑 (1200px+) ── */
+@media (min-width: 1200px) {
+  #appWrapper { padding: 8px 20px; }
+  .tablet { max-width: 1400px; height: calc(100vh - 16px); border-radius: 20px; }
+  main { padding: 10px 12px; gap: 10px; }
+}
