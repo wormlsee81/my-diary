@@ -430,6 +430,12 @@ function setLang(lang) {
   if (ieumDiaryListBtn) ieumDiaryListBtn.textContent = isEn ? '📖 Diary List' : '📖 일기장';
   const ieumPrintBtn = document.getElementById('ieumPrintBtn');
   if (ieumPrintBtn) ieumPrintBtn.textContent = isEn ? '🖨️ Print' : '🖨️ 그림일기 출력';
+  // ⚠️ 포트폴리오/교사 대시보드 버튼은 번역 로직이 빠져 있어 영어 모드에서도
+  //    한글 그대로 남아있던 문제 수정
+  const ieumPortfolioBtn = document.getElementById('ieumPortfolioBtn');
+  if (ieumPortfolioBtn) ieumPortfolioBtn.textContent = lang === 'en' ? '📈 Portfolio' : '📈 포트폴리오';
+  const ieumTeacherDashBtn = document.getElementById('ieumTeacherDashBtn');
+  if (ieumTeacherDashBtn) ieumTeacherDashBtn.textContent = lang === 'en' ? '📊 Teacher Dashboard' : '📊 교사 대시보드';
 
   /* ── 이음 기타 UI 요소 전환 ── */
   const richnesBarLabel = document.getElementById('richnesBarLabel');

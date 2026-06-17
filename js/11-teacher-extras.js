@@ -42,13 +42,11 @@ function closeTeacherDashboard() {
 }
 
 async function getDashboardData() {
-  // 모든 닉네임 키에서 일기 데이터 수집
-  const allKeys = [];
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      allKeys.push(localStorage.key(i));
-    }
-  } catch(e) {}
+  // ⚠️ 일기 데이터는 02-core-utils.js의 lsSet()을 통해 localforage(IndexedDB)에
+  //    저장된다 (mdj_entries_<닉네임> 키). 예전 코드는 localStorage를 직접 스캔해서
+  //    실제 데이터를 한 번도 찾지 못하고 항상 빈 대시보드만 보여주고 있었음.
+  let allKeys = [];
+  try { allKeys = await localforage.keys(); } catch(e) {}
   const students = [];
   const seen = new Set();
   for (const key of allKeys) {
@@ -57,7 +55,7 @@ async function getDashboardData() {
     if (seen.has(nick)) continue;
     seen.add(nick);
     try {
-      const entries = JSON.parse(localStorage.getItem(key) || '[]');
+      const entries = (await lsGet(key)) || [];
       if (entries.length > 0) {
         const latest = entries[0];
         const today = new Date().toLocaleDateString('ko-KR');

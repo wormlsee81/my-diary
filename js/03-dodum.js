@@ -17,6 +17,9 @@ function switchDodumTab(tab){
       btn.style.background=t===tab?'rgba(255,255,255,.9)':'rgba(255,255,255,.2)';
       btn.style.color=t===tab?'var(--blue)':'white';
       btn.style.fontWeight=t===tab?'bold':'normal';
+      // ⚠️ border도 명시적으로 관리: 안 그러면 처음 HTML에 박혀있던
+      //    border:2px solid white(활성 탭 표시용)가 탭을 옮긴 뒤에도 안 지워져 남음
+      btn.style.border=t===tab?'2px solid white':'none';
     }
   });
   const headerRight=$('dodumHeaderRight_montage');
