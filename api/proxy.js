@@ -27,12 +27,18 @@ export default async function handler(req, res) {
 
     const { target, ...rest } = body;
 
+    // ⚠️ Vercel 서버리스 함수의 응답 페이로드 한도는 4.5MB로 고정되어 있어
+    //    1024x1024 PNG를 base64로 돌려주면 한도를 넘기는 경우가 잦다.
+    //    클라이언트가 어떤 값을 보내든 768을 넘지 않도록 서버에서도 강제 클램프.
+    const MAX_SIDE = 768;
+    const clampSide = (v, fallback) => Math.min(parseInt(v, 10) || fallback, MAX_SIDE);
+
     // Together AI 이미지 생성 API 형식
     const togetherBody = {
       model: rest.model || 'black-forest-labs/FLUX.1-schnell',
       prompt: rest.prompt,
-      width: rest.width || 1024,
-      height: rest.height || 1024,
+      width: clampSide(rest.width, MAX_SIDE),
+      height: clampSide(rest.height, MAX_SIDE),
       steps: rest.steps || 4,
       n: rest.n || 1,
       response_format: 'b64_json',
