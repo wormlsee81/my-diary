@@ -9,7 +9,7 @@ const LANG_CONTENT = {
     desc: 'AI와 함께 상상력을 키우고 나만의 책을 완성해요!',
     nickLabel: '내 이름:', nickPlaceholder: '이름을 입력해주세요',
     confirmBtn: '확인 ✓',
-    ieumTabDiary: '📖 그림일기', ieumTabEssay: '📝 Essay Builder',
+    ieumTabDiary: '📖 그림일기', ieumTabEssay: '📝 논설문 쓰기',
   },
   en: {
     logo: '🌟', title: 'English Adventure!',
@@ -40,12 +40,11 @@ function setLang(lang) {
   if(tabDiary) tabDiary.textContent = c.ieumTabDiary;
   if(tabEssay) tabEssay.textContent = c.ieumTabEssay;
 
-  // ── Essay Builder 탭: 한국어일 때 숨김, 영어일 때만 표시 ──
-  if(tabEssay) tabEssay.style.display = lang === 'en' ? '' : 'none';
-  // 한국어로 전환 시 Essay 탭이 활성화되어 있으면 diary 탭으로 강제 전환
-  if(lang === 'ko' && typeof _currentIeumTab !== 'undefined' && _currentIeumTab === 'essay') {
-    switchIeumTab('diary');
-  }
+  // ✅ [수정] 예전에는 여기서 "한국어면 탭 숨김 + essay 탭에 있으면 diary로
+  // 강제 이동"을 했었는데, 08-ieum-essay.js가 이미 한국어(논설문 선생님)/
+  // 영어(Essay Coach) 양쪽을 모두 지원하도록 완성되어 있어서, 이 줄 때문에
+  // 정작 완성된 한국어 논설문 기능에 사용자가 영원히 도달할 수 없었음.
+  // → 탭은 항상 보이고, textContent만 위에서 언어별로 바뀌도록 둔다.
 
   // Update Essay Builder UI for the selected language
   const essayTopicBox = document.getElementById('essayTopicBox');
@@ -57,6 +56,8 @@ function setLang(lang) {
     essayChips.innerHTML = `<span style="color:#ccc;font-size:13px;">${lang==='en' ? 'Pick a topic to see recommended words & connectors ✨' : '주제를 뽑으면 추천 단어/문법이 나타나요 ✨'}</span>`;
   }
   // Update Essay Builder guide panel labels
+  const essayPanelTitle = document.getElementById('essayPanelTitle');
+  if(essayPanelTitle) essayPanelTitle.textContent = lang==='en' ? '[ ✍️ Essay Builder ]' : '[ ✍️ 논설문 쓰기 ]';
   const guideTitle = document.getElementById('essayGuideTitle');
   if(guideTitle) guideTitle.textContent = lang==='en' ? '[ 📋 Essay Guide ]' : '[ 📋 에세이 가이드 ]';
   const essayStructureTitle = document.getElementById('essayStructureTitle');
@@ -326,24 +327,27 @@ function setLang(lang) {
     : '🌟 [Conclusion] 결론 — <em>의견을 다시 강조해요</em>';
 
   // Essay Builder 초급 모드 textarea placeholder 병기
+  // ✅ [수정] 한국어(논설문) 분기는 원래 영어 예문이 그대로 남아있던 leftover
+  // 버그였음 — analyzeEssay()의 한국어 채점 기준이 "절대 영어로 쓰지 말 것"
+  // 이므로, 초급 모드 예문도 실제 국어 논설문 예문으로 교체함.
   const essayStepIntro = document.getElementById('essayStepIntro');
   if (essayStepIntro) essayStepIntro.placeholder = isEn
     ? 'e.g. I think smartphones are very helpful. (스마트폰이 매우 유용하다고 생각해요.)'
-    : '예) I think smartphones are very helpful.';
+    : '예) 저는 스마트폰을 교실에서 써도 된다고 생각합니다.';
   const essayStepBody1 = document.getElementById('essayStepBody1');
   if (essayStepBody1) essayStepBody1.placeholder = isEn
     ? 'e.g. First, we can search for information easily. (첫째, 정보를 쉽게 검색할 수 있어요.)'
-    : '예) First, we can search for information easily.';
+    : '예) 첫째, 모르는 것이 생기면 바로 찾아볼 수 있습니다.';
   const essayStepBody2 = document.getElementById('essayStepBody2');
   if (essayStepBody2) essayStepBody2.placeholder = isEn
     ? 'e.g. Second, we can communicate with our friends. (둘째, 친구들과 소통할 수 있어요.)'
-    : '예) Second, we can communicate with our friends.';
+    : '예) 둘째, 친구들과 빠르게 연락하고 소통할 수 있습니다.';
   const essayStepConcl = document.getElementById('essayStepConcl');
   if (essayStepConcl) essayStepConcl.placeholder = isEn
     ? 'e.g. In conclusion, I believe smartphones are very useful. (결론적으로, 스마트폰이 매우 유용하다고 생각해요.)'
-    : '예) In conclusion, I believe smartphones are very useful.';
+    : '예) 이와 같은 이유로 저는 스마트폰 사용에 찬성합니다.';
   const essayCombineBtnLabel = document.getElementById('essayCombineBtnLabel');
-  if (essayCombineBtnLabel) essayCombineBtnLabel.textContent = isEn ? 'Complete My Essay! 🪄' : '에세이 완성하기!';
+  if (essayCombineBtnLabel) essayCombineBtnLabel.textContent = isEn ? 'Complete My Essay! 🪄' : '논설문 완성하기!';
 
   // Essay Builder 모드 토글
   const btnModeBasic = document.getElementById('btnModeBasic');
