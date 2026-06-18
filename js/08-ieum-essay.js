@@ -31,22 +31,98 @@ function applyEssayLangUI() {
   if (hint) hint.style.display = isEn ? '' : 'none';
   const ttsRow = $('essayTtsRow');
   if (ttsRow) ttsRow.style.display = isEn ? 'flex' : 'none';
+  /* 유용한 접속사 칩은 영어 전용, 참고 사실/의견 박스는 한국어 전용 */
+  const connBlock = $('essayConnectorsBlock');
+  if (connBlock) connBlock.style.display = isEn ? '' : 'none';
+  const factsBlock = $('essayFactsBlock');
+  if (factsBlock) factsBlock.style.display = isEn ? 'none' : '';
 }
 
 /* ── 2. 주제 데이터 ── */
 const ESSAY_TOPICS = [
-  { title:'스마트폰을 교실에서 써도 될까?',            titleEn:'Should students use smartphones in class?',              words:['smartphone','helpful','addicted'],           grammar:['I think','Because'] },
-  { title:'동물원은 필요할까, 필요하지 않을까?',        titleEn:'Are zoos necessary or not?',                             words:['freedom','endangered','protect'],            grammar:['However,','In my opinion,'] },
-  { title:'환경을 지키려면 우리가 무엇을 해야 할까?',  titleEn:'What should we do to protect the environment?',          words:['recycle','pollution','environment'],         grammar:['First,','Therefore,'] },
-  { title:'학교 급식에 채소를 꼭 먹어야 할까?',        titleEn:'Should students be required to eat vegetables at lunch?', words:['healthy','nutrition','choice'],              grammar:['I believe','For example,'] },
-  { title:'초등학생도 SNS를 써도 될까?',               titleEn:'Should elementary students be allowed to use social media?',words:['dangerous','social media','privacy'],        grammar:['On the other hand,','In conclusion,'] },
-  { title:'학교 숙제는 꼭 필요할까?',                  titleEn:'Is school homework really necessary?',                   words:['practice','stress','improve'],               grammar:['Second,','In addition,'] },
-  { title:'반려동물을 키우는 것이 좋을까?',            titleEn:'Is having a pet a good idea?',                           words:['responsibility','companion','care'],          grammar:['I think','Because'] },
-  { title:'미래에는 로봇이 선생님을 대신할 수 있을까?',titleEn:'Can robots replace teachers in the future?',             words:['artificial intelligence','emotion','replace'],grammar:['However,','I believe'] },
-  { title:'용돈을 받으면 어떻게 써야 할까?',           titleEn:'How should students spend their allowance?',             words:['save','spend','important'],                  grammar:['First,','For example,'] },
-  { title:'스포츠는 모든 학생이 배워야 할까?',         titleEn:'Should all students be required to learn sports?',       words:['teamwork','healthy','competition'],           grammar:['In my opinion,','Therefore,'] },
-  { title:'패스트푸드는 건강에 해로울까?',             titleEn:'Is fast food harmful to our health?',                    words:['nutrition','junk food','balanced'],           grammar:['I think','However,'] },
-  { title:'학교에서 교복을 입어야 할까?',              titleEn:'Should students wear uniforms at school?',               words:['uniform','equality','freedom'],               grammar:['First,','In conclusion,'] },
+  { title:'스마트폰을 교실에서 써도 될까?',            titleEn:'Should students use smartphones in class?',              words:['smartphone','helpful','addicted'],           grammar:['I think','Because'],
+    factsKo:[
+      {stance:'찬성', text:'스마트폰으로 모르는 내용을 바로 검색해 학습에 활용할 수 있다.'},
+      {stance:'찬성', text:'위급한 상황에서 가족이나 선생님께 빠르게 연락할 수 있다.'},
+      {stance:'반대', text:'수업 중 알림이나 메시지로 집중력이 떨어질 수 있다.'},
+      {stance:'반대', text:'친구들과 직접 얼굴을 보고 대화하는 시간이 줄어들 수 있다.'},
+    ] },
+  { title:'동물원은 필요할까, 필요하지 않을까?',        titleEn:'Are zoos necessary or not?',                             words:['freedom','endangered','protect'],            grammar:['However,','In my opinion,'],
+    factsKo:[
+      {stance:'찬성', text:'멸종 위기 동물을 보호하고 번식시키는 역할을 한다.'},
+      {stance:'찬성', text:'직접 보면서 동물에 대한 생생한 교육적 경험을 할 수 있다.'},
+      {stance:'반대', text:'좁은 우리에 갇혀 지내는 동물은 스트레스를 받을 수 있다.'},
+      {stance:'반대', text:'야생에서 살아야 할 동물이 본래의 습성을 잃을 수 있다.'},
+    ] },
+  { title:'환경을 지키려면 우리가 무엇을 해야 할까?',  titleEn:'What should we do to protect the environment?',          words:['recycle','pollution','environment'],         grammar:['First,','Therefore,'],
+    factsKo:[
+      {stance:'참고', text:'분리배출을 철저히 하면 재활용률을 높일 수 있다.'},
+      {stance:'참고', text:'일회용품 사용을 줄이는 것이 쓰레기를 줄이는 핵심 방법이다.'},
+      {stance:'참고', text:'가까운 거리는 걷거나 자전거를 이용하면 탄소 배출을 줄일 수 있다.'},
+    ] },
+  { title:'학교 급식에 채소를 꼭 먹어야 할까?',        titleEn:'Should students be required to eat vegetables at lunch?', words:['healthy','nutrition','choice'],              grammar:['I believe','For example,'],
+    factsKo:[
+      {stance:'찬성', text:'채소에는 비타민과 식이섬유가 풍부해 성장기 건강에 도움이 된다.'},
+      {stance:'찬성', text:'어릴 때부터 다양한 음식을 골고루 먹는 식습관을 기를 수 있다.'},
+      {stance:'반대', text:'좋아하지 않는 채소를 억지로 먹으면 식사 시간이 즐겁지 않을 수 있다.'},
+      {stance:'반대', text:'강요보다는 조금씩 맛보게 하는 방법이 더 효과적일 수 있다.'},
+    ] },
+  { title:'초등학생도 SNS를 써도 될까?',               titleEn:'Should elementary students be allowed to use social media?',words:['dangerous','social media','privacy'],        grammar:['On the other hand,','In conclusion,'],
+    factsKo:[
+      {stance:'찬성', text:'멀리 사는 친구나 가족과 소식을 주고받을 수 있다.'},
+      {stance:'찬성', text:'다양한 정보와 관심사를 빠르게 접할 수 있다.'},
+      {stance:'반대', text:'개인정보가 노출되거나 낯선 사람과 연락이 닿을 위험이 있다.'},
+      {stance:'반대', text:'사용 시간이 길어지면 수면이나 학습에 방해가 될 수 있다.'},
+    ] },
+  { title:'학교 숙제는 꼭 필요할까?',                  titleEn:'Is school homework really necessary?',                   words:['practice','stress','improve'],               grammar:['Second,','In addition,'],
+    factsKo:[
+      {stance:'찬성', text:'수업에서 배운 내용을 다시 연습하며 복습할 수 있다.'},
+      {stance:'찬성', text:'스스로 계획을 세워 공부하는 습관을 기를 수 있다.'},
+      {stance:'반대', text:'숙제가 너무 많으면 쉬거나 놀 시간이 줄어든다.'},
+      {stance:'반대', text:'가정 환경에 따라 숙제를 도와줄 사람이 없는 경우도 있다.'},
+    ] },
+  { title:'반려동물을 키우는 것이 좋을까?',            titleEn:'Is having a pet a good idea?',                           words:['responsibility','companion','care'],          grammar:['I think','Because'],
+    factsKo:[
+      {stance:'찬성', text:'동물을 돌보며 책임감과 생명 존중을 배울 수 있다.'},
+      {stance:'찬성', text:'반려동물과 함께 있으면 정서적으로 안정감을 느낄 수 있다.'},
+      {stance:'반대', text:'매일 먹이를 주고 산책시키는 등 꾸준한 돌봄이 필요하다.'},
+      {stance:'반대', text:'가족 중 알레르기가 있거나 키우기를 반대하는 사람이 있을 수 있다.'},
+    ] },
+  { title:'미래에는 로봇이 선생님을 대신할 수 있을까?',titleEn:'Can robots replace teachers in the future?',             words:['artificial intelligence','emotion','replace'],grammar:['However,','I believe'],
+    factsKo:[
+      {stance:'찬성', text:'로봇은 같은 내용을 지치지 않고 반복해서 가르칠 수 있다.'},
+      {stance:'찬성', text:'학생 개인의 학습 속도에 맞춰 문제 난이도를 조절해 줄 수 있다.'},
+      {stance:'반대', text:'로봇은 학생의 감정을 이해하고 공감하는 데 한계가 있다.'},
+      {stance:'반대', text:'친구나 선생님과의 인간적인 관계 속에서 배우는 것도 중요하다.'},
+    ] },
+  { title:'용돈을 받으면 어떻게 써야 할까?',           titleEn:'How should students spend their allowance?',             words:['save','spend','important'],                  grammar:['First,','For example,'],
+    factsKo:[
+      {stance:'저축', text:'미리 계획해서 저축하면 나중에 큰 금액이 필요할 때 도움이 된다.'},
+      {stance:'저축', text:'용돈 기입장을 쓰면 돈을 어디에 썼는지 알 수 있어 절약에 도움이 된다.'},
+      {stance:'소비', text:'필요한 학용품이나 책을 직접 사보며 합리적인 소비를 배울 수 있다.'},
+      {stance:'소비', text:'가족이나 친구를 위한 작은 선물을 사보며 나누는 기쁨을 배울 수 있다.'},
+    ] },
+  { title:'스포츠는 모든 학생이 배워야 할까?',         titleEn:'Should all students be required to learn sports?',       words:['teamwork','healthy','competition'],           grammar:['In my opinion,','Therefore,'],
+    factsKo:[
+      {stance:'찬성', text:'규칙적인 운동은 체력과 건강을 길러준다.'},
+      {stance:'찬성', text:'팀 스포츠를 통해 협동심과 배려심을 배울 수 있다.'},
+      {stance:'반대', text:'학생마다 좋아하는 활동이 달라 흥미를 느끼지 못할 수 있다.'},
+      {stance:'반대', text:'신체적인 차이로 인해 부담을 느끼는 학생도 있을 수 있다.'},
+    ] },
+  { title:'패스트푸드는 건강에 해로울까?',             titleEn:'Is fast food harmful to our health?',                    words:['nutrition','junk food','balanced'],           grammar:['I think','However,'],
+    factsKo:[
+      {stance:'찬성(해롭다)', text:'나트륨과 지방이 많아 자주 먹으면 건강에 좋지 않을 수 있다.'},
+      {stance:'찬성(해롭다)', text:'영양소가 골고루 들어있지 않아 성장기에 부족할 수 있다.'},
+      {stance:'반대(괜찮다)', text:'가끔 먹는 것은 큰 문제가 되지 않으며 기분 전환에도 도움이 될 수 있다.'},
+      {stance:'반대(괜찮다)', text:'채소나 다른 음식과 균형 있게 함께 먹으면 보완할 수 있다.'},
+    ] },
+  { title:'학교에서 교복을 입어야 할까?',              titleEn:'Should students wear uniforms at school?',               words:['uniform','equality','freedom'],               grammar:['First,','In conclusion,'],
+    factsKo:[
+      {stance:'찬성', text:'매일 옷을 고민하지 않아도 되어 시간이 절약된다.'},
+      {stance:'찬성', text:'친구들 사이의 옷차림 비교나 부담을 줄일 수 있다.'},
+      {stance:'반대', text:'자신의 개성을 옷으로 표현할 자유가 줄어들 수 있다.'},
+      {stance:'반대', text:'활동하기 불편하거나 계절에 맞지 않을 때가 있다.'},
+    ] },
 
   /* ────────────────────────────────────────────────────────
    * 교과서 기반 논설문(주장하는 글) 주제 추가
@@ -56,14 +132,59 @@ const ESSAY_TOPICS = [
    *       전형적인 토론·논설문 주제를 초등 논설문 글쓰기에 맞게 재구성.
    *       (영어 칩이 아닌 국어 연결 표현 위주로 grammar 필드 구성)
    * ──────────────────────────────────────────────────────── */
-  { title:'동물원은 꼭 있어야 할까?',                  words:['좁은 우리','스트레스','보호'],                grammar:['첫째,','왜냐하면'] },
-  { title:'우리 전통 음식을 사랑해야 할까?',           words:['전통 음식','우수성','건강'],                  grammar:['첫째,','예를 들어'] },
-  { title:'올바른 우리말 사용, 왜 중요할까?',          words:['줄임말','우리말','바른 표현'],                grammar:['둘째,','따라서'] },
-  { title:'선의의 거짓말은 해도 될까?',                words:['선의의 거짓말','용기','신뢰'],                grammar:['그러나','왜냐하면'] },
-  { title:'학급의 날, 어떻게 보내면 좋을까?',          words:['장기 자랑','학급 행사','협동'],               grammar:['첫째,','둘째,'] },
-  { title:'독도는 왜 우리 땅이라고 말해야 할까?',      words:['독도','우리 영토','역사적 근거'],             grammar:['따라서','왜냐하면'] },
-  { title:'우리 동네 문제, 어떻게 해결해야 할까?',     words:['우리 동네','불편한 점','해결 방안'],           grammar:['첫째,','그러므로'] },
-  { title:'학급 규칙은 왜 지켜야 할까?',               words:['학급 규칙','약속','공동체'],                  grammar:['왜냐하면','따라서'] },
+  { title:'동물원은 꼭 있어야 할까?',                  words:['좁은 우리','스트레스','보호'],                grammar:['첫째,','왜냐하면'],
+    factsKo:[
+      {stance:'찬성', text:'멸종 위기에 처한 동물을 보호하고 안전하게 돌볼 수 있다.'},
+      {stance:'찬성', text:'가까이에서 동물을 관찰하며 생태와 보호의 중요성을 배울 수 있다.'},
+      {stance:'반대', text:'좁은 우리 안에서 지내는 동물은 스트레스를 받을 수 있다.'},
+      {stance:'반대', text:'동물 본래의 서식지와 다른 환경에서 살아야 한다.'},
+    ] },
+  { title:'우리 전통 음식을 사랑해야 할까?',           words:['전통 음식','우수성','건강'],                  grammar:['첫째,','예를 들어'],
+    factsKo:[
+      {stance:'참고', text:'김치, 된장 등 발효 음식은 건강에 좋은 성분이 많다고 알려져 있다.'},
+      {stance:'참고', text:'전통 음식에는 우리 조상들의 지혜와 문화가 담겨 있다.'},
+      {stance:'참고', text:'명절이나 행사 때 먹는 전통 음식은 가족의 추억을 만들어 준다.'},
+      {stance:'다른 의견', text:'입맛에 따라 낯설게 느껴지거나 덜 좋아하는 사람도 있을 수 있다.'},
+    ] },
+  { title:'올바른 우리말 사용, 왜 중요할까?',          words:['줄임말','우리말','바른 표현'],                grammar:['둘째,','따라서'],
+    factsKo:[
+      {stance:'참고', text:'줄임말을 너무 많이 쓰면 윗세대와 의사소통이 어려워질 수 있다.'},
+      {stance:'참고', text:'바른 우리말 표현은 자신의 생각을 더 정확하게 전달하는 데 도움이 된다.'},
+      {stance:'참고', text:'우리말에는 우리 고유의 문화와 정서가 담겨 있다.'},
+      {stance:'다른 의견', text:'새로운 말이나 줄임말도 시대에 따라 자연스럽게 생기는 언어 변화로 볼 수 있다.'},
+    ] },
+  { title:'선의의 거짓말은 해도 될까?',                words:['선의의 거짓말','용기','신뢰'],                grammar:['그러나','왜냐하면'],
+    factsKo:[
+      {stance:'찬성', text:'상대방의 마음을 다치지 않게 하려는 따뜻한 마음에서 나온다.'},
+      {stance:'찬성', text:'작은 거짓말이 상황을 더 부드럽게 만들 때도 있다.'},
+      {stance:'반대', text:'거짓말이 들통나면 신뢰를 잃을 수 있다.'},
+      {stance:'반대', text:'솔직하게 말하는 것이 장기적으로는 더 좋은 관계를 만든다.'},
+    ] },
+  { title:'학급의 날, 어떻게 보내면 좋을까?',          words:['장기 자랑','학급 행사','협동'],               grammar:['첫째,','둘째,'],
+    factsKo:[
+      {stance:'의견1', text:'장기자랑을 하면 서로의 다양한 재능을 알고 더 친해질 수 있다.'},
+      {stance:'의견2', text:'체육대회를 하면 다 함께 몸을 움직이며 협동심을 기를 수 있다.'},
+      {stance:'참고', text:'어떤 활동을 하든 모든 친구가 즐겁게 참여할 수 있는 방법을 고민하는 것이 중요하다.'},
+    ] },
+  { title:'독도는 왜 우리 땅이라고 말해야 할까?',      words:['독도','우리 영토','역사적 근거'],             grammar:['따라서','왜냐하면'],
+    factsKo:[
+      {stance:'사실', text:'독도는 역사적으로 우리나라 사람들이 오랫동안 살고 이용해 온 섬이다.'},
+      {stance:'사실', text:'옛 기록과 지도 자료에서도 독도를 우리 영토로 표시한 것을 찾을 수 있다.'},
+      {stance:'사실', text:'현재 독도에는 우리나라 경찰과 주민이 거주하며 실제로 관리하고 있다.'},
+      {stance:'참고', text:'독도의 역사를 정확히 아는 것이 우리 땅이라고 주장하는 근거가 된다.'},
+    ] },
+  { title:'우리 동네 문제, 어떻게 해결해야 할까?',     words:['우리 동네','불편한 점','해결 방안'],           grammar:['첫째,','그러므로'],
+    factsKo:[
+      {stance:'참고', text:'동네 어른들께 여쭤보거나 설문조사를 하면 어떤 문제가 있는지 알 수 있다.'},
+      {stance:'참고', text:'구청이나 주민센터에 의견을 전달하는 방법도 있다.'},
+      {stance:'참고', text:'친구들과 함께 작은 캠페인이나 포스터를 만들어 알리는 것도 좋은 방법이다.'},
+    ] },
+  { title:'학급 규칙은 왜 지켜야 할까?',               words:['학급 규칙','약속','공동체'],                  grammar:['왜냐하면','따라서'],
+    factsKo:[
+      {stance:'참고', text:'규칙이 있으면 친구들과 다투는 일을 줄일 수 있다.'},
+      {stance:'참고', text:'모두가 규칙을 지키면 교실이 더 안전하고 편안해진다.'},
+      {stance:'참고', text:'규칙을 함께 정하고 지키는 경험은 사회의 법과 약속을 이해하는 데 도움이 된다.'},
+    ] },
 ];
 
 /* 교과서 기반 주제가 시작되는 인덱스 (12번째부터). UI에서 "교과서 주제" 배지 등을 붙일 때 참고용 */
@@ -84,6 +205,7 @@ function drawEssayTopic() {
   const textbookTag = (!isEn && topic._fromTextbook) ? ' <span style="font-size:11px;color:#888;">(교과서 주제)</span>' : '';
   if (topicBox) topicBox.innerHTML = '🎯 ' + displayTitle + textbookTag;
   renderEssayChips(topic);
+  renderEssayFacts(topic);
   toast(isEn ? '✨ New topic picked! Click the word chips to start your essay!' : '✨ 새 주제가 뽑혔어요! 낱말 칩을 눌러 논설문을 시작해봐요!');
 }
 
@@ -105,6 +227,30 @@ function renderEssayChips(topic) {
     btn.onclick = () => insertEssayChipText(g + ' ');
     el.appendChild(btn);
   });
+}
+
+/* 한국어 모드 전용: 영어 접속사 칩 대신, 주제에 대해 참고할 수 있는 짧은 사실/의견을
+   찬성·반대(또는 그에 준하는) 양쪽 입장을 모두 보여줘서 근거 아이디어를 얻도록 돕는다 */
+function renderEssayFacts(topic) {
+  const el = $('essayFactsList');
+  if (!el) return;
+  const facts = (topic && topic.factsKo) || [];
+  if (facts.length === 0) {
+    el.innerHTML = `<span style="color:#ccc; font-size:12px;">이 주제에 대한 참고 자료가 아직 없어요.</span>`;
+    return;
+  }
+  const stanceColor = (s) => {
+    if (s.startsWith('찬성')) return { bg:'#f0fef8', border:'#4caf8a', text:'#2a6a4a' };
+    if (s.startsWith('반대')) return { bg:'#fff5f0', border:'#e07050', text:'#8a3a1a' };
+    if (s === '사실')          return { bg:'#f0f7ff', border:'var(--blue)', text:'#2a5a8a' };
+    return { bg:'#fdf8f0', border:'var(--orange)', text:'#8a5a1a' };
+  };
+  el.innerHTML = facts.map(f => {
+    const c = stanceColor(f.stance);
+    return `<div style="background:${c.bg};border-left:3px solid ${c.border};color:${c.text};border-radius:0 8px 8px 0;padding:6px 10px;font-size:11.5px;line-height:1.55;margin-bottom:5px;word-break:keep-all;">
+      <b>[${f.stance}]</b> ${f.text}
+    </div>`;
+  }).join('');
 }
 
 /* ── 4. 칩 텍스트 삽입 ── */
@@ -129,8 +275,9 @@ function insertEssaySkeleton() {
 
   if (isEn) {
     ta.value =
-`🍞 [Intro — 서론]
-I think ${hint}. In my opinion, _________________________________.
+`🍞 [Intro — 서론: 문제 상황 + 나의 주장]
+These days, many people are talking about ${hint}. (Describe the situation in your own words.)
+I think _________________________________. (Write your clear opinion here.)
 
 🥩 [Body 1 — 첫 번째 이유]
 First, _________________________________. For example, _________________________________.
@@ -141,10 +288,11 @@ Second, _________________________________. In addition, ________________________
 🍞 [Conclusion — 결론]
 In conclusion, I believe _________________________________. Therefore, _________________________________.`;
   } else {
-    // 국어 논설문(주장하는 글) 4단 구조: 서론 - 본론1 - 본론2 - 결론
+    // 국어 논설문(주장하는 글) 4단 구조: 서론(문제 상황+주장) - 본론1 - 본론2 - 결론
     ta.value =
-`🍞 [서론 — 문제 제기 및 주장]
-저는 ${hint}에 대해 (찬성/반대)합니다. 그 이유는 다음과 같습니다.
+`🍞 [서론 — 문제 상황 + 나의 주장]
+요즘 ${hint}에 대한 이야기가 많이 나오고 있습니다. (어떤 문제 상황인지 한두 문장으로 설명해보세요.)
+저는 이 문제에 대해 (찬성/반대)합니다. (나의 주장을 분명하게 써보세요.)
 
 🥩 [본론 1 — 첫 번째 근거]
 첫째, _________________________________. 왜냐하면 _________________________________.
@@ -170,6 +318,8 @@ function newEssay() {
   if (topicBox) topicBox.textContent = _currentLang==='en' ? 'Pick a topic! 🎲' : '주제를 뽑아주세요! 🎲';
   const chips = $('essayChips');
   if (chips) chips.innerHTML = `<span style="color:#ccc;font-size:13px;">${_currentLang==='en' ? 'Pick a topic to see recommended words & connectors ✨' : '주제를 뽑으면 추천 낱말/표현이 나타나요 ✨'}</span>`;
+  const factsEl = $('essayFactsList');
+  if (factsEl) factsEl.innerHTML = `<span style="color:#ccc; font-size:12px;">주제를 뽑으면 참고할 만한 사실/의견이 나타나요 ✨</span>`;
   ['essayRichnessFill','essayBonusFill'].forEach(id => { const el=$(id); if(el) el.style.width='0%'; });
   $('essayRichnessScore').textContent = _currentLang==='en' ? '— waiting' : '— 대기 중';
   $('essayBonusScore').textContent    = _currentLang==='en' ? '— waiting' : '— 대기 중';
@@ -214,11 +364,15 @@ async function analyzeEssay(text) {
   const topicWords   = _currentEssayTopic ? _currentEssayTopic.words.join(', ')   : '(none)';
   const topicGrammar = _currentEssayTopic ? _currentEssayTopic.grammar.join(', ') : '(none)';
   const topicTitle   = _currentEssayTopic ? _currentEssayTopic.title : (_currentLang==='en' ? 'Free topic' : '자유 주제');
+  const topicFactsKo = (_currentEssayTopic && _currentEssayTopic.factsKo && _currentEssayTopic.factsKo.length)
+    ? _currentEssayTopic.factsKo.map(f => `- [${f.stance}] ${f.text}`).join('\n')
+    : '(이 주제에는 등록된 참고 자료가 없음. 일반적인 상식 안에서 제안할 것)';
 
   const isEn = _currentLang === 'en';
 
   /* 파트 3 수정: max_tokens 증가 + grammarErrors 배열 필드 추가 */
   /* 한국어 분기 추가: 영어 문법 채점 프롬프트 대신 국어 논설문(주장하는 글) 채점 프롬프트 사용 */
+  /* 2026 개편: 서론=문제 상황+주장으로 기준 변경, 참고 자료 기반 contentIdea(구체적 근거/아이디어 제안) 필드 추가 */
   const systemPrompt = isEn ? `You are a warm English Essay Coach for elementary school students (ages 10-13).
 Topic: "${topicTitle}"
 
@@ -228,7 +382,7 @@ SANDWICH FEEDBACK (always apply in 'advice'):
 3. 💪 ENCOURAGEMENT — English only
 
 ESSAY STRUCTURE CHECK:
-- hasIntro: does the student state their opinion/claim at the start?
+- hasIntro: does the student describe the situation/problem AND state their opinion/claim at the start?
 - hasBody: does the student give at least one reason with an example?
 - hasConclusion: does the student restate their opinion at the end?
 
@@ -238,7 +392,7 @@ Recommended grammar/connectors: ${topicGrammar} → +1 each (max 2)
 Count how many of these appear in the text. bonusInk = that count (max 5).
 
 RICHNESS SCORING (1–10):
-- Clear opinion stated: +2
+- Situation + clear opinion stated: +2
 - At least 2 body paragraphs with reasons: +3
 - Conclusion present: +2
 - Vocabulary & grammar quality: +2
@@ -252,14 +406,16 @@ For each mistake, provide:
 - "type": error category, one of: "spelling" | "article" | "tense" | "subject-verb" | "word-order" | "preposition" | "plural" | "other"
 If there are no grammar errors, return an empty array [].
 
-Return ONLY valid JSON (no markdown):
+Be specific, not generic. Quote a short phrase from the student's own text in your feedback whenever possible, instead of generic filler like "keep writing" or "add more detail".
+
+Return ONLY valid JSON (no markdown, no code fences):
 {
   "richness":<1-10>,
   "bonusInk":<0-5>,
   "hasIntro":<true|false>,
   "hasBody":<true|false>,
   "hasConclusion":<true|false>,
-  "structureFeedback":"<English 1 sentence on structure — what's missing or well done>",
+  "structureFeedback":"<English 1 sentence on structure — what's missing or well done, quoting the student's text if possible>",
   "wordUseFeedback":"<English 1 sentence on recommended word/grammar usage>",
   "grammarFeedback":"<sandwich-method grammar fix, English only, 1-2 sentences>",
   "grammarErrors":[
@@ -279,7 +435,7 @@ Return ONLY valid JSON (no markdown):
 3. 💪 격려 — 따뜻하게 다음 단계를 응원 (한국어로만)
 
 [논설문 구조 평가] (서론-본론-결론의 논리적 흐름을 확인)
-- hasIntro: 글 앞부분에 자신의 주장(찬성/반대 의견)을 분명히 밝혔는가?
+- hasIntro: 글 앞부분에 ① 어떤 문제 상황/논쟁인지 설명하고, ② 그에 대한 자신의 주장(찬성/반대 의견)을 분명히 밝혔는가? (둘 다 있어야 true)
 - hasBody: 그 주장을 뒷받침하는 근거(이유)를 적어도 하나 이상, 예시와 함께 제시했는가?
 - hasConclusion: 글 끝에서 자신의 주장을 다시 한 번 요약·강조했는가?
 
@@ -289,7 +445,7 @@ Return ONLY valid JSON (no markdown):
 글 속에 위 낱말/표현이 몇 개나 나오는지 세어서 합산 (최대 5).
 
 [풍부함 점수] (richness, 1~10)
-- 주장이 명확하게 드러남: +2
+- 문제 상황과 주장이 모두 명확하게 드러남: +2
 - 근거가 2개 이상이고 각각 예시가 있음: +3
 - 결론에서 주장을 다시 정리함: +2
 - 어휘 수준과 문장 호응(맞춤법 포함)의 정확성: +2
@@ -303,18 +459,35 @@ Return ONLY valid JSON (no markdown):
 - "type": 오류 종류 — 다음 중 하나만 사용: "spelling"(맞춤법) | "spacing"(띄어쓰기) | "agreement"(문장 호응) | "punctuation"(문장 부호) | "word-choice"(낱말 선택) | "other"(기타)
 오류가 없으면 빈 배열 []을 반환해.
 
+[참고 자료 — 이 주제에 대해 미리 정리해 둔 사실/의견 목록]
+${topicFactsKo}
+
+[아이디어 제안] (contentIdea) — 가장 중요한 필드
+위 참고 자료 목록과 학생의 글을 비교해서, 학생이 아직 쓰지 않은 근거나 아이디어 중
+학생의 주장(찬성/반대) 방향과 어울리는 것을 1~2개 찾아 제안해줘.
+"더 써보세요", "자세히 써보세요" 같은 뻔하고 일반적인 말은 절대 쓰지 말고,
+"~라는 사실을 근거로 들어보면 어떨까요?" 처럼 학생이 다음 문장에 바로 활용할 수 있는
+구체적인 문장/표현 형태로 제안해줘. 참고 자료에 학생 주장과 반대되는 입장의 근거가 있다면,
+"반대쪽에서는 이런 주장도 할 수 있는데, 그에 대해 반박해보는 것도 좋아요" 처럼
+반론을 다루는 방법도 제안해줄 수 있어.
+
 [추천 어휘/사자성어] (voca)
 글의 수준을 한 단계 높여줄 수 있는 고급 국어 어휘나 사자성어를 2~3개 추천해줘.
 형식: 낱말(뜻 풀이), 낱말(뜻 풀이) 형태로, 예: 일관성(생각이나 태도가 한결같은 성질) 형태처럼 짧은 뜻 풀이를 함께 적어줘.
 
-오직 유효한 JSON만 반환해 (마크다운 금지):
+[일반 원칙]
+모든 피드백 문장은 구체적이어야 해. 가능하면 학생이 실제로 쓴 표현을 짧게 인용해서 언급하고,
+"잘 써보아요!", "확인해보아요!" 같은 막연한 말만 반복하지 마.
+
+오직 유효한 JSON만 반환해 (마크다운 금지, 코드블록 금지):
 {
   "richness":<1-10>,
   "bonusInk":<0-5>,
   "hasIntro":<true|false>,
   "hasBody":<true|false>,
   "hasConclusion":<true|false>,
-  "structureFeedback":"<논설문 구조에 대한 한국어 1문장 — 무엇이 부족하거나 잘 되었는지>",
+  "structureFeedback":"<논설문 구조에 대한 한국어 1문장 — 무엇이 부족하거나 잘 되었는지, 가능하면 학생 글의 표현을 인용>",
+  "contentIdea":"<학생이 다음 문장에 바로 활용할 수 있는 구체적인 근거/아이디어 제안. 한국어 2~3문장>",
   "wordUseFeedback":"<추천 낱말/연결 표현 활용에 대한 한국어 1문장>",
   "grammarFeedback":"<샌드위치 방식의 맞춤법·띄어쓰기·문장 호응 교정, 한국어로 1~2문장>",
   "grammarErrors":[
@@ -326,15 +499,25 @@ Return ONLY valid JSON (no markdown):
 }`;
 
   const raw = await callClaude({
-    model: 'claude-haiku-4-5-20251001', max_tokens: 1000,
+    model: 'claude-haiku-4-5-20251001', max_tokens: 1400,
     system: systemPrompt,
     messages: [{ role:'user', content:`${isEn ? "Student's essay:" : '학생이 쓴 논설문:'}\n${text}` }]
   });
 
-  const data = parseJSON(raw) || {
+  /* 방어적 파싱: 모델이 지시를 어기고 ```json 코드블록으로 감싸서 반환하는 경우를
+     대비해 백틱 펜스를 미리 제거한 뒤 파싱한다. (생성형 모델은 종종 이렇게 응답함) */
+  const cleanedRaw = (typeof raw === 'string' ? raw : (raw ? JSON.stringify(raw) : ''))
+    .replace(/```json/gi, '').replace(/```/g, '').trim();
+  const parsed = parseJSON(cleanedRaw);
+  if (!parsed) {
+    // 디버깅용: 파싱이 실패하면 원본 응답을 콘솔에 남겨 원인을 추적할 수 있게 한다
+    console.warn('[analyzeEssay] AI 응답 JSON 파싱 실패 — 기본 피드백으로 대체됨. 원본 응답:', raw);
+  }
+  const data = parsed || {
     richness:3, bonusInk:0,
     hasIntro:false, hasBody:false, hasConclusion:false,
     structureFeedback: isEn ? 'Try to include an intro, body, and conclusion!' : '서론, 본론, 결론을 모두 갖추어 써보아요!',
+    contentIdea:       isEn ? '' : '',
     wordUseFeedback:   isEn ? 'Try using some of the recommended words!' : '추천 낱말이나 연결 표현을 사용해봐요!',
     grammarFeedback:   isEn ? 'Check your grammar and sentence structure!' : '맞춤법과 띄어쓰기를 한 번 더 확인해봐요!',
     grammarErrors:     [], /* 파트 3: Grammar Diff 빈 배열 fallback */
@@ -343,6 +526,7 @@ Return ONLY valid JSON (no markdown):
     voca:              '' /* 파트 4: voca fallback */
   };
   if(!data.voca) data.voca = ''; /* 파트 4 */
+  if(!data.contentIdea) data.contentIdea = '';
 
   if (data.bonusInk > 0) {
     const bb = $('essayBonusBadge');
@@ -375,7 +559,7 @@ function setEssayTeacher(st, data) {
   const wrap = $('essayCoachWrap');
   if (!face || !msg) return;
   face.classList.remove('thinking');
-  ['essayCoachStructure','essayCoachWordUse','essayCoachGrammar','essayCoachNext']
+  ['essayCoachStructure','essayCoachIdea','essayCoachWordUse','essayCoachGrammar','essayCoachNext']
     .forEach(id => { const e=$(id); if(e){ e.style.display='none'; e.innerHTML=''; } });
   if (wrap) wrap.style.display = 'none';
 
@@ -412,6 +596,15 @@ function setEssayTeacher(st, data) {
     const addLabel  = isEn ? 'add ' : '';
     const perfectLb = isEn ? 'Perfect structure! 👏' : '완벽한 구조예요! 👏';
     structEl.innerHTML = `🍔 <b>${isEn ? 'Essay Structure:' : '논설문 구조:'}</b> ${ok.join(' / ')}${miss.length ? ' — <span style="color:var(--orange);">' + addLabel + miss.join(', ') + '!</span>' : ' ' + perfectLb}<br><small style="opacity:.8;">${data.structureFeedback}</small>`;
+    hasCoach = true;
+  }
+
+  /* 2026 개편: 근거/아이디어가 부족한 막연한 조언 대신, 주제 참고 자료를 바탕으로 한
+     구체적인 근거·아이디어 제안을 보여준다 (item 2 개선) */
+  const ideaEl = $('essayCoachIdea');
+  if (ideaEl && data.contentIdea && data.contentIdea.trim()) {
+    ideaEl.style.cssText = baseStyle + 'background:#f5f0ff; border-left:3px solid #8a7ce8; color:#4a3a8a;';
+    ideaEl.innerHTML = `💡 <b>${isEn ? 'Idea Suggestion:' : '아이디어 제안:'}</b> ${data.contentIdea}`;
     hasCoach = true;
   }
 
@@ -833,7 +1026,7 @@ async function loadEssay(id) {
   if (topicBox) topicBox.textContent = _currentEssayTopic
     ? '🎯 ' + ((_currentLang === 'en' && _currentEssayTopic.titleEn) ? _currentEssayTopic.titleEn : _currentEssayTopic.title)
     : (_currentLang==='en' ? '🎯 Free topic' : '🎯 자유 주제');
-  if (_currentEssayTopic) renderEssayChips(_currentEssayTopic);
+  if (_currentEssayTopic) { renderEssayChips(_currentEssayTopic); renderEssayFacts(_currentEssayTopic); }
   /* 파트 4 + 한국어 분기: TTS/힌트는 영어 전용 기능이므로 영어 모드에서만 노출 */
   applyEssayLangUI();
   toast(_currentLang==='en' ? '📖 Essay loaded!' : '📖 논설문을 불러왔어요!');
