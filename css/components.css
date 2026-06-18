@@ -24,13 +24,56 @@
    (몽타주 탭의 단어자판기/시어출력기, 이음 헤더의 백업/저장/포트폴리오 등 모든
    .hbtn에서 공통으로 발생) 인라인 style로 border를 직접 지정한 버튼(예: 활성 탭)은
    인라인 스타일이 항상 더 높은 우선순위를 가지므로 영향 없음.*/
+/* ⚠️ 발견: .hbtn / .home-btn / .hbtn.orange 는 base.css·components.css
+   어디에도 실제 정의가 없었음(!) — 그동안 거의 브라우저 기본 버튼 모양에
+   의존하고 있었고, class="hbtn orange"도 사실상 아무 효과가 없었음.
+   .ieum-tab(이미 잘 어울리는 기존 톤: rgba(255,255,255,.22) 배경 + 흰 글자)을
+   참고해서 헤더 버튼 전체에 통일된 디자인을 새로 정의함. */
 .hbtn {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
   border: none;
   outline: none;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.22);
+  color: white;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .18s, transform .12s, box-shadow .18s;
 }
+.hbtn:hover { background: rgba(255,255,255,.36); }
+.hbtn:active { transform: scale(.95); }
+
+/* 강조 버튼 — 저장처럼 중요한 동작이나 포트폴리오/교사 대시보드 같은
+   특별 기능에 일관되게 사용. 기존 :root의 --orange를 그대로 사용. */
+.hbtn.orange {
+  background: var(--orange);
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+.hbtn.orange:hover { background: var(--orange-dark); }
+
+/* '홈' 버튼도 같은 문제였어서 같은 디자인으로 통일 */
+.home-btn {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.22);
+  color: white;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .18s, transform .12s;
+}
+.home-btn:hover { background: rgba(255,255,255,.36); }
+.home-btn:active { transform: scale(.95); }
+
 #ieumApp header { background:var(--mint); color:white; padding:10px 18px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0; flex-wrap: wrap; gap: 8px;}
 .h-left, .h-right { display:flex; align-items:center; gap:7px; flex-wrap: wrap;}
 .date-badge { background:rgba(255,255,255,.2); padding:4px 10px; border-radius:20px; font-size:12px; }
