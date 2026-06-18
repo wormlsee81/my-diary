@@ -525,6 +525,7 @@
         <!-- 구조/단어활용/맞춤법/다음 도전 세부 코칭 -->
         <div id="essayCoachWrap" style="display:none; padding:8px 10px 10px;">
           <div id="essayCoachStructure" style="display:none;"></div>
+          <div id="essayCoachIdea"      style="display:none;"></div>
           <div id="essayCoachWordUse"   style="display:none;"></div>
           <div id="essayCoachGrammar"   style="display:none;"></div>
           <div id="essayCoachNext"      style="display:none;"></div>
@@ -544,7 +545,7 @@
         <div style="background:#fff8f0;border:2px solid var(--orange);border-radius:10px;padding:8px 12px;font-size:12px;">
           <b style="color:var(--orange);" id="essayStructureTitle">🍔 햄버거 에세이 구조</b>
           <div style="margin-top:6px;display:flex;flex-direction:column;gap:4px;">
-            <div style="background:#eaf6f4;border-radius:7px;padding:5px 10px;font-size:11px;border-left:3px solid var(--mint);" id="essayIntroLabel"><b>🍞 Intro (서론)</b> — 나의 의견/주장 문장</div>
+            <div style="background:#eaf6f4;border-radius:7px;padding:5px 10px;font-size:11px;border-left:3px solid var(--mint);" id="essayIntroLabel"><b>🍞 Intro (서론)</b> — 문제 상황 제기 + 나의 의견/주장</div>
             <div style="background:#fff5e0;border-radius:7px;padding:5px 10px;font-size:11px;border-left:3px solid var(--orange);" id="essayBody1Label"><b>🥩 Body 1</b> — 첫 번째 이유 + 예시</div>
             <div style="background:#fff5e0;border-radius:7px;padding:5px 10px;font-size:11px;border-left:3px solid var(--orange);" id="essayBody2Label"><b>🥩 Body 2</b> — 두 번째 이유 + 예시</div>
             <div style="background:#eaf6f4;border-radius:7px;padding:5px 10px;font-size:11px;border-left:3px solid var(--mint);" id="essayConcLabel"><b>🍞 Conclusion (결론)</b> — 의견 재확인</div>
@@ -552,8 +553,8 @@
         </div>
       </div>
 
-      <!-- ④ 접속사 칩 모음 -->
-      <div style="flex-shrink:0;margin-bottom:10px;">
+      <!-- ④ 접속사 칩 모음 (영어 모드 전용) -->
+      <div id="essayConnectorsBlock" style="flex-shrink:0;margin-bottom:10px;">
         <div style="font-size:12px;color:#999;margin-bottom:6px;" id="essayConnLabel">🔗 유용한 접속사 (클릭하면 삽입):</div>
         <div style="display:flex;flex-wrap:wrap;gap:5px;">
           <button class="essay-chip grammar" onclick="insertEssayChipText('First, ')">First,</button>
@@ -568,6 +569,14 @@
           <button class="essay-chip grammar" onclick="insertEssayChipText('In addition, ')">In addition,</button>
           <button class="essay-chip grammar" onclick="insertEssayChipText('On the other hand, ')">On the other hand,</button>
           <button class="essay-chip grammar" onclick="insertEssayChipText('In my opinion, ')">In my opinion,</button>
+        </div>
+      </div>
+
+      <!-- ④-2 참고 자료 / 팩트 박스 (한국어 모드 전용) — 찬성·반대 양쪽 입장의 근거 아이디어 제공 -->
+      <div id="essayFactsBlock" style="display:none;flex-shrink:0;margin-bottom:10px;">
+        <div style="font-size:12px;color:#999;margin-bottom:6px;">📚 참고할 만한 사실/의견 (양쪽 입장 모두):</div>
+        <div id="essayFactsList" style="display:flex;flex-direction:column;">
+          <span style="color:#ccc; font-size:12px;">주제를 뽑으면 참고할 만한 사실/의견이 나타나요 ✨</span>
         </div>
       </div>
 
@@ -975,7 +984,7 @@
 <script src="js/05-shared-builders.js"></script>
 <script src="js/06-ttieum.js"></script>
 <script src="js/07-jieum.js"></script>
-<script src="js/08-ieum-essay.js"></script>
+<script src="js/08-ieum-essay.js?v=2"></script>
 <script src="js/09-sos-dict.js"></script>
 <script src="js/10-i18n.js"></script>
 <script src="js/11-teacher-extras.js"></script>
