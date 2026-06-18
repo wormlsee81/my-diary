@@ -110,8 +110,7 @@ function insertEssayChipText(text) {
 
 /* ── 5. 글쓰기 뼈대 삽입 (영어: 햄버거 뼈대 / 한국어: 서론-본론1-본론2-결론) ── */
 function insertEssaySkeleton() {
-  // 파트 1: 뼈대 삽입 시 고급 모드로 전환
-  setEssayMode('advanced');
+  // 2026 UX 개편: 모드 토글이 사라졌으므로 메인 textarea에 곧바로 4단 구조를 삽입
   const ta = $('essayTextarea');
   if (!ta) return;
   const isEn = _currentLang === 'en';
@@ -150,123 +149,10 @@ In conclusion, I believe _________________________________. Therefore, _________
   toast(isEn ? '🍔 Hamburger skeleton inserted! Fill in the blanks!' : '🍔 논설문 뼈대(서론-본론1-본론2-결론)를 넣었어요! 빈칸을 채워보세요!');
 }
 
-/* ══════════════════════════════════════════════════════════
-   파트 1 추가: 단계별 마법사 모드 — 초급(빈칸채우기) / 고급(자유영작) 토글
-══════════════════════════════════════════════════════════ */
-let _essayMode = 'basic'; // 'basic' | 'advanced'
-
-/**
- * 파트 1: 초급/고급 모드 전환
- * - 초급: textarea 숨기고 3분할 입력창 표시
- * - 고급: 3분할 입력창 숨기고 textarea 표시
- */
-function setEssayMode(mode) {
-  _essayMode = mode;
-  const stepWrap  = $('essayStepWrap');
-  const textarea  = $('essayTextarea');
-  const btnBasic    = $('btnModeBasic');
-  const btnAdvanced = $('btnModeAdvanced');
-  const voiceRow  = $('btnEssayVoice');
-
-  if (mode === 'basic') {
-    // 초급 모드: 분리 입력창 보이기, textarea 숨기기
-    if (stepWrap)  { stepWrap.style.display  = 'flex'; }
-    if (textarea)  { textarea.style.display  = 'none'; }
-    if (btnBasic)    { btnBasic.classList.add('active');    btnBasic.classList.remove('advanced'); }
-    if (btnAdvanced) { btnAdvanced.classList.remove('active'); }
-    // 음성 버튼은 초급에선 숨김 (입력 대상이 분산됨)
-    if (voiceRow && voiceRow.parentElement) voiceRow.parentElement.style.display = 'none';
-  } else {
-    // 고급 모드: textarea 보이기, 분리 입력창 숨기기
-    if (stepWrap)  { stepWrap.style.display  = 'none'; }
-    if (textarea)  { textarea.style.display  = ''; }
-    if (btnAdvanced) { btnAdvanced.classList.add('active'); }
-    if (btnBasic)    { btnBasic.classList.remove('active'); }
-    if (voiceRow && voiceRow.parentElement) voiceRow.parentElement.style.display = 'flex';
-    textarea?.focus();
-  }
-}
-
-/**
- * 파트 1: 초급 모드 — 서론/본론/결론 합치기
- * 세 칸을 모두 채우면 하나로 합쳐 고급 textarea에 넣고 분석 실행
- */
-function combineEssaySteps() {
-  const intro = ($('essayStepIntro')?.value || '').trim();
-  const body1 = ($('essayStepBody1')?.value || '').trim();
-  const body2 = ($('essayStepBody2')?.value || '').trim();
-  const concl = ($('essayStepConcl')?.value || '').trim();
-  const isEn  = _currentLang === 'en';
-
-  const missing = [];
-  if (!intro) missing.push(isEn ? 'Intro' : '서론');
-  if (!body1) missing.push(isEn ? 'Body 1' : '본론 1 (첫 번째 근거)');
-  if (!body2) missing.push(isEn ? 'Body 2' : '본론 2 (두 번째 근거)');
-  if (!concl) missing.push(isEn ? 'Conclusion' : '결론');
-
-  if (missing.length > 0) {
-    toast(isEn
-      ? `✏️ Please fill in: ${missing.join(', ')}!`
-      : `✏️ 빈칸을 채워주세요: ${missing.join(', ')}!`);
-    return;
-  }
-
-  // 합쳐서 textarea에 삽입 (언어별 구조 라벨 분기)
-  const combined = isEn
-?
-`[Intro]
-${intro}
-
-[Body 1]
-${body1}
-
-[Body 2]
-${body2}
-
-[Conclusion]
-${concl}`
-:
-`[서론]
-${intro}
-
-[본론 1]
-${body1}
-
-[본론 2]
-${body2}
-
-[결론]
-${concl}`;
-
-  const ta = $('essayTextarea');
-  if (ta) ta.value = combined;
-
-  // 고급 모드로 전환해서 분석 결과 보여주기
-  setEssayMode('advanced');
-
-  /* 파트 4 + 한국어 분기: TTS/쉐도잉은 영어 읽기 연습용이므로 한국어(논설문) 모드에서는 행을 띄우지 않음 */
-  const ttsRow = $('essayTtsRow');
-  if (ttsRow) ttsRow.style.display = (_currentLang === 'en') ? 'flex' : 'none';
-
-  toast(_currentLang==='en'
-    ? '🪄 Your essay is combined! Analyzing now... 🔍'
-    : '🪄 논설문을 합쳤어요! 분석 중... 🔍');
-
-  // 분석 즉시 트리거
-  _lastEssayAnalysis = null;
-  onEssayInput();
-}
-
 /* ── 6. 새 에세이 ── */
 function newEssay() {
   const ta = $('essayTextarea');
-  if (ta) ta.value = '';
-  // 파트 1: 초급 모드 입력창도 초기화
-  ['essayStepIntro','essayStepBody1','essayStepBody2','essayStepConcl'].forEach(id => {
-    const el = $(id); if (el) el.value = '';
-  });
-  // 초급 모드로 기본값 복원 (3~4학년 친화적)
-  setEssayMode(_essayMode);
+  if (ta) { ta.value = ''; ta.focus(); }
   _currentEssayTopic = null;
   _lastEssayText = ''; _lastEssayAnalysis = null;
   const topicBox = $('essayTopicBox');
@@ -957,9 +843,6 @@ async function deleteEssay(id) {
 document.addEventListener('DOMContentLoaded', () => {
   const ta = $('essayTextarea');
   if (ta) ta.addEventListener('input', onEssayInput);
-
-  /* 파트 1: 초기 모드 설정 — 기본값은 초급(basic) */
-  setEssayMode('basic');
 
   /* 파트 2: 팝업 외부 클릭 시 닫기 */
   document.addEventListener('click', (e) => {
