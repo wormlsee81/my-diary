@@ -322,7 +322,7 @@
   <!-- ▼ 이음 탭 바 -->
   <div class="ieum-tab-bar">
     <button class="ieum-tab active" id="ieumTab_diary" onclick="switchIeumTab('diary')">📖 그림일기</button>
-    <button class="ieum-tab" id="ieumTab_essay" onclick="switchIeumTab('essay')">📝 Essay Builder</button>
+    <button class="ieum-tab" id="ieumTab_essay" onclick="switchIeumTab('essay')">📝 논설문 쓰기</button>
     <button class="ieum-tab" id="ieumTab_peer" onclick="switchIeumTab('peer')">🤝 동료 피드백</button>
   </div>
   <main id="ieumContent_diary">
@@ -429,12 +429,12 @@
     </section>
   </main>
 
-  <!-- ▼ Essay Builder 화면 (탭 2) — 기본 숨김 -->
+  <!-- ▼ Essay/논설문 쓰기 화면 (탭 2) — 기본 숨김 -->
   <main id="ieumContent_essay" style="display:none;">
 
     <!-- 왼쪽 패널: 주제·칩·작성 -->
     <section class="panel" style="display:flex; flex-direction:column; position:relative;">
-      <div class="panel-title">[ ✍️ Essay Builder ]</div>
+      <div class="panel-title" id="essayPanelTitle">[ ✍️ 논설문 쓰기 ]</div>
 
       <!-- 주제 뽑기 / 뼈대 버튼 -->
       <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-shrink:0; flex-wrap:wrap;">
@@ -641,7 +641,7 @@
     </section>
 
   </main>
-  <!-- ▲ Essay Builder 화면 끝 -->
+  <!-- ▲ Essay/논설문 쓰기 화면 끝 -->
 
   <!-- ▼ 동료 피드백 화면 (탭 3) — 기본 숨김 -->
   <main id="ieumContent_peer" style="display:none;">
