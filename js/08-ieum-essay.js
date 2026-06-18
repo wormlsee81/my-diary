@@ -19,7 +19,18 @@ function switchIeumTab(tab) {
     const btn = $(`ieumTab_${t}`);
     if (btn) btn.classList.toggle('active', t === tab);
   });
-  if (tab === 'essay') renderEssayList();
+  if (tab === 'essay') { renderEssayList(); applyEssayLangUI(); }
+}
+
+/* 한국어 모드에서는 "영어로 에세이를 써보세요" 힌트와 "원어민 발음 듣기(TTS)" 영역을
+   화면에서 완전히 숨긴다 (영어 전용 기능이므로). 언어가 바뀔 수 있는 모든 진입점에서
+   호출해 항상 현재 언어 상태에 맞게 동기화한다. */
+function applyEssayLangUI() {
+  const isEn = _currentLang === 'en';
+  const hint = $('essayWriteHint');
+  if (hint) hint.style.display = isEn ? '' : 'none';
+  const ttsRow = $('essayTtsRow');
+  if (ttsRow) ttsRow.style.display = isEn ? 'flex' : 'none';
 }
 
 /* ── 2. 주제 데이터 ── */
@@ -166,6 +177,7 @@ function newEssay() {
   if (st) st.classList.remove('show','s1','s2','s3','s4','s5');
   const bb = $('essayBonusBadge');
   if (bb) bb.classList.remove('show');
+  applyEssayLangUI();
   setEssayTeacher('idle');
 }
 
@@ -384,9 +396,8 @@ function setEssayTeacher(st, data) {
   face.textContent = '✨';
   msg.innerHTML = `<span class="teacher-hi">${isEn ? '🌟 Essay Feedback' : '🌟 논설문 피드백'}</span><br>${data.advice || (isEn ? 'Great essay! Keep it up! 💪' : '논설문을 잘 쓰고 있어요! 💪')}`;
 
-  /* 파트 4 + 한국어 분기: TTS는 영어 읽기 연습용이므로 영어 모드에서만 행을 보여줌 */
-  const ttsRow = $('essayTtsRow');
-  if (ttsRow) ttsRow.style.display = isEn ? 'flex' : 'none';
+  /* 파트 4 + 한국어 분기: TTS/힌트는 영어 전용 기능이므로 영어 모드에서만 노출 */
+  applyEssayLangUI();
 
   let hasCoach = false;
   const baseStyle = 'display:block; border-radius:0 8px 8px 0; padding:7px 11px; font-size:11.5px; line-height:1.65; margin-bottom:5px; word-break:keep-all;';
@@ -823,9 +834,8 @@ async function loadEssay(id) {
     ? '🎯 ' + ((_currentLang === 'en' && _currentEssayTopic.titleEn) ? _currentEssayTopic.titleEn : _currentEssayTopic.title)
     : (_currentLang==='en' ? '🎯 Free topic' : '🎯 자유 주제');
   if (_currentEssayTopic) renderEssayChips(_currentEssayTopic);
-  /* 파트 4 + 한국어 분기: TTS는 영어 읽기 연습용이므로 영어 모드에서만 표시 */
-  const ttsRow = $('essayTtsRow');
-  if (ttsRow) ttsRow.style.display = (_currentLang === 'en') ? 'flex' : 'none';
+  /* 파트 4 + 한국어 분기: TTS/힌트는 영어 전용 기능이므로 영어 모드에서만 노출 */
+  applyEssayLangUI();
   toast(_currentLang==='en' ? '📖 Essay loaded!' : '📖 논설문을 불러왔어요!');
 }
 
@@ -844,19 +854,109 @@ document.addEventListener('DOMContentLoaded', () => {
   const ta = $('essayTextarea');
   if (ta) ta.addEventListener('input', onEssayInput);
 
-  /* 파트 2: 팝업 외부 클릭 시 닫기 */
-  document.addEventListener('click', (e) => {
-    const panel = $('sosDictPanel');
-    const btn   = $('sosDictBtn');
-    if (panel && panel.classList.contains('open')) {
-      if (!panel.contains(e.target) && e.target !== btn && !btn?.contains(e.target)) {
-        panel.classList.remove('open');
-      }
-    }
-  });
+  /* 초기 진입 시에도 현재 언어에 맞게 TTS/힌트 노출 여부 동기화 */
+  applyEssayLangUI();
 });
 
 /* ══════════════════════════════════════════════════════════
-   파트 2 추가: SOS 영단어 도우미 — 미니 챗봇
-   한글 단어/문장 → Claude API → 영어 단어 + 예문 즉시 반환
+   논설문 자기 평가 체크리스트 (5점 척도, 10문항)
+   — 기존 openSelfAssessModal()(그림일기용)과는 별도로 동작하는,
+     이음-에세이 탭 전용의 완전히 독립적인 모달/로직.
+     (외부 openSelfAssessModal 미동작 이슈와 무관하게 항상 동작하도록
+      이 파일 안에서 모달 표시/숨김까지 직접 처리함)
 ══════════════════════════════════════════════════════════ */
+const ESSAY_SA_QUESTIONS = [
+  '글의 처음(서론)에서 내 주장(의견)을 분명하게 밝혔다.',
+  '주장을 뒷받침하는 이유(근거)를 2개 이상 썼다.',
+  '각 이유마다 알맞은 예시나 설명을 덧붙였다.',
+  '서론-본론-결론의 순서와 짜임새가 잘 갖춰져 있다.',
+  "'첫째, 둘째, 왜냐하면, 그러므로' 같은 연결어를 알맞게 사용했다.",
+  '결론에서 내 주장을 다시 한번 강조하며 마무리했다.',
+  '맞춤법과 띄어쓰기를 확인하며 썼다.',
+  '문장의 주어와 서술어가 잘 어울리게(호응되게) 썼다.',
+  '읽는 사람이 이해하기 쉽도록 명확하게 썼다.',
+  '글을 쓰는 동안 정성을 다해 최선을 다했다.'
+];
+const ESSAY_SA_SCALE_LABELS = ['전혀 아니다', '그렇지 않다', '보통이다', '그렇다', '매우 그렇다'];
+let _essaySaRatings = {};
+
+/** 자기 평가 모달 열기 — 매번 새로 그려서 이전 응답을 초기화 */
+function openEssaySelfAssessModal() {
+  const modal = $('essaySelfAssessModal');
+  if (!modal) return;
+  _essaySaRatings = {};
+
+  const wrap = $('essaySaItemsWrap');
+  if (wrap) {
+    wrap.innerHTML = ESSAY_SA_QUESTIONS.map((q, i) => `
+      <div style="border:1.5px solid var(--border);border-radius:10px;padding:9px 11px;">
+        <div style="font-size:12.5px;color:#444;margin-bottom:7px;line-height:1.5;word-break:keep-all;">${i + 1}. ${q}</div>
+        <div style="display:flex;gap:5px;" id="essaySaRow${i}">
+          ${[1, 2, 3, 4, 5].map(v => `
+            <button type="button" onclick="setEssaySaRating(${i},${v},this)"
+              title="${ESSAY_SA_SCALE_LABELS[v - 1]}"
+              style="flex:1;padding:7px 0;border:1.5px solid var(--border);border-radius:8px;background:white;font-family:inherit;font-size:13px;font-weight:bold;color:#999;cursor:pointer;transition:all .12s;">${v}</button>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  const resultBox = $('essaySaResultBox');
+  if (resultBox) { resultBox.style.display = 'none'; resultBox.innerHTML = ''; }
+
+  modal.style.display = 'flex';
+}
+
+function closeEssaySelfAssessModal() {
+  const modal = $('essaySelfAssessModal');
+  if (modal) modal.style.display = 'none';
+}
+
+/** 문항별 1~5점 선택 — 선택된 버튼만 강조 표시 */
+function setEssaySaRating(idx, value, btnEl) {
+  _essaySaRatings[idx] = value;
+  const row = $(`essaySaRow${idx}`);
+  if (!row) return;
+  Array.from(row.children).forEach((btn, i) => {
+    const selected = (i + 1) === value;
+    btn.style.background  = selected ? 'var(--orange)' : 'white';
+    btn.style.color       = selected ? 'white' : '#999';
+    btn.style.borderColor = selected ? 'var(--orange)' : 'var(--border)';
+  });
+}
+
+/** 평가 완료 — 모든 문항 응답 확인 → 점수 집계 → 결과 표시 → 보너스 잉크 지급 */
+async function submitEssaySelfAssessment() {
+  const total    = ESSAY_SA_QUESTIONS.length;
+  const answered = Object.keys(_essaySaRatings).length;
+  if (answered < total) {
+    toast(`✏️ 아직 ${total - answered}개 문항에 답하지 않았어요! 모든 문항에 1~5점을 골라주세요.`);
+    return;
+  }
+
+  const sum = Object.values(_essaySaRatings).reduce((a, b) => a + b, 0);
+  const avg = sum / total; // 1~5점 평균
+
+  let comment;
+  if      (avg >= 4.5) comment = '🌟 최고예요! 논설문에 필요한 요소를 꼼꼼하게 다 갖췄어요!';
+  else if (avg >= 3.5) comment = '😊 아주 잘 썼어요! 조금만 더 다듬으면 완벽해질 거예요!';
+  else if (avg >= 2.5) comment = '🙂 잘 하고 있어요! 부족했던 항목들을 다시 살펴봐요!';
+  else if (avg >= 1.5) comment = '😅 조금 더 노력이 필요해요! 체크한 항목부터 다시 고쳐볼까요?';
+  else                  comment = '💪 처음부터 차근차근, 다시 한번 도전해봐요!';
+
+  let aiCompareHTML = '';
+  if (_lastEssayAnalysis && typeof _lastEssayAnalysis.richness === 'number') {
+    const selfOn10 = Math.round(avg * 2 * 10) / 10; // 5점 척도 → 10점 척도로 환산
+    aiCompareHTML = `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--orange);">🤖 AI 점수: <b>${_lastEssayAnalysis.richness}/10</b> &nbsp;vs&nbsp; 내 자기평가: <b>${selfOn10}/10</b></div>`;
+  }
+
+  const resultBox = $('essaySaResultBox');
+  if (resultBox) {
+    resultBox.style.display = 'block';
+    resultBox.innerHTML = `📊 총점 <b>${sum}/${total * 5}점</b> (평균 ${avg.toFixed(1)}/5)<br>${comment}${aiCompareHTML}`;
+  }
+
+  toast('📝 자기 평가를 완료했어요! 스스로 돌아보는 멋진 습관이에요 🌱');
+  try { await addInk(5); } catch (e) { /* 잉크 지급 실패는 평가 자체를 막지 않음 */ }
+}
