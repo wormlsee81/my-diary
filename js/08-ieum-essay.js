@@ -1,6 +1,14 @@
 /* ============================================================
- * [이음-에세이] 주제뽑기 · 에세이 작성/분석 · TTS · 쉐도잉
+ * [이음-에세이 / 논설문] 주제뽑기 · 작성/분석 · TTS · 쉐도잉
  * (분할 자동 생성 — 원본 index.html에서 추출, 로드 순서 유지 필수)
+ *
+ * 언어 분기 정책:
+ *  - _currentLang === 'en'  → 영어 에세이 코치 (기존 기능 그대로)
+ *  - _currentLang !== 'en'  → 국어 논설문 선생님 (주장하는 글쓰기)
+ *    · 평가 기준: 한국어 맞춤법/띄어쓰기/문장 호응 + 서론-본론-결론 논리 구조
+ *    · TTS/쉐도잉은 "영어 읽기 연습" 기능이므로 한국어 모드에서는
+ *      버튼을 누르면 안내 토스트만 띄우도록 방어 코드를 추가함
+ *      (기능 코드 자체는 원본 그대로 유지)
  * ============================================================ */
 let _currentIeumTab = 'diary';
 function switchIeumTab(tab) {
@@ -28,18 +36,44 @@ const ESSAY_TOPICS = [
   { title:'스포츠는 모든 학생이 배워야 할까?',         titleEn:'Should all students be required to learn sports?',       words:['teamwork','healthy','competition'],           grammar:['In my opinion,','Therefore,'] },
   { title:'패스트푸드는 건강에 해로울까?',             titleEn:'Is fast food harmful to our health?',                    words:['nutrition','junk food','balanced'],           grammar:['I think','However,'] },
   { title:'학교에서 교복을 입어야 할까?',              titleEn:'Should students wear uniforms at school?',               words:['uniform','equality','freedom'],               grammar:['First,','In conclusion,'] },
+
+  /* ────────────────────────────────────────────────────────
+   * 교과서 기반 논설문(주장하는 글) 주제 추가
+   * 출처: 2015 개정 교육과정 [4국03-03] 의견이 드러나게 글쓰기,
+   *       5~6학년군 국어 "주장과 근거를 판단해요"(논설문 단원),
+   *       "토의하여 해결해요" / "토론을 해요" 단원에 실제로 제시되는
+   *       전형적인 토론·논설문 주제를 초등 논설문 글쓰기에 맞게 재구성.
+   *       (영어 칩이 아닌 국어 연결 표현 위주로 grammar 필드 구성)
+   * ──────────────────────────────────────────────────────── */
+  { title:'동물원은 꼭 있어야 할까?',                  words:['좁은 우리','스트레스','보호'],                grammar:['첫째,','왜냐하면'] },
+  { title:'우리 전통 음식을 사랑해야 할까?',           words:['전통 음식','우수성','건강'],                  grammar:['첫째,','예를 들어'] },
+  { title:'올바른 우리말 사용, 왜 중요할까?',          words:['줄임말','우리말','바른 표현'],                grammar:['둘째,','따라서'] },
+  { title:'선의의 거짓말은 해도 될까?',                words:['선의의 거짓말','용기','신뢰'],                grammar:['그러나','왜냐하면'] },
+  { title:'학급의 날, 어떻게 보내면 좋을까?',          words:['장기 자랑','학급 행사','협동'],               grammar:['첫째,','둘째,'] },
+  { title:'독도는 왜 우리 땅이라고 말해야 할까?',      words:['독도','우리 영토','역사적 근거'],             grammar:['따라서','왜냐하면'] },
+  { title:'우리 동네 문제, 어떻게 해결해야 할까?',     words:['우리 동네','불편한 점','해결 방안'],           grammar:['첫째,','그러므로'] },
+  { title:'학급 규칙은 왜 지켜야 할까?',               words:['학급 규칙','약속','공동체'],                  grammar:['왜냐하면','따라서'] },
 ];
+
+/* 교과서 기반 주제가 시작되는 인덱스 (12번째부터). UI에서 "교과서 주제" 배지 등을 붙일 때 참고용 */
+const ESSAY_TOPICS_KO_TEXTBOOK_START = 12;
+ESSAY_TOPICS.forEach((t, i) => { t._fromTextbook = (i >= ESSAY_TOPICS_KO_TEXTBOOK_START); });
 let _currentEssayTopic = null;
 
 /* ── 3. 주제 뽑기 ── */
+/* 한국어 분기: 교과서 기반 국어 논설문 주제는 titleEn이 없으므로,
+   영어 모드에서는 titleEn이 있는 주제만 추첨 대상으로 삼는다 */
 function drawEssayTopic() {
-  const topic = ESSAY_TOPICS[Math.floor(Math.random() * ESSAY_TOPICS.length)];
+  const isEn = _currentLang === 'en';
+  const pool = isEn ? ESSAY_TOPICS.filter(t => !!t.titleEn) : ESSAY_TOPICS;
+  const topic = pool[Math.floor(Math.random() * pool.length)];
   _currentEssayTopic = topic;
   const topicBox = $('essayTopicBox');
-  const displayTitle = (_currentLang === 'en' && topic.titleEn) ? topic.titleEn : topic.title;
-  if (topicBox) topicBox.textContent = '🎯 ' + displayTitle;
+  const displayTitle = (isEn && topic.titleEn) ? topic.titleEn : topic.title;
+  const textbookTag = (!isEn && topic._fromTextbook) ? ' <span style="font-size:11px;color:#888;">(교과서 주제)</span>' : '';
+  if (topicBox) topicBox.innerHTML = '🎯 ' + displayTitle + textbookTag;
   renderEssayChips(topic);
-  toast(_currentLang==='en' ? '✨ New topic picked! Click the word chips to start your essay!' : '✨ 새 주제가 뽑혔어요! 단어 칩을 눌러 에세이를 시작해봐요!');
+  toast(isEn ? '✨ New topic picked! Click the word chips to start your essay!' : '✨ 새 주제가 뽑혔어요! 낱말 칩을 눌러 논설문을 시작해봐요!');
 }
 
 function renderEssayChips(topic) {
@@ -74,14 +108,17 @@ function insertEssayChipText(text) {
   onEssayInput();
 }
 
-/* ── 5. 햄버거 뼈대 삽입 ── */
+/* ── 5. 글쓰기 뼈대 삽입 (영어: 햄버거 뼈대 / 한국어: 서론-본론1-본론2-결론) ── */
 function insertEssaySkeleton() {
   // 파트 1: 뼈대 삽입 시 고급 모드로 전환
   setEssayMode('advanced');
   const ta = $('essayTextarea');
   if (!ta) return;
-  const hint = _currentEssayTopic ? '"' + _currentEssayTopic.title + '"' : '...';
-  ta.value =
+  const isEn = _currentLang === 'en';
+  const hint = _currentEssayTopic ? '"' + (isEn && _currentEssayTopic.titleEn ? _currentEssayTopic.titleEn : _currentEssayTopic.title) + '"' : '...';
+
+  if (isEn) {
+    ta.value =
 `🍞 [Intro — 서론]
 I think ${hint}. In my opinion, _________________________________.
 
@@ -93,8 +130,24 @@ Second, _________________________________. In addition, ________________________
 
 🍞 [Conclusion — 결론]
 In conclusion, I believe _________________________________. Therefore, _________________________________.`;
+  } else {
+    // 국어 논설문(주장하는 글) 4단 구조: 서론 - 본론1 - 본론2 - 결론
+    ta.value =
+`🍞 [서론 — 문제 제기 및 주장]
+저는 ${hint}에 대해 (찬성/반대)합니다. 그 이유는 다음과 같습니다.
+
+🥩 [본론 1 — 첫 번째 근거]
+첫째, _________________________________. 왜냐하면 _________________________________.
+
+🥩 [본론 2 — 두 번째 근거]
+둘째, _________________________________. 예를 들어 _________________________________.
+
+🍞 [결론 — 주장 강조 및 요약]
+이와 같은 이유로 저는 ${hint}에 대해 (찬성/반대)합니다. 우리 모두 _________________________________.`;
+  }
+
   ta.focus();
-  toast(_currentLang==='en' ? '🍔 Hamburger skeleton inserted! Fill in the blanks!' : '🍔 햄버거 뼈대를 넣었어요! 빈칸을 채워보세요!');
+  toast(isEn ? '🍔 Hamburger skeleton inserted! Fill in the blanks!' : '🍔 논설문 뼈대(서론-본론1-본론2-결론)를 넣었어요! 빈칸을 채워보세요!');
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -143,22 +196,24 @@ function combineEssaySteps() {
   const body1 = ($('essayStepBody1')?.value || '').trim();
   const body2 = ($('essayStepBody2')?.value || '').trim();
   const concl = ($('essayStepConcl')?.value || '').trim();
+  const isEn  = _currentLang === 'en';
 
   const missing = [];
-  if (!intro) missing.push(_currentLang==='en' ? 'Intro' : '서론 (Intro)');
-  if (!body1) missing.push(_currentLang==='en' ? 'Body 1' : '첫 번째 이유 (Body 1)');
-  if (!body2) missing.push(_currentLang==='en' ? 'Body 2' : '두 번째 이유 (Body 2)');
-  if (!concl) missing.push(_currentLang==='en' ? 'Conclusion' : '결론 (Conclusion)');
+  if (!intro) missing.push(isEn ? 'Intro' : '서론');
+  if (!body1) missing.push(isEn ? 'Body 1' : '본론 1 (첫 번째 근거)');
+  if (!body2) missing.push(isEn ? 'Body 2' : '본론 2 (두 번째 근거)');
+  if (!concl) missing.push(isEn ? 'Conclusion' : '결론');
 
   if (missing.length > 0) {
-    toast(_currentLang==='en'
+    toast(isEn
       ? `✏️ Please fill in: ${missing.join(', ')}!`
       : `✏️ 빈칸을 채워주세요: ${missing.join(', ')}!`);
     return;
   }
 
-  // 합쳐서 textarea에 삽입
-  const combined =
+  // 합쳐서 textarea에 삽입 (언어별 구조 라벨 분기)
+  const combined = isEn
+?
 `[Intro]
 ${intro}
 
@@ -169,6 +224,18 @@ ${body1}
 ${body2}
 
 [Conclusion]
+${concl}`
+:
+`[서론]
+${intro}
+
+[본론 1]
+${body1}
+
+[본론 2]
+${body2}
+
+[결론]
 ${concl}`;
 
   const ta = $('essayTextarea');
@@ -177,13 +244,13 @@ ${concl}`;
   // 고급 모드로 전환해서 분석 결과 보여주기
   setEssayMode('advanced');
 
-  /* 파트 4 추가: 에세이 합치기 완료 시 TTS 버튼 행 즉시 표시 */
+  /* 파트 4 + 한국어 분기: TTS/쉐도잉은 영어 읽기 연습용이므로 한국어(논설문) 모드에서는 행을 띄우지 않음 */
   const ttsRow = $('essayTtsRow');
-  if (ttsRow) ttsRow.style.display = 'flex';
+  if (ttsRow) ttsRow.style.display = (_currentLang === 'en') ? 'flex' : 'none';
 
   toast(_currentLang==='en'
     ? '🪄 Your essay is combined! Analyzing now... 🔍'
-    : '🪄 에세이를 합쳤어요! 분석 중... 🔍');
+    : '🪄 논설문을 합쳤어요! 분석 중... 🔍');
 
   // 분석 즉시 트리거
   _lastEssayAnalysis = null;
@@ -205,10 +272,10 @@ function newEssay() {
   const topicBox = $('essayTopicBox');
   if (topicBox) topicBox.textContent = _currentLang==='en' ? 'Pick a topic! 🎲' : '주제를 뽑아주세요! 🎲';
   const chips = $('essayChips');
-  if (chips) chips.innerHTML = `<span style="color:#ccc;font-size:13px;">${_currentLang==='en' ? 'Pick a topic to see recommended words & connectors ✨' : '주제를 뽑으면 추천 단어/문법이 나타나요 ✨'}</span>`;
+  if (chips) chips.innerHTML = `<span style="color:#ccc;font-size:13px;">${_currentLang==='en' ? 'Pick a topic to see recommended words & connectors ✨' : '주제를 뽑으면 추천 낱말/표현이 나타나요 ✨'}</span>`;
   ['essayRichnessFill','essayBonusFill'].forEach(id => { const el=$(id); if(el) el.style.width='0%'; });
-  $('essayRichnessScore').textContent = '— waiting';
-  $('essayBonusScore').textContent    = '— waiting';
+  $('essayRichnessScore').textContent = _currentLang==='en' ? '— waiting' : '— 대기 중';
+  $('essayBonusScore').textContent    = _currentLang==='en' ? '— waiting' : '— 대기 중';
   const st = $('essayStamp');
   if (st) st.classList.remove('show','s1','s2','s3','s4','s5');
   const bb = $('essayBonusBadge');
@@ -227,10 +294,11 @@ function onEssayInput() {
   _essayHintTimer = setTimeout(async () => {
     try {
       const r = await analyzeEssay(txt);
+      const isEn = _currentLang === 'en';
       $('essayRichnessFill').style.width  = `${r.richness * 10}%`;
-      $('essayRichnessScore').textContent = `Score ${r.richness}/10`;
+      $('essayRichnessScore').textContent = isEn ? `Score ${r.richness}/10` : `점수 ${r.richness}/10`;
       $('essayBonusFill').style.width     = `${(r.bonusInk / 5) * 100}%`;
-      $('essayBonusScore').textContent    = `Bonus +${r.bonusInk} 💧`;
+      $('essayBonusScore').textContent    = isEn ? `Bonus +${r.bonusInk} 💧` : `보너스 +${r.bonusInk} 💧`;
       updateEssayStamp(r.richness);
       const bb = $('essayBonusBadge');
       if (bb) {
@@ -242,7 +310,7 @@ function onEssayInput() {
   }, 2800);
 }
 
-/* ── 8. Essay AI 분석 ── */
+/* ── 8. AI 분석 (영어: Essay Coach / 한국어: 국어 논설문 선생님) ── */
 async function analyzeEssay(text) {
   if (_lastEssayText === text && _lastEssayAnalysis) return _lastEssayAnalysis;
   const topicWords   = _currentEssayTopic ? _currentEssayTopic.words.join(', ')   : '(none)';
@@ -252,15 +320,14 @@ async function analyzeEssay(text) {
   const isEn = _currentLang === 'en';
 
   /* 파트 3 수정: max_tokens 증가 + grammarErrors 배열 필드 추가 */
-  const raw = await callClaude({
-    model: 'claude-haiku-4-5-20251001', max_tokens: 1000,
-    system: `You are a warm English Essay Coach for elementary school students (ages 10-13).
+  /* 한국어 분기 추가: 영어 문법 채점 프롬프트 대신 국어 논설문(주장하는 글) 채점 프롬프트 사용 */
+  const systemPrompt = isEn ? `You are a warm English Essay Coach for elementary school students (ages 10-13).
 Topic: "${topicTitle}"
 
 SANDWICH FEEDBACK (always apply in 'advice'):
 1. 🌟 PRAISE first — find something genuinely good
 2. ✏️ GENTLE CORRECTION — fix one grammar/structure issue kindly
-3. 💪 ENCOURAGEMENT — ${isEn ? 'English only' : 'English + Korean'}
+3. 💪 ENCOURAGEMENT — English only
 
 ESSAY STRUCTURE CHECK:
 - hasIntro: does the student state their opinion/claim at the start?
@@ -294,28 +361,87 @@ Return ONLY valid JSON (no markdown):
   "hasIntro":<true|false>,
   "hasBody":<true|false>,
   "hasConclusion":<true|false>,
-  "structureFeedback":"<${isEn ? 'English' : 'Korean'} 1 sentence on structure — what's missing or well done>",
-  "wordUseFeedback":"<${isEn ? 'English' : 'Korean'} 1 sentence on recommended word/grammar usage>",
-  "grammarFeedback":"<sandwich-method grammar fix, ${isEn ? 'English only' : 'English+Korean'}, 1-2 sentences>",
+  "structureFeedback":"<English 1 sentence on structure — what's missing or well done>",
+  "wordUseFeedback":"<English 1 sentence on recommended word/grammar usage>",
+  "grammarFeedback":"<sandwich-method grammar fix, English only, 1-2 sentences>",
   "grammarErrors":[
     {"original":"<student's original sentence>","corrected":"<corrected sentence>","type":"<error type>"}
   ],
-  "nextChallenge":"<one concrete next step, ${isEn ? 'English only' : 'bilingual English+Korean'}>",
-  "advice":"<sandwich overall: praise + correction + ${isEn ? 'English encouragement' : 'bilingual encouragement'}, 2-3 sentences>",
+  "nextChallenge":"<one concrete next step, English only>",
+  "advice":"<sandwich overall: praise + correction + English encouragement, 2-3 sentences>",
   "voca":"<2-3 useful words from your feedback. Format: word (한국어뜻), word (한국어뜻). e.g. specific (구체적인), vivid (생생한), structure (구조)>"
-}`,
-    messages: [{ role:'user', content:`Student's essay:\n${text}` }]
+}` : `너는 초등학생(10~13세)을 위한 다정하고 꼼꼼한 '국어 논설문 선생님'이야.
+학생은 논설문(주장하는 글)을 쓰고 있어. 주제: "${topicTitle}"
+
+이 과제는 영어 글쓰기가 아니라 국어 글쓰기야. 절대로 영어 문법(article, tense, preposition 등)을 기준으로 채점하지 말고, 아래 한국어 기준으로만 평가해줘.
+
+[샌드위치 피드백] ('advice' 필드에 항상 이 순서로 적용)
+1. 🌟 칭찬 먼저 — 글에서 진짜로 잘한 점 하나를 구체적으로 찾아 칭찬
+2. ✏️ 부드러운 교정 — 맞춤법/띄어쓰기/문장 호응 중 한 가지를 다정하게 고쳐주기
+3. 💪 격려 — 따뜻하게 다음 단계를 응원 (한국어로만)
+
+[논설문 구조 평가] (서론-본론-결론의 논리적 흐름을 확인)
+- hasIntro: 글 앞부분에 자신의 주장(찬성/반대 의견)을 분명히 밝혔는가?
+- hasBody: 그 주장을 뒷받침하는 근거(이유)를 적어도 하나 이상, 예시와 함께 제시했는가?
+- hasConclusion: 글 끝에서 자신의 주장을 다시 한 번 요약·강조했는가?
+
+[보너스 점수] (bonusInk 0~5)
+추천 낱말: ${topicWords} → 사용 시 +1점 (최대 3점)
+추천 연결 표현: ${topicGrammar} → 사용 시 +1점 (최대 2점)
+글 속에 위 낱말/표현이 몇 개나 나오는지 세어서 합산 (최대 5).
+
+[풍부함 점수] (richness, 1~10)
+- 주장이 명확하게 드러남: +2
+- 근거가 2개 이상이고 각각 예시가 있음: +3
+- 결론에서 주장을 다시 정리함: +2
+- 어휘 수준과 문장 호응(맞춤법 포함)의 정확성: +2
+- 글의 창의성·구체성: +1
+
+[맞춤법·띄어쓰기·문장 호응 교정 목록] (grammarErrors)
+학생 글에서 가장 중요한 맞춤법/띄어쓰기/문장 호응 오류를 최대 3개까지 찾아줘.
+각 오류마다 다음을 제공:
+- "original": 학생 글에서 문제가 있는 문장/구절 원문 그대로 (짧게, 한 문장 이내)
+- "corrected": 맞춤법·띄어쓰기·문장 호응을 바르게 고친 문장
+- "type": 오류 종류 — 다음 중 하나만 사용: "spelling"(맞춤법) | "spacing"(띄어쓰기) | "agreement"(문장 호응) | "punctuation"(문장 부호) | "word-choice"(낱말 선택) | "other"(기타)
+오류가 없으면 빈 배열 []을 반환해.
+
+[추천 어휘/사자성어] (voca)
+글의 수준을 한 단계 높여줄 수 있는 고급 국어 어휘나 사자성어를 2~3개 추천해줘.
+형식: 낱말(뜻 풀이), 낱말(뜻 풀이) 형태로, 예: 일관성(생각이나 태도가 한결같은 성질) 형태처럼 짧은 뜻 풀이를 함께 적어줘.
+
+오직 유효한 JSON만 반환해 (마크다운 금지):
+{
+  "richness":<1-10>,
+  "bonusInk":<0-5>,
+  "hasIntro":<true|false>,
+  "hasBody":<true|false>,
+  "hasConclusion":<true|false>,
+  "structureFeedback":"<논설문 구조에 대한 한국어 1문장 — 무엇이 부족하거나 잘 되었는지>",
+  "wordUseFeedback":"<추천 낱말/연결 표현 활용에 대한 한국어 1문장>",
+  "grammarFeedback":"<샌드위치 방식의 맞춤법·띄어쓰기·문장 호응 교정, 한국어로 1~2문장>",
+  "grammarErrors":[
+    {"original":"<학생 글의 원래 문장>","corrected":"<맞춤법/띄어쓰기/문장 호응을 고친 문장>","type":"<오류 종류>"}
+  ],
+  "nextChallenge":"<다음에 도전해볼 구체적인 한 가지, 한국어로>",
+  "advice":"<샌드위치 종합 피드백: 칭찬 + 교정 + 격려, 한국어로 2~3문장>",
+  "voca":"<글의 수준을 높여줄 고급 어휘나 사자성어 2~3개. 형식: 낱말(뜻), 낱말(뜻). 예: 일관성(한결같은 성질), 일목요연(한눈에 알기 쉽게 정리됨)>"
+}`;
+
+  const raw = await callClaude({
+    model: 'claude-haiku-4-5-20251001', max_tokens: 1000,
+    system: systemPrompt,
+    messages: [{ role:'user', content:`${isEn ? "Student's essay:" : '학생이 쓴 논설문:'}\n${text}` }]
   });
 
   const data = parseJSON(raw) || {
     richness:3, bonusInk:0,
     hasIntro:false, hasBody:false, hasConclusion:false,
-    structureFeedback: isEn ? 'Try to include an intro, body, and conclusion!' : '서론, 본론, 결론을 모두 써보세요!',
-    wordUseFeedback:   isEn ? 'Try using some of the recommended words!' : '추천 단어를 사용해봐요!',
-    grammarFeedback:   isEn ? 'Check your grammar and sentence structure!' : '문법을 확인해보세요!',
+    structureFeedback: isEn ? 'Try to include an intro, body, and conclusion!' : '서론, 본론, 결론을 모두 갖추어 써보아요!',
+    wordUseFeedback:   isEn ? 'Try using some of the recommended words!' : '추천 낱말이나 연결 표현을 사용해봐요!',
+    grammarFeedback:   isEn ? 'Check your grammar and sentence structure!' : '맞춤법과 띄어쓰기를 한 번 더 확인해봐요!',
     grammarErrors:     [], /* 파트 3: Grammar Diff 빈 배열 fallback */
     nextChallenge:     isEn ? 'Keep writing! 😊' : '계속 써봐요! 😊',
-    advice:            isEn ? 'Great effort on your essay! Keep it up! 💪' : '에세이를 잘 쓰고 있어요! 계속 해봐요! 💪',
+    advice:            isEn ? 'Great effort on your essay! Keep it up! 💪' : '논설문을 잘 쓰고 있어요! 계속 해봐요! 💪',
     voca:              '' /* 파트 4: voca fallback */
   };
   if(!data.voca) data.voca = ''; /* 파트 4 */
@@ -344,7 +470,7 @@ function updateEssayStamp(r) {
   requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
 }
 
-/* ── 10. Essay 선생님 피드백 UI ── */
+/* ── 10. 선생님 피드백 UI (영어: Essay Coach / 한국어: 논설문 선생님) ── */
 function setEssayTeacher(st, data) {
   const face = $('essayTeacherFace');
   const msg  = $('essayTeacherMsg');
@@ -356,24 +482,25 @@ function setEssayTeacher(st, data) {
   if (wrap) wrap.style.display = 'none';
 
   const isEn = _currentLang === 'en';
+  const coachLabel = isEn ? 'Essay Coach' : '📝 논설문 선생님';
 
   if (st === 'idle') {
     face.textContent = '👩‍🏫';
-    msg.innerHTML = `<span class="teacher-hi">Essay Coach</span><br>${isEn ? 'Start writing your essay and I\'ll give you feedback! ✍️' : '에세이를 쓰면 피드백을 드릴게요! ✍️'}`;
+    msg.innerHTML = `<span class="teacher-hi">${coachLabel}</span><br>${isEn ? 'Start writing your essay and I\'ll give you feedback! ✍️' : '논설문을 쓰면 피드백을 드릴게요! ✍️'}`;
     return;
   }
   if (st === 'thinking') {
     face.textContent = '🤔'; face.classList.add('thinking');
-    msg.innerHTML = `<span class="teacher-hi">Essay Coach</span><br>${isEn ? 'Reading your essay carefully... 📖' : '에세이를 열심히 읽고 있어요... 📖'}`;
+    msg.innerHTML = `<span class="teacher-hi">${coachLabel}</span><br>${isEn ? 'Reading your essay carefully... 📖' : '논설문을 꼼꼼히 읽고 있어요... 📖'}`;
     return;
   }
 
   face.textContent = '✨';
-  msg.innerHTML = `<span class="teacher-hi">🌟 Essay Feedback</span><br>${data.advice || (isEn ? 'Great essay! Keep it up! 💪' : '에세이를 잘 쓰고 있어요! 💪')}`;
+  msg.innerHTML = `<span class="teacher-hi">${isEn ? '🌟 Essay Feedback' : '🌟 논설문 피드백'}</span><br>${data.advice || (isEn ? 'Great essay! Keep it up! 💪' : '논설문을 잘 쓰고 있어요! 💪')}`;
 
-  /* 파트 4 추가: 피드백이 나오면 TTS 버튼 행 표시 */
+  /* 파트 4 + 한국어 분기: TTS는 영어 읽기 연습용이므로 영어 모드에서만 행을 보여줌 */
   const ttsRow = $('essayTtsRow');
-  if (ttsRow) ttsRow.style.display = 'flex';
+  if (ttsRow) ttsRow.style.display = isEn ? 'flex' : 'none';
 
   let hasCoach = false;
   const baseStyle = 'display:block; border-radius:0 8px 8px 0; padding:7px 11px; font-size:11.5px; line-height:1.65; margin-bottom:5px; word-break:keep-all;';
@@ -386,15 +513,15 @@ function setEssayTeacher(st, data) {
     if (data.hasConclusion) ok.push(isEn ? '🍞 Conclusion ✅' : '🍞 결론 ✅'); else miss.push(isEn ? 'Conclusion' : '결론');
     structEl.style.cssText = baseStyle + 'background:#f0fef8; border-left:3px solid #4caf8a; color:#2a6a4a;';
     const addLabel  = isEn ? 'add ' : '';
-    const perfectLb = isEn ? 'Perfect structure! 👏' : '완벽해요! 👏';
-    structEl.innerHTML = `🍔 <b>${isEn ? 'Essay Structure:' : 'Essay 구조:'}</b> ${ok.join(' / ')}${miss.length ? ' — <span style="color:var(--orange);">' + addLabel + miss.join(', ') + '!</span>' : ' ' + perfectLb}<br><small style="opacity:.8;">${data.structureFeedback}</small>`;
+    const perfectLb = isEn ? 'Perfect structure! 👏' : '완벽한 구조예요! 👏';
+    structEl.innerHTML = `🍔 <b>${isEn ? 'Essay Structure:' : '논설문 구조:'}</b> ${ok.join(' / ')}${miss.length ? ' — <span style="color:var(--orange);">' + addLabel + miss.join(', ') + '!</span>' : ' ' + perfectLb}<br><small style="opacity:.8;">${data.structureFeedback}</small>`;
     hasCoach = true;
   }
 
   const wordEl = $('essayCoachWordUse');
   if (wordEl && data.wordUseFeedback) {
     wordEl.style.cssText = baseStyle + 'background:#fffbf0; border-left:3px solid var(--orange); color:#8a5a1a;';
-    wordEl.innerHTML = `💧 <b>${isEn ? 'Word & Grammar Usage:' : '추천 단어/문법 활용:'}</b> ${data.wordUseFeedback}`;
+    wordEl.innerHTML = `💧 <b>${isEn ? 'Word & Grammar Usage:' : '추천 낱말/표현 활용:'}</b> ${data.wordUseFeedback}`;
     hasCoach = true;
   }
 
@@ -402,26 +529,31 @@ function setEssayTeacher(st, data) {
   if (gramEl && (data.grammarFeedback || (data.grammarErrors && data.grammarErrors.length > 0))) {
     gramEl.style.cssText = baseStyle + 'background:#fff8f0; border-left:3px solid #e07040; color:#7a3010;';
 
-    /* 파트 3 수정: Grammar Diff 하이라이트 UI 렌더링 */
-    let diffHTML = `📝 <b>Grammar:</b> ${data.grammarFeedback || ''}`;
+    /* 파트 3 수정: Grammar Diff 하이라이트 UI 렌더링 (한국어 모드: 맞춤법/띄어쓰기/문장호응) */
+    const gramLabel = isEn ? 'Grammar:' : '맞춤법·띄어쓰기:';
+    let diffHTML = `📝 <b>${gramLabel}</b> ${data.grammarFeedback || ''}`;
 
     const errors = Array.isArray(data.grammarErrors) ? data.grammarErrors : [];
     if (errors.length === 0) {
       // 오류 없음
       diffHTML += `<div class="grammar-diff-wrap" style="margin-top:6px;">
-        <div class="diff-no-error">✅ <span>${isEn ? 'No grammar errors found! Great job! 🎉' : '문법 오류가 없어요! 정말 잘 썼어요! 🎉'}</span></div>
+        <div class="diff-no-error">✅ <span>${isEn ? 'No grammar errors found! Great job! 🎉' : '맞춤법·띄어쓰기 오류가 없어요! 정말 잘 썼어요! 🎉'}</span></div>
       </div>`;
     } else {
       // 오류별 Diff 카드 렌더링
+      // 영어 모드 오류 타입 + 한국어 모드 오류 타입(spacing/agreement/punctuation/word-choice)을 모두 매핑
       const typeLabel = {
-        'spelling':'철자','article':'관사','tense':'시제',
+        'spelling':'철자(맞춤법)','article':'관사','tense':'시제',
         'subject-verb':'주어-동사','word-order':'어순',
-        'preposition':'전치사','plural':'복수형','other':'기타'
+        'preposition':'전치사','plural':'복수형',
+        'spacing':'띄어쓰기','agreement':'문장 호응',
+        'punctuation':'문장 부호','word-choice':'낱말 선택',
+        'other':'기타'
       };
       const diffCards = errors.map(err => {
         const orig      = escHtml(err.original  || '');
         const corrected = escHtml(err.corrected || '');
-        const typeLbl   = typeLabel[err.type] || err.type || 'other';
+        const typeLbl   = typeLabel[err.type] || err.type || (isEn ? 'other' : '기타');
         // 토큰 단위 diff 계산 → 변경된 부분 초록 강조
         const highlightedCorrected = buildDiffHighlight(err.original || '', err.corrected || '');
         return `
@@ -441,13 +573,13 @@ function setEssayTeacher(st, data) {
   const nextEl = $('essayCoachNext');
   if (nextEl && data.nextChallenge) {
     nextEl.style.cssText = baseStyle + 'background:#f0f7ff; border-left:3px solid var(--blue); color:#2a5a8a; margin-bottom:0;';
-    nextEl.innerHTML = `✏️ <b>Next challenge:</b> ${data.nextChallenge}`;
+    nextEl.innerHTML = `✏️ <b>${isEn ? 'Next challenge:' : '다음 도전:'}</b> ${data.nextChallenge}`;
     hasCoach = true;
   }
 
   if (hasCoach && wrap) wrap.style.display = 'block';
 
-  /* 파트 4: Essay 미니 단어장(voca) 렌더링 */
+  /* 파트 4: 미니 단어장(voca) 렌더링 — 한국어 모드에서는 고급 어휘/사자성어 */
   const isEnEssay = _currentLang === 'en';
   let essayVocaEl = $('essayCoachVoca');
   if (data && data.voca && data.voca.trim()) {
@@ -457,7 +589,7 @@ function setEssayTeacher(st, data) {
       if (wrap) wrap.appendChild(essayVocaEl);
     }
     essayVocaEl.style.cssText = 'display:block; margin-top:6px; background:#f0f7ff; border-left:3px solid #4a90e2; padding:6px 10px; border-radius:8px; font-size:11px; color:#2a5a8a; word-break:keep-all;';
-    essayVocaEl.innerHTML = `💡 <b>${isEnEssay ? "Today's Words:" : "오늘의 단어:"}</b> ${data.voca}`;
+    essayVocaEl.innerHTML = `💡 <b>${isEnEssay ? "Today's Words:" : "오늘의 어휘:"}</b> ${data.voca}`;
     if (wrap && wrap.style.display === 'none') wrap.style.display = 'block';
   } else if (essayVocaEl) {
     essayVocaEl.style.display = 'none';
@@ -496,8 +628,14 @@ function getCleanEssayText() {
 
 /**
  * 파트 4: TTS 재생 / 정지 토글
+ * 방어 코드: 이 기능은 "영어 발음 듣기" 전용이므로 한국어(논설문) 모드에서는
+ *           원본 TTS 로직을 그대로 호출하지 않고 안내만 띄운다.
  */
 function toggleEssayTTS() {
+  if (_currentLang !== 'en') {
+    toast('🔊 원어민 발음 듣기는 영어 에세이 모드에서만 사용할 수 있어요!');
+    return;
+  }
   if (!window.speechSynthesis) {
     toast(_currentLang === 'en'
       ? '❌ Your browser does not support TTS. Please use Chrome!'
@@ -608,8 +746,14 @@ let _isShadowing = false;      // 현재 쉐도잉 진행 여부
 
 /**
  * 파트 4: 쉐도잉(내가 직접 읽어보기) 시작 / 중지 토글
+ * 방어 코드: 영어 발음으로 소리내어 읽는 연습 기능이므로 한국어(논설문) 모드에서는
+ *           원본 STT 로직을 그대로 호출하지 않고 안내만 띄운다.
  */
 function startEssayShadowing() {
+  if (_currentLang !== 'en') {
+    toast('🎤 소리내어 읽기 연습은 영어 에세이 모드에서만 사용할 수 있어요!');
+    return;
+  }
   if (_isShadowing) {
     stopEssayShadowing();
     return;
@@ -734,10 +878,10 @@ function closeShadowBonusPop() {
   if (pop) pop.classList.remove('show');
 }
 
-/* ── 11. Essay 저장 / 목록 / 불러오기 ── */
+/* ── 11. 저장 / 목록 / 불러오기 (한국어 모드: "논설문"으로 표기) ── */
 async function saveEssay() {
   const text = ($('essayTextarea')?.value || '').trim();
-  if (text.length < 20) { toast(_currentLang==='en' ? 'Please write a little more! ✏️' : '에세이를 좀 더 써주세요! ✏️'); return; }
+  if (text.length < 20) { toast(_currentLang==='en' ? 'Please write a little more! ✏️' : '논설문을 좀 더 써주세요! ✏️'); return; }
   const entry = {
     id: Date.now(),
     date: dateLabel,
@@ -750,7 +894,7 @@ async function saveEssay() {
   saved.unshift(entry);
   if (saved.length > 30) saved.pop();
   await lsSet(key, saved);
-  toast(_currentLang==='en' ? '📝 Essay saved! Great work 🎉' : '📝 에세이가 저장됐어요! 수고했어요 🎉');
+  toast(_currentLang==='en' ? '📝 Essay saved! Great work 🎉' : '📝 논설문이 저장됐어요! 수고했어요 🎉');
   renderEssayList();
 }
 
@@ -762,7 +906,7 @@ async function renderEssayList() {
   if (!saved.length) {
     wrap.innerHTML = _currentLang==='en'
       ? '<div style="color:#ccc;font-size:13px;text-align:center;padding:20px;">No saved essays yet.<br>Write and save your first essay! 📝</div>'
-      : '<div style="color:#ccc;font-size:13px;text-align:center;padding:20px;">저장된 에세이가 없어요.<br>에세이를 쓰고 저장해보세요! 📝</div>';
+      : '<div style="color:#ccc;font-size:13px;text-align:center;padding:20px;">저장된 논설문이 없어요.<br>논설문을 쓰고 저장해보세요! 📝</div>';
     return;
   }
   wrap.innerHTML = saved.map(e => `
@@ -793,14 +937,14 @@ async function loadEssay(id) {
     ? '🎯 ' + ((_currentLang === 'en' && _currentEssayTopic.titleEn) ? _currentEssayTopic.titleEn : _currentEssayTopic.title)
     : (_currentLang==='en' ? '🎯 Free topic' : '🎯 자유 주제');
   if (_currentEssayTopic) renderEssayChips(_currentEssayTopic);
-  /* 파트 4 추가: 불러온 에세이에서도 TTS 버튼 표시 */
+  /* 파트 4 + 한국어 분기: TTS는 영어 읽기 연습용이므로 영어 모드에서만 표시 */
   const ttsRow = $('essayTtsRow');
-  if (ttsRow) ttsRow.style.display = 'flex';
-  toast(_currentLang==='en' ? '📖 Essay loaded!' : '📖 에세이를 불러왔어요!');
+  if (ttsRow) ttsRow.style.display = (_currentLang === 'en') ? 'flex' : 'none';
+  toast(_currentLang==='en' ? '📖 Essay loaded!' : '📖 논설문을 불러왔어요!');
 }
 
 async function deleteEssay(id) {
-  if (!confirm(_currentLang==='en' ? 'Delete this essay?' : '이 에세이를 삭제할까요?')) return;
+  if (!confirm(_currentLang==='en' ? 'Delete this essay?' : '이 논설문을 삭제할까요?')) return;
   const key   = `mdj_essays_${currentNick}`;
   const saved = (await lsGet(key)) || [];
   const next  = saved.filter(e => e.id !== id);
