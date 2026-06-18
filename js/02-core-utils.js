@@ -67,9 +67,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Restore language preference
   try { const sl = localStorage.getItem('mdj_lang'); if(sl === 'en') setLang('en'); } catch(e) {}
 
-  // Essay Builder 탭: 초기 언어가 ko이면 숨김 (setLang이 호출되지 않는 경우 대비)
-  const tabEssayInit = document.getElementById('ieumTab_essay');
-  if(tabEssayInit && _currentLang !== 'en') tabEssayInit.style.display = 'none';
+  // ✅ [수정] Essay Builder(논설문 쓰기) 탭: 과거에는 초기 언어가 ko이면
+  // 이 줄이 탭 버튼 자체를 display:none 처리해서, 기본 언어가 한국어인
+  // 거의 모든 사용자에게 탭이 영구히 보이지 않는 문제가 있었음.
+  // → 언어와 무관하게 탭은 항상 보이도록 강제 숨김 로직을 제거함.
+  // (탭 내부 문구를 언어별로 바꾸고 싶다면 여기서 숨기지 말고,
+  //  setLang() 쪽에서 텍스트만 토글하도록 구현할 것)
 
   // 신규 시스템 초기화
   refreshInkUI();
