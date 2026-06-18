@@ -430,13 +430,14 @@
   </main>
 
   <!-- ▼ Essay/논설문 쓰기 화면 (탭 2) — 기본 숨김 -->
+  <!-- 2026 UX 개편: 좌(글쓰기 전용, flex:6) / 우(AI 피드백+글감 도우미, flex:4) — 인지 과부하 감소 -->
   <main id="ieumContent_essay" style="display:none;">
 
-    <!-- 왼쪽 패널: 주제·칩·작성 -->
-    <section class="panel" style="display:flex; flex-direction:column; position:relative;">
+    <!-- 왼쪽 패널: 글쓰기 전용 -->
+    <section class="panel" style="display:flex; flex-direction:column; position:relative; flex:6;">
       <div class="panel-title" id="essayPanelTitle">[ ✍️ 논설문 쓰기 ]</div>
 
-      <!-- 주제 뽑기 / 뼈대 버튼 -->
+      <!-- 주제 뽑기 / 뼈대 / 새 에세이 버튼 -->
       <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-shrink:0; flex-wrap:wrap;">
         <button class="mission-btn" style="background:var(--mint);" onclick="openEssayTopicModal()">🎲 Topic Pick</button>
         <button class="mission-btn" style="background:var(--orange);" onclick="insertEssaySkeleton()" id="btnEssaySkeleton">🍔 햄버거 뼈대</button>
@@ -446,31 +447,13 @@
       <!-- 현재 주제 표시 -->
       <div class="essay-topic-box" id="essayTopicBox">주제를 뽑아주세요! 🎲</div>
 
-      <!-- 추천 단어/문법 칩 -->
-      <div style="margin:8px 0 4px; font-size:12px; color:#999; flex-shrink:0;" id="essayChipHint">💡 클릭하면 에세이에 바로 삽입돼요!</div>
-      <div id="essayChips" style="display:flex; flex-wrap:wrap; gap:7px; min-height:36px; flex-shrink:0; align-items:center;">
-        <span style="color:#ccc; font-size:13px;">주제를 뽑으면 추천 단어/문법이 나타나요 ✨</span>
-      </div>
-
-      <div style="height:1px; background:var(--border); margin:10px 0; flex-shrink:0;"></div>
-
-      <!-- 파트 1 추가: 모드 선택 토글 -->
-      <div class="essay-mode-toggle" id="essayModeToggle">
-        <button class="essay-mode-btn active" id="btnModeBasic" onclick="setEssayMode('basic')">
-          🧩 초급 모드<br><span style="font-size:10px;font-weight:normal;">빈칸 채우기 (3~4학년)</span>
-        </button>
-        <button class="essay-mode-btn advanced" id="btnModeAdvanced" onclick="setEssayMode('advanced')">
-          ✏️ 고급 모드<br><span style="font-size:10px;font-weight:normal;">자유 영작 (5~6학년)</span>
-        </button>
-      </div>
-
       <!-- 에세이 작성 힌트 + 음성 입력 버튼 -->
-      <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:6px; flex-shrink:0;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; margin:8px 0 6px; flex-shrink:0;">
         <span style="font-size:12px; color:#999;" id="essayWriteHint">✏️ 영어 에세이를 써보세요!</span>
         <div style="display:flex; gap:6px; align-items:center;">
           <!-- 기존 STT 음성 입력 버튼 -->
           <button class="tool-btn" onclick="startSTT('essayTextarea')" title="음성 입력" id="btnEssayVoice">🎤 음성 입력</button>
-          <!-- 파트 4 추가: 내가 직접 읽어보기(쉐도잉) 버튼 — STT 마이크 옆 배치 -->
+          <!-- 내가 직접 읽어보기(쉐도잉) 버튼 -->
           <button class="tool-btn" onclick="startEssayShadowing()" title="내 에세이를 소리내어 읽어보기" id="btnEssayShadow"
             style="background:linear-gradient(135deg,var(--mint),#4e9a8c);color:white;border-color:transparent;">
             🎤 내가 직접 읽어보기
@@ -478,7 +461,7 @@
         </div>
       </div>
 
-      <!-- 파트 4 추가: 원어민 발음 듣기(TTS) + 상태 표시 영역 -->
+      <!-- 원어민 발음 듣기(TTS) + 상태 표시 영역 -->
       <div class="essay-tts-row" id="essayTtsRow" style="display:none;">
         <button class="tts-listen-btn" id="btnTtsListen" onclick="toggleEssayTTS()">
           🔊 원어민 발음 듣기
@@ -486,88 +469,17 @@
         <span class="tts-status-label" id="ttsStatusLabel">에세이 완성 후 눌러보세요!</span>
       </div>
 
-      <!-- 파트 1 추가: 초급 모드 — 서론/본론/결론 분리 입력창 -->
-      <div id="essayStepWrap">
-        <div class="essay-step-group">
-          <div class="essay-step-label intro" id="essayStepIntroLabel">🍞 [Intro] — <em>I think... / In my opinion...</em></div>
-          <textarea class="essay-step-input intro" id="essayStepIntro" rows="2"
-            placeholder="예) I think smartphones are very helpful."></textarea>
-        </div>
-        <div class="essay-step-group">
-          <div class="essay-step-label body" id="essayStepBody1Label">🥩 [Body 1] — <em>First, ... Because...</em></div>
-          <textarea class="essay-step-input body" id="essayStepBody1" rows="2"
-            placeholder="예) First, we can search for information easily."></textarea>
-        </div>
-        <div class="essay-step-group">
-          <div class="essay-step-label body" id="essayStepBody2Label">🥩 [Body 2] — <em>Second, ... For example...</em></div>
-          <textarea class="essay-step-input body" id="essayStepBody2" rows="2"
-            placeholder="예) Second, we can communicate with our friends."></textarea>
-        </div>
-        <div class="essay-step-group">
-          <div class="essay-step-label concl" id="essayStepConclLabel">🌟 [Conclusion] — <em>Therefore, ... In conclusion...</em></div>
-          <textarea class="essay-step-input concl" id="essayStepConcl" rows="2"
-            placeholder="예) In conclusion, I believe smartphones are very useful."></textarea>
-        </div>
-        <button class="essay-combine-btn" id="essayCombineBtn" onclick="combineEssaySteps()">
-          🪄 <span id="essayCombineBtnLabel">에세이 완성하기!</span>
-        </button>
-      </div>
-
-      <!-- 고급 모드: 기존 큰 textarea -->
-      <textarea class="essay-manuscript" id="essayTextarea"
+      <!-- 메인 글쓰기 창 (모드 토글 없이 항상 표시, 화면을 꽉 채움) -->
+      <textarea class="essay-manuscript" id="essayTextarea" style="flex:1; min-height:300px;"
         placeholder="🍞 [Intro] 서론 — 나의 의견을 써보세요.&#10;예) I think smartphones are very helpful.&#10;&#10;🥩 [Body 1] 첫 번째 이유와 예시를 써보세요.&#10;예) First, we can search for information easily.&#10;&#10;🥩 [Body 2] 두 번째 이유와 예시를 써보세요.&#10;예) Second, we can communicate with friends.&#10;&#10;🍞 [Conclusion] 결론 — 의견을 다시 강조해보세요.&#10;예) In conclusion, I believe smartphones are useful."></textarea>
 
-      <!-- Writing 점수 바 -->
-      <div class="richness-bar-wrap">
-        <span style="font-size:12px;color:#999;white-space:nowrap;">✏️ Writing</span>
-        <div class="richness-track"><div class="richness-fill" id="essayRichnessFill"></div></div>
-        <span class="richness-score" id="essayRichnessScore">— waiting</span>
-      </div>
-      <!-- Bonus 잉크 바 -->
-      <div class="richness-bar-wrap" style="margin-top:4px;">
-        <span style="font-size:12px;color:var(--orange);white-space:nowrap;">💧 Bonus</span>
-        <div class="richness-track">
-          <div class="richness-fill" id="essayBonusFill" style="background:linear-gradient(to right,var(--orange),#f49f5a);"></div>
-        </div>
-        <span class="richness-score" id="essayBonusScore" style="color:var(--orange);">— waiting</span>
-      </div>
-
-      <!-- 도장 + 보너스 잉크 뱃지 -->
-      <div class="essay-stamp-wrap">
-        <div class="stamp" id="essayStamp">
-          <div class="stamp-icon" id="essayStampIcon"></div>
-          <div class="stamp-text"  id="essayStampText"></div>
-        </div>
-        <div class="bonus-ink-badge" id="essayBonusBadge" style="margin-left:12px;">
-          💧 +<span id="essayBonusInkNum">0</span> <span id="essayBonusLabel">보너스!</span>
-        </div>
-      </div>
-
-      <!-- 선생님 피드백 -->
-      <div class="teacher-box" style="flex-direction:column;gap:0;padding:0;min-height:auto;align-items:stretch;">
-        <div style="display:flex;gap:8px;align-items:center;padding:8px 10px 6px;">
-          <div class="teacher-face" id="essayTeacherFace">👩‍🏫</div>
-          <div style="flex:1;min-width:0;">
-            <div class="teacher-msg" id="essayTeacherMsg">
-              <span class="teacher-hi">Essay Coach</span><br>주제를 뽑고 에세이를 써보세요! 🌟
-            </div>
-          </div>
-        </div>
-        <div id="essayCoachWrap" style="display:none; padding:0 10px 10px;">
-          <div id="essayCoachStructure" style="display:none;"></div>
-          <div id="essayCoachWordUse"   style="display:none;"></div>
-          <div id="essayCoachGrammar"   style="display:none;"></div>
-          <div id="essayCoachNext"      style="display:none;"></div>
-        </div>
-      </div>
-
-      <!-- 파트 2 추가: SOS 영단어 도우미 플로팅 버튼 -->
+      <!-- SOS 영단어 도우미 플로팅 버튼 -->
       <button id="sosDictBtn" onclick="toggleSosDict()" title="이거 영어로 뭐예요?">
         <span class="sos-pulse"></span>
         🚨 이거 영어로 뭐예요?
       </button>
 
-      <!-- 파트 2 추가: SOS 미니 챗봇 팝업 패널 -->
+      <!-- SOS 미니 챗봇 팝업 패널 -->
       <div id="sosDictPanel">
         <div class="sos-header">
           <span>🚨 영단어 SOS 도우미</span>
@@ -589,17 +501,71 @@
       </div>
     </section>
 
-    <!-- 오른쪽 패널: 가이드 + 저장목록 -->
-    <section class="panel" style="display:flex; flex-direction:column;">
+    <!-- 오른쪽 패널: AI 피드백 + 글감 도우미 (내용이 길어지면 패널 자체가 스크롤) -->
+    <section class="panel" style="display:flex; flex-direction:column; flex:4; overflow-y:auto;">
       <div class="panel-header">
-        <div class="panel-title" style="margin:0;" id="essayGuideTitle">[ 📋 에세이 가이드 ]</div>
+        <div class="panel-title" style="margin:0;" id="essayGuideTitle">[ 🤖 AI 피드백 & 글감 도우미 ]</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button class="hbtn orange" onclick="openSelfAssessModal()">📝 자기 평가</button>
           <button class="hbtn orange" onclick="saveEssay()" style="font-size:12px;padding:8px;">💾 에세이 저장</button>
         </div>
       </div>
 
-      <!-- 햄버거 구조 가이드 -->
+      <!-- ① AI 선생님 피드백 카드: 말풍선 + 점수 바 + 도장 + 세부 코칭이 한 카드로 통합 -->
+      <div class="teacher-box" style="flex-direction:column;gap:0;padding:0;min-height:auto;align-items:stretch;flex-shrink:0;margin-bottom:10px;">
+        <div style="display:flex;gap:8px;align-items:center;padding:8px 10px 6px;">
+          <div class="teacher-face" id="essayTeacherFace">👩‍🏫</div>
+          <div style="flex:1;min-width:0;">
+            <div class="teacher-msg" id="essayTeacherMsg">
+              <span class="teacher-hi">Essay Coach</span><br>주제를 뽑고 에세이를 써보세요! 🌟
+            </div>
+          </div>
+        </div>
+
+        <!-- Writing 점수 바 -->
+        <div class="richness-bar-wrap" style="padding:0 10px;">
+          <span style="font-size:12px;color:#999;white-space:nowrap;">✏️ Writing</span>
+          <div class="richness-track"><div class="richness-fill" id="essayRichnessFill"></div></div>
+          <span class="richness-score" id="essayRichnessScore">— waiting</span>
+        </div>
+        <!-- Bonus 잉크 바 -->
+        <div class="richness-bar-wrap" style="margin-top:4px;padding:0 10px;">
+          <span style="font-size:12px;color:var(--orange);white-space:nowrap;">💧 Bonus</span>
+          <div class="richness-track">
+            <div class="richness-fill" id="essayBonusFill" style="background:linear-gradient(to right,var(--orange),#f49f5a);"></div>
+          </div>
+          <span class="richness-score" id="essayBonusScore" style="color:var(--orange);">— waiting</span>
+        </div>
+
+        <!-- 도장 + 보너스 잉크 뱃지 -->
+        <div class="essay-stamp-wrap" style="padding:8px 10px 0;">
+          <div class="stamp" id="essayStamp">
+            <div class="stamp-icon" id="essayStampIcon"></div>
+            <div class="stamp-text"  id="essayStampText"></div>
+          </div>
+          <div class="bonus-ink-badge" id="essayBonusBadge" style="margin-left:12px;">
+            💧 +<span id="essayBonusInkNum">0</span> <span id="essayBonusLabel">보너스!</span>
+          </div>
+        </div>
+
+        <!-- 구조/단어활용/맞춤법/다음 도전 세부 코칭 -->
+        <div id="essayCoachWrap" style="display:none; padding:8px 10px 10px;">
+          <div id="essayCoachStructure" style="display:none;"></div>
+          <div id="essayCoachWordUse"   style="display:none;"></div>
+          <div id="essayCoachGrammar"   style="display:none;"></div>
+          <div id="essayCoachNext"      style="display:none;"></div>
+        </div>
+      </div>
+
+      <!-- ② 추천 낱말/표현 칩 (글감 도우미) -->
+      <div style="flex-shrink:0;margin-bottom:10px;">
+        <div style="font-size:12px;color:#999;margin-bottom:6px;" id="essayChipHint">💡 클릭하면 에세이에 바로 삽입돼요!</div>
+        <div id="essayChips" style="display:flex; flex-wrap:wrap; gap:7px; min-height:36px; align-items:center;">
+          <span style="color:#ccc; font-size:13px;">주제를 뽑으면 추천 단어/문법이 나타나요 ✨</span>
+        </div>
+      </div>
+
+      <!-- ③ 햄버거 구조 가이드 -->
       <div style="flex-shrink:0;margin-bottom:10px;">
         <div style="background:#fff8f0;border:2px solid var(--orange);border-radius:10px;padding:8px 12px;font-size:12px;">
           <b style="color:var(--orange);" id="essayStructureTitle">🍔 햄버거 에세이 구조</b>
@@ -612,7 +578,7 @@
         </div>
       </div>
 
-      <!-- 접속사 칩 모음 -->
+      <!-- ④ 접속사 칩 모음 -->
       <div style="flex-shrink:0;margin-bottom:10px;">
         <div style="font-size:12px;color:#999;margin-bottom:6px;" id="essayConnLabel">🔗 유용한 접속사 (클릭하면 삽입):</div>
         <div style="display:flex;flex-wrap:wrap;gap:5px;">
@@ -631,9 +597,9 @@
         </div>
       </div>
 
-      <!-- 저장된 에세이 목록 -->
+      <!-- ⑤ 저장된 에세이 목록 -->
       <div style="font-size:12px;color:#999;margin-bottom:6px;flex-shrink:0;" id="essaySavedLabel">📚 저장된 에세이:</div>
-      <div id="essayListWrap" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;">
+      <div id="essayListWrap" style="flex-shrink:0;display:flex;flex-direction:column;gap:8px;">
         <div style="color:#ccc;font-size:13px;text-align:center;padding:20px;">
           저장된 에세이가 없어요.<br>에세이를 쓰고 저장해보세요! 📝
         </div>
