@@ -186,7 +186,7 @@
         <span id="timerDisplay">60</span>
       </div>
       <!-- 파트 3 수정: 타임어택/기억 되살리기 버튼 텍스트에 span id 추가 -->
-      <button class="hbtn" id="timeAttackBtn" onclick="toggleTimeAttack()" style="background:rgba(255,107,53,.7);">⚡ <span id="timeAttackBtnLabel">타임어택</span></button>
+      <button class="hbtn orange" id="timeAttackBtn" onclick="toggleTimeAttack()">⚡ <span id="timeAttackBtnLabel">타임어택</span></button>
       <button class="hbtn" id="witnessBtn" onclick="getWitnessReport()">📷 <span id="witnessBtnLabel">기억 되살리기</span></button>
     </div>
   </header>
@@ -310,13 +310,13 @@
       <div class="user-chip" id="userChip"></div>
       <button class="hbtn orange" onclick="openBadgeModal()" id="ieumBadgeBtn">🏆 내 뱃지</button>
       <div class="ink-hud" id="ieumInkHud"><span class="ink-icon">💧</span><span id="ieumInkCount">0</span></div>
-      <button class="hbtn" style="background:rgba(255,255,255,.3);" onclick="openBackupRestoreModal()" title="데이터 백업/복원" id="ieumBackupBtn">💾 백업</button>
+      <button class="hbtn" onclick="openBackupRestoreModal()" title="데이터 백업/복원" id="ieumBackupBtn">💾 백업</button>
       <button class="hbtn orange" onclick="saveDiary()" id="ieumSaveDiaryBtn">💾 저장</button>
-      <button class="hbtn" onclick="openRevisionModal()" id="revBtn" style="background:rgba(255,255,255,.3);">✍️ 퇴고</button>
+      <button class="hbtn" onclick="openRevisionModal()" id="revBtn">✍️ 퇴고</button>
       <button class="hbtn" onclick="openListModal()" id="ieumDiaryListBtn">📖 일기장</button>
-      <button class="hbtn" style="background:rgba(255,255,255,.3);" onclick="openDiaryPrintModal()" id="ieumPrintBtn">🖨️ 그림일기 출력</button>
-      <button class="hbtn" style="background:rgba(255,200,100,.4);" onclick="openPortfolioModal()" id="ieumPortfolioBtn" title="글쓰기 성장 타임라인">📈 포트폴리오</button>
-      <button class="hbtn" style="background:rgba(255,255,255,.2);" onclick="openTeacherDashboard()" id="ieumTeacherDashBtn" title="교사 대시보드">📊 교사 대시보드</button>
+      <button class="hbtn" onclick="openDiaryPrintModal()" id="ieumPrintBtn">🖨️ 그림일기 출력</button>
+      <button class="hbtn orange" onclick="openPortfolioModal()" id="ieumPortfolioBtn" title="글쓰기 성장 타임라인">📈 포트폴리오</button>
+      <button class="hbtn orange" onclick="openTeacherDashboard()" id="ieumTeacherDashBtn" title="교사 대시보드">📊 교사 대시보드</button>
     </div>
   </header>
   <!-- ▼ 이음 탭 바 -->
@@ -594,7 +594,7 @@
       <div class="panel-header">
         <div class="panel-title" style="margin:0;" id="essayGuideTitle">[ 📋 에세이 가이드 ]</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="hbtn" style="background:var(--orange);color:white;font-size:12px;padding:8px;border-radius:10px;" onclick="openSelfAssessModal()">📝 자기 평가</button>
+          <button class="hbtn orange" onclick="openSelfAssessModal()">📝 자기 평가</button>
           <button class="hbtn orange" onclick="saveEssay()" style="font-size:12px;padding:8px;">💾 에세이 저장</button>
         </div>
       </div>
@@ -871,7 +871,7 @@
     </div>
     <div style="display:flex;gap:7px;">
       <button class="hbtn orange" id="btnDebateTopic" style="display:none;" onclick="drawDebateTopic()">🎲 주제 뽑기</button>
-      <button class="hbtn" onclick="saveStory()" id="btnStorySave">💾 저장</button>
+      <button class="hbtn orange" onclick="saveStory()" id="btnStorySave">💾 저장</button>
       <button class="hbtn" onclick="openStoryListModal()" id="btnStoryList">📚 저장목록</button>
       <button class="hbtn" onclick="resetStory()" id="btnStoryReset">🔄 새로하기</button>
     </div>
@@ -905,12 +905,12 @@
       </div>
     </div>
     <div style="display:flex;gap:6px;" id="jieumHeaderBtns">
-      <button class="hbtn" id="bookSaveBtn" onclick="saveCurrentBook()">💾 저장</button>
+      <button class="hbtn orange" id="bookSaveBtn" onclick="saveCurrentBook()">💾 저장</button>
       <button class="hbtn" id="bookJpgBtn" onclick="openBookJpgModal()">🖼️ JPG 저장</button>
       <button class="hbtn" id="bookPrintBtn" onclick="openPrintModal('book')">📄 PDF 출력</button>
       <button class="hbtn" id="bookLoadBtn" onclick="openBookListModal()">📂 불러오기</button>
       <button class="hbtn" id="bookResetBtn" onclick="resetBook()">🔄 새 책</button>
-      <button class="hbtn" id="poemSaveBtn" onclick="savePoem()" style="display:none;">💾 저장</button>
+      <button class="hbtn orange" id="poemSaveBtn" onclick="savePoem()" style="display:none;">💾 저장</button>
       <button class="hbtn" id="poemPrintBtn" onclick="openPoemJpgSave()" style="display:none;">🖼️ 시화 JPG 저장</button>
       <button class="hbtn" id="poemLoadBtn" onclick="openPoemListModal()" style="display:none;">📂 목록</button>
       <button class="hbtn" id="poemResetBtn" onclick="resetPoem()" style="display:none;">🔄 초기화</button>
@@ -1181,6 +1181,25 @@
         <button onclick="submitTeacherComment()" style="flex:1;padding:10px;background:var(--teacher);color:white;border:none;border-radius:10px;font-family:inherit;font-size:14px;cursor:pointer;font-weight:bold;">💬 피드백 전송</button>
         <button onclick="$('dashCommentArea').style.display='none'" style="padding:10px 16px;background:#eee;border:none;border-radius:10px;font-family:inherit;font-size:13px;cursor:pointer;">취소</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ 교사 대시보드 PIN 인증 모달 ══════ -->
+<div class="modal-bg" id="teacherPinModal">
+  <div class="modal" style="max-width:320px;text-align:center;">
+    <h2>🔒 교사 인증</h2>
+    <div style="font-size:13px;color:#888;margin-bottom:14px;word-break:keep-all;">
+      교사 대시보드는 선생님만 볼 수 있어요.<br>PIN 번호 4자리를 입력해주세요.
+    </div>
+    <input type="password" id="teacherPinInput" maxlength="4" inputmode="numeric" pattern="[0-9]*"
+           placeholder="••••" autocomplete="off"
+           style="width:100%;box-sizing:border-box;text-align:center;font-size:26px;letter-spacing:12px;padding:10px 0;border:2px solid var(--border);border-radius:12px;font-family:inherit;outline:none;margin-bottom:6px;"
+           onkeydown="if(event.key==='Enter'){event.preventDefault();submitTeacherPin();}">
+    <div id="teacherPinError" style="color:var(--red);font-size:13px;min-height:18px;"></div>
+    <div class="modal-btns">
+      <button class="mbtn ghost" onclick="closeModal('teacherPinModal')">취소</button>
+      <button class="mbtn primary" onclick="submitTeacherPin()">확인</button>
     </div>
   </div>
 </div>
