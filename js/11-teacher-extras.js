@@ -33,7 +33,38 @@ function drawRandomEssayTopic() {
 let _dashFilter = 'all';
 let _dashCommentTarget = null;
 
-async function openTeacherDashboard() {
+/* ── 교사 대시보드 PIN 인증 ──────────────────────────────────
+   교사 대시보드 버튼은 그동안 누구나 누를 수 있었음(권한 체크 없음).
+   짧은 PIN으로 1차 보호막을 둠. 공용 기기에서 다른 사람이 로그아웃하면
+   (forceLogout) 다시 잠기도록 _teacherUnlocked를 false로 초기화함. */
+const TEACHER_PIN = '0914';
+let _teacherUnlocked = false;
+
+function openTeacherDashboard() {
+  if (_teacherUnlocked) { _openTeacherDashboardUnlocked(); return; }
+  const input = $('teacherPinInput');
+  const err   = $('teacherPinError');
+  if (input) input.value = '';
+  if (err)   err.textContent = '';
+  $('teacherPinModal')?.classList.add('open');
+  setTimeout(() => input?.focus(), 50);
+}
+
+function submitTeacherPin() {
+  const input = $('teacherPinInput');
+  const err   = $('teacherPinError');
+  const val = (input?.value || '').trim();
+  if (val === TEACHER_PIN) {
+    _teacherUnlocked = true;
+    closeModal('teacherPinModal');
+    _openTeacherDashboardUnlocked();
+  } else {
+    if (err) err.textContent = '❌ PIN 번호가 틀렸어요!';
+    if (input) { input.value = ''; input.focus(); }
+  }
+}
+
+async function _openTeacherDashboardUnlocked() {
   $('teacherDashModal').classList.add('open');
   await refreshDashboard();
 }

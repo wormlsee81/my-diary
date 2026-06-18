@@ -248,6 +248,9 @@ async function forceLogout() {
   // 2. 인메모리 상태 초기화
   currentNick = '';
   _anonSession = null;
+  // ⚠️ 교사 대시보드 PIN 잠금도 같이 초기화 — 안 그러면 공용 기기에서
+  //    다음 사용자가 로그아웃 없이 바로 대시보드를 볼 수 있게 됨
+  if (typeof _teacherUnlocked !== 'undefined') _teacherUnlocked = false;
   // 3. sessionStorage 완전 초기화
   try { sessionStorage.clear(); } catch {}
   // 4. 민감 캐시 지우기 (IndexedDB 유지, 세션 키만)
