@@ -1013,6 +1013,19 @@ async function renderEssayList() {
     </div>`).join('');
 }
 
+/* 2026 개편: 우측 패널 상단의 "📈 포트폴리오" 버튼 — 이 에세이 탭에서는
+   별도 모달 대신, 패널 하단의 "저장된 에세이" 목록으로 부드럽게 스크롤하며
+   잠깐 강조 효과를 줘서 "포트폴리오 = 내가 쓴 글 모음"이라는 느낌을 준다 */
+function scrollToSavedEssays() {
+  const wrap = $('essayListWrap');
+  if (!wrap) return;
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  wrap.style.transition = 'box-shadow .3s ease, border-radius .3s ease';
+  wrap.style.boxShadow = '0 0 0 3px var(--orange)';
+  setTimeout(() => { wrap.style.boxShadow = 'none'; }, 1400);
+  toast(_currentLang === 'en' ? '📈 Here are your saved essays!' : '📈 내가 쓴 논설문 모음이에요!');
+}
+
 async function loadEssay(id) {
   const key   = `mdj_essays_${currentNick}`;
   const saved = (await lsGet(key)) || [];
@@ -1073,10 +1086,14 @@ const ESSAY_SA_QUESTIONS = [
 const ESSAY_SA_SCALE_LABELS = ['전혀 아니다', '그렇지 않다', '보통이다', '그렇다', '매우 그렇다'];
 let _essaySaRatings = {};
 
-/** 자기 평가 모달 열기 — 매번 새로 그려서 이전 응답을 초기화 */
-function openEssaySelfAssessModal() {
+/** 자기 평가 모달 열기 — 매번 새로 그려서 이전 응답을 초기화
+    (함수명을 launchEssaySaChecklist로 명명: 다른 스크립트 파일의 동명 함수와
+     충돌할 가능성을 없애기 위한 방어적 조치) */
+function launchEssaySaChecklist() {
+  console.log('[essay-self-assess] launchEssaySaChecklist() 호출됨');
   const modal = $('essaySelfAssessModal');
-  if (!modal) return;
+  console.log('[essay-self-assess] modal element:', modal);
+  if (!modal) { console.warn('[essay-self-assess] #essaySelfAssessModal 요소를 찾을 수 없음'); return; }
   _essaySaRatings = {};
 
   const wrap = $('essaySaItemsWrap');
@@ -1101,7 +1118,7 @@ function openEssaySelfAssessModal() {
   modal.style.display = 'flex';
 }
 
-function closeEssaySelfAssessModal() {
+function dismissEssaySaChecklist() {
   const modal = $('essaySelfAssessModal');
   if (modal) modal.style.display = 'none';
 }
