@@ -1170,3 +1170,212 @@ async function submitEssaySelfAssessment() {
   toast('📝 자기 평가를 완료했어요! 스스로 돌아보는 멋진 습관이에요 🌱');
   try { await addInk(5); } catch (e) { /* 잉크 지급 실패는 평가 자체를 막지 않음 */ }
 }
+
+/* ══════════════════════════════════════════════════════════
+   논설문 퇴고(다시쓰기) 시스템 — item: "논설문 쓰기에도 퇴고 버튼/시스템 추가"
+   그림일기용 퇴고 모달(openRevisionModal, 04-ieum-diary.js)과는 완전히 독립적으로
+   동작하며, essayTextarea를 직접 대상으로 한다. AI가 찾아준 문장별 개선 제안을
+   학생이 하나씩 골라 적용하거나, 한 번에 모두 적용할 수 있다.
+══════════════════════════════════════════════════════════ */
+let _essayRevisions = []; // [{original, corrected, category, reason, applied}]
+
+async function launchEssayRevision() {
+  const modal = $('essayRevisionModal');
+  if (!modal) return;
+  const ta = $('essayTextarea');
+  const text = (ta?.value || '').trim();
+  const isEn = _currentLang === 'en';
+
+  if (text.length < 15) {
+    toast(isEn ? '✏️ Write a bit more before revising!' : '✏️ 퇴고하기 전에 조금 더 써보아요!');
+    return;
+  }
+
+  const loadingEl   = $('essayRevisionLoading');
+  const overallEl   = $('essayRevisionOverall');
+  const emptyEl     = $('essayRevisionEmpty');
+  const listWrap    = $('essayRevisionListWrap');
+  const applyAllBtn = $('essayRevisionApplyAllBtn');
+
+  if (overallEl)   { overallEl.style.display = 'none'; overallEl.innerHTML = ''; }
+  if (emptyEl)     { emptyEl.style.display = 'none'; emptyEl.innerHTML = ''; }
+  if (listWrap)    listWrap.innerHTML = '';
+  if (applyAllBtn) applyAllBtn.style.display = 'none';
+  if (loadingEl)   loadingEl.style.display = 'block';
+  _essayRevisions = [];
+  modal.style.display = 'flex';
+
+  try {
+    const result = await reviseEssayWithAI(text);
+    _essayRevisions = (result.revisions || []).map(r => ({ ...r, applied: false }));
+
+    if (loadingEl) loadingEl.style.display = 'none';
+
+    if (overallEl && result.overallComment) {
+      overallEl.style.display = 'block';
+      overallEl.innerHTML = `🌟 ${result.overallComment}`;
+    }
+
+    if (_essayRevisions.length === 0) {
+      if (emptyEl) {
+        emptyEl.style.display = 'block';
+        emptyEl.innerHTML = isEn
+          ? '🎉 No revisions needed — your essay looks great!'
+          : '🎉 더 고칠 부분이 없어요! 정말 잘 썼어요!';
+      }
+      return;
+    }
+
+    renderEssayRevisionList();
+    if (applyAllBtn) applyAllBtn.style.display = 'block';
+  } catch (e) {
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (emptyEl) {
+      emptyEl.style.display = 'block';
+      emptyEl.innerHTML = isEn
+        ? '⚠️ Could not load revision suggestions. Please try again.'
+        : '⚠️ 퇴고 제안을 불러오지 못했어요. 다시 시도해주세요.';
+    }
+    console.warn('[essay-revision] 실패:', e);
+  }
+}
+
+function renderEssayRevisionList() {
+  const listWrap = $('essayRevisionListWrap');
+  if (!listWrap) return;
+  const isEn = _currentLang === 'en';
+  const categoryColor = {
+    '맞춤법':'#e07040', '띄어쓰기':'#e07040', '문장호응':'#e07040',
+    'spelling':'#e07040', 'grammar':'#e07040',
+    '표현':'var(--orange)', 'word-choice':'var(--orange)',
+    '내용보강':'#8a7ce8', 'content':'#8a7ce8'
+  };
+  listWrap.innerHTML = _essayRevisions.map((r, i) => {
+    const color = categoryColor[r.category] || 'var(--blue)';
+    const highlightedCorrected = buildDiffHighlight(r.original || '', r.corrected || '');
+    return `
+      <div style="border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;" id="essayRevItem${i}">
+        <span style="display:inline-block;background:${color};color:white;font-size:10px;padding:2px 8px;border-radius:10px;margin-bottom:6px;">${escHtml(r.category || (isEn ? 'general' : '표현'))}</span>
+        <div style="font-size:12px;color:#b33;text-decoration:line-through;opacity:.75;margin-bottom:3px;word-break:keep-all;">${escHtml(r.original || '')}</div>
+        <div style="font-size:12.5px;color:#2a6a4a;font-weight:bold;margin-bottom:5px;word-break:keep-all;">${highlightedCorrected}</div>
+        <div style="font-size:11px;color:#888;margin-bottom:7px;word-break:keep-all;">💬 ${escHtml(r.reason || '')}</div>
+        <button onclick="applyEssayRevisionItem(${i})" id="essayRevApplyBtn${i}"
+          style="padding:6px 14px;background:white;border:1.5px solid #4a90c2;color:#4a90c2;border-radius:8px;font-family:inherit;font-size:12px;font-weight:bold;cursor:pointer;">
+          ${isEn ? '✅ Apply' : '✅ 적용하기'}
+        </button>
+      </div>`;
+  }).join('');
+}
+
+/** 제안 하나를 essayTextarea에 직접 적용. opts.silent=true면 "원문을 못 찾음" 경고 토스트를 생략
+    (전체 적용 시 토스트가 여러 번 겹쳐 뜨는 것을 방지하기 위함) */
+function applyEssayRevisionItem(idx, opts) {
+  const silent = !!(opts && opts.silent);
+  const r = _essayRevisions[idx];
+  if (!r || r.applied) return true;
+  const ta = $('essayTextarea');
+  if (!ta) return false;
+
+  if (r.original && ta.value.includes(r.original)) {
+    ta.value = ta.value.replace(r.original, r.corrected || '');
+  } else {
+    if (!silent) {
+      toast(_currentLang === 'en'
+        ? '⚠️ Could not find the exact original text — it may have changed.'
+        : '⚠️ 원래 문장을 찾지 못했어요. 글이 바뀌었을 수 있어요.');
+    }
+    return false;
+  }
+
+  r.applied = true;
+  const btn = $(`essayRevApplyBtn${idx}`);
+  if (btn) {
+    btn.textContent = _currentLang === 'en' ? '✔️ Applied' : '✔️ 적용됨';
+    btn.disabled = true;
+    btn.style.background = '#eee';
+    btn.style.color = '#aaa';
+    btn.style.borderColor = '#ddd';
+    btn.style.cursor = 'default';
+  }
+  onEssayInput();
+  return true;
+}
+
+function applyAllEssayRevisions() {
+  let failCount = 0;
+  _essayRevisions.forEach((r, i) => {
+    if (!r.applied && !applyEssayRevisionItem(i, { silent: true })) failCount++;
+  });
+  const isEn = _currentLang === 'en';
+  if (failCount > 0) {
+    toast(isEn
+      ? `✅ Applied! (${failCount} couldn't be matched — the text may have changed)`
+      : `✅ 적용했어요! (${failCount}개는 원문을 찾지 못해 건너뛰었어요)`);
+  } else {
+    toast(isEn ? '✅ All suggestions applied!' : '✅ 모든 제안을 적용했어요!');
+  }
+}
+
+function dismissEssayRevision() {
+  const modal = $('essayRevisionModal');
+  if (modal) modal.style.display = 'none';
+}
+
+/* AI에게 퇴고(다시쓰기) 제안 요청 — analyzeEssay()의 채점용 프롬프트와는 별도로,
+   "문장을 더 좋게 다시 쓰기"에 집중한 전용 프롬프트를 사용한다 */
+async function reviseEssayWithAI(text) {
+  const isEn = _currentLang === 'en';
+  const topicTitle = _currentEssayTopic ? _currentEssayTopic.title : (isEn ? 'Free topic' : '자유 주제');
+
+  const systemPrompt = isEn ? `You are a warm English writing teacher helping an elementary student (ages 10-13) revise their essay.
+Topic: "${topicTitle}"
+
+Find up to 5 sentences or phrases that could be revised to be clearer, more vivid, or more correct.
+For each one, provide:
+- "original": the exact original sentence/phrase from the student's text (short, max 1 sentence)
+- "corrected": an improved version
+- "category": one of "spelling" | "grammar" | "word-choice" | "content"
+- "reason": one short, kind sentence explaining why this is better
+
+Also give an "overallComment": 1 short encouraging sentence about the essay overall.
+If the essay is already excellent, return an empty "revisions" array.
+
+Return ONLY valid JSON (no markdown, no code fences):
+{
+  "revisions":[{"original":"...","corrected":"...","category":"...","reason":"..."}],
+  "overallComment":"..."
+}` : `너는 초등학생(10~13세)의 논설문 퇴고를 도와주는 다정한 국어 선생님이야.
+주제: "${topicTitle}"
+
+학생의 글에서 더 자연스럽고 풍부하게 고치면 좋을 문장이나 표현을 최대 5개 찾아줘.
+각 항목마다:
+- "original": 학생 글의 원래 문장/표현 그대로 (짧게, 1문장 이내)
+- "corrected": 더 자연스럽고 구체적으로 고친 문장
+- "category": 다음 중 하나 — "맞춤법" | "띄어쓰기" | "문장호응" | "표현" | "내용보강"
+- "reason": 왜 이렇게 고치면 더 좋은지 다정하게 한 문장으로 설명
+
+"overallComment"에는 전체적으로 퇴고하면 글이 얼마나 좋아질지 칭찬과 격려를 담아 1~2문장으로 적어줘.
+이미 글이 훌륭하다면 "revisions"를 빈 배열로 반환해.
+
+오직 유효한 JSON만 반환해 (마크다운 금지, 코드블록 금지):
+{
+  "revisions":[{"original":"...","corrected":"...","category":"...","reason":"..."}],
+  "overallComment":"..."
+}`;
+
+  const raw = await callClaude({
+    model: 'claude-haiku-4-5-20251001', max_tokens: 1400,
+    system: systemPrompt,
+    messages: [{ role:'user', content:`${isEn ? "Student's essay:" : '학생이 쓴 논설문:'}\n${text}` }]
+  });
+
+  const cleanedRaw = (typeof raw === 'string' ? raw : (raw ? JSON.stringify(raw) : ''))
+    .replace(/```json/gi, '').replace(/```/g, '').trim();
+  const parsed = parseJSON(cleanedRaw);
+  if (!parsed) {
+    console.warn('[essay-revision] AI 응답 JSON 파싱 실패. 원본 응답:', raw);
+    throw new Error('essay-revision-parse-failed');
+  }
+  if (!Array.isArray(parsed.revisions)) parsed.revisions = [];
+  return parsed;
+}
