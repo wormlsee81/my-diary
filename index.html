@@ -445,6 +445,7 @@
         <button class="mission-btn" style="background:var(--mint);" onclick="openEssayTopicModal()">🎲 Topic Pick</button>
         <button class="mission-btn" style="background:var(--orange);" onclick="insertEssaySkeleton()" id="btnEssaySkeleton">🍔 햄버거 뼈대</button>
         <button class="mission-btn" style="background:#8a7ce8;" onclick="newEssay()" id="btnEssayNew">✏️ 새 에세이</button>
+        <button class="mission-btn" style="background:#4a90c2;" onclick="launchEssayRevision()" id="btnEssayRevise">✍️ 퇴고</button>
       </div>
 
       <!-- 현재 주제 표시 -->
@@ -988,7 +989,7 @@
 <script src="js/05-shared-builders.js"></script>
 <script src="js/06-ttieum.js"></script>
 <script src="js/07-jieum.js"></script>
-<script src="js/08-ieum-essay.js?v=3"></script>
+<script src="js/08-ieum-essay.js?v=4"></script>
 <script src="js/09-sos-dict.js"></script>
 <script src="js/10-i18n.js"></script>
 <script src="js/11-teacher-extras.js"></script>
@@ -1224,6 +1225,34 @@
     <div style="display:flex;gap:8px;margin-top:16px;">
       <button onclick="dismissEssaySaChecklist()" style="flex:1;padding:11px;background:#eee;color:#666;border:none;border-radius:12px;font-family:inherit;font-size:13px;cursor:pointer;">취소</button>
       <button onclick="submitEssaySelfAssessment()" style="flex:2;padding:11px;background:var(--orange);color:white;border:none;border-radius:12px;font-family:inherit;font-size:13px;font-weight:bold;cursor:pointer;">✅ 평가 완료!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ 논설문(에세이) 퇴고 모달 — AI가 찾아준 다시쓰기 제안을 골라서 적용 ══════
+     이음-에세이 탭 전용. 그림일기용 퇴고 모달(openRevisionModal)과는 완전히 별도이며,
+     essayTextarea를 직접 대상으로 동작하는 독립적인 인라인 모달 ══════ -->
+<div id="essayRevisionModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:white;border-radius:16px;padding:18px 20px;max-width:520px;width:100%;max-height:88vh;overflow-y:auto;box-sizing:border-box;">
+    <div style="font-size:16px;font-weight:bold;color:#4a90c2;margin-bottom:4px;">✍️ 퇴고 — 내 논설문 다시 쓰기</div>
+    <div style="font-size:11px;color:#999;margin-bottom:14px;line-height:1.5;">
+      AI 선생님이 더 좋은 문장으로 고칠 수 있는 부분을 찾아드려요.<br>
+      마음에 드는 제안만 골라서 하나씩 적용해보세요!
+    </div>
+
+    <div id="essayRevisionLoading" style="display:none;text-align:center;padding:30px 0;color:#999;font-size:13px;">
+      🔍 퇴고할 부분을 찾고 있어요...
+    </div>
+
+    <div id="essayRevisionOverall" style="display:none;margin-bottom:12px;padding:10px 14px;background:#f0f7ff;border:2px solid var(--blue);border-radius:12px;font-size:12px;color:#2a5a8a;line-height:1.6;"></div>
+
+    <div id="essayRevisionEmpty" style="display:none;text-align:center;padding:20px 0;color:#888;font-size:13px;"></div>
+
+    <div id="essayRevisionListWrap" style="display:flex;flex-direction:column;gap:10px;"></div>
+
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button onclick="dismissEssayRevision()" style="flex:1;padding:11px;background:#eee;color:#666;border:none;border-radius:12px;font-family:inherit;font-size:13px;cursor:pointer;">닫기</button>
+      <button id="essayRevisionApplyAllBtn" onclick="applyAllEssayRevisions()" style="display:none;flex:2;padding:11px;background:#4a90c2;color:white;border:none;border-radius:12px;font-family:inherit;font-size:13px;font-weight:bold;cursor:pointer;">✅ 모두 적용하기</button>
     </div>
   </div>
 </div>
