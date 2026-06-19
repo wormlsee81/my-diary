@@ -25,6 +25,32 @@ function switchIeumTab(tab) {
 /* 한국어 모드에서는 "영어로 에세이를 써보세요" 힌트와 "원어민 발음 듣기(TTS)" 영역을
    화면에서 완전히 숨긴다 (영어 전용 기능이므로). 언어가 바뀔 수 있는 모든 진입점에서
    호출해 항상 현재 언어 상태에 맞게 동기화한다. */
+const ESSAY_PLACEHOLDER_KO =
+`🍞 [Intro] 서론 — 문제 상황과 나의 의견을 써보세요.
+예) 요즘 스마트폰을 교실에서 써도 되는지에 대한 논쟁이 있습니다. 저는 스마트폰 사용에 찬성합니다.
+
+🥩 [Body 1] 첫 번째 이유와 예시를 써보세요.
+예) 첫째, 모르는 내용을 바로 검색해서 학습에 활용할 수 있습니다.
+
+🥩 [Body 2] 두 번째 이유와 예시를 써보세요.
+예) 둘째, 위급한 상황에서 가족과 빠르게 연락할 수 있습니다.
+
+🍞 [Conclusion] 결론 — 의견을 다시 강조해보세요.
+예) 이와 같은 이유로 저는 스마트폰 사용에 찬성합니다.`;
+
+const ESSAY_PLACEHOLDER_EN =
+`🍞 [Intro] — Describe the situation, then share your opinion.
+e.g.) These days, people are debating whether students should use smartphones in class. I think smartphones are helpful.
+
+🥩 [Body 1] First reason + example.
+e.g.) First, we can search for information easily.
+
+🥩 [Body 2] Second reason + example.
+e.g.) Second, we can communicate with friends.
+
+🍞 [Conclusion] Restate your opinion.
+e.g.) In conclusion, I believe smartphones are useful.`;
+
 function applyEssayLangUI() {
   const isEn = _currentLang === 'en';
   const hint = $('essayWriteHint');
@@ -36,6 +62,10 @@ function applyEssayLangUI() {
   if (connBlock) connBlock.style.display = isEn ? '' : 'none';
   const factsBlock = $('essayFactsBlock');
   if (factsBlock) factsBlock.style.display = isEn ? 'none' : '';
+  /* 2026 버그 수정: placeholder가 언어와 무관하게 항상 영어로 고정돼 있던 문제 —
+     언어 전환 시점마다 placeholder도 함께 동기화한다 (item 2) */
+  const ta = $('essayTextarea');
+  if (ta) ta.placeholder = isEn ? ESSAY_PLACEHOLDER_EN : ESSAY_PLACEHOLDER_KO;
 }
 
 /* ── 2. 주제 데이터 ── */
@@ -1013,17 +1043,25 @@ async function renderEssayList() {
     </div>`).join('');
 }
 
-/* 2026 개편: 우측 패널 상단의 "📈 포트폴리오" 버튼 — 이 에세이 탭에서는
-   별도 모달 대신, 패널 하단의 "저장된 에세이" 목록으로 부드럽게 스크롤하며
-   잠깐 강조 효과를 줘서 "포트폴리오 = 내가 쓴 글 모음"이라는 느낌을 준다 */
+/* 2026 개편: "📈 포트폴리오" 버튼을 눌렀을 때만 "저장된 에세이" 목록이 나타나도록
+   토글 방식으로 변경 (기본적으로는 숨겨져 있음). 다시 누르면 접힌다. */
 function scrollToSavedEssays() {
-  const wrap = $('essayListWrap');
-  if (!wrap) return;
-  wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  wrap.style.transition = 'box-shadow .3s ease, border-radius .3s ease';
-  wrap.style.boxShadow = '0 0 0 3px var(--orange)';
-  setTimeout(() => { wrap.style.boxShadow = 'none'; }, 1400);
-  toast(_currentLang === 'en' ? '📈 Here are your saved essays!' : '📈 내가 쓴 논설문 모음이에요!');
+  const section = $('essaySavedSection');
+  if (!section) return;
+  const isEn = _currentLang === 'en';
+  const willShow = section.style.display === 'none' || !section.style.display;
+
+  if (willShow) {
+    section.style.display = 'block';
+    renderEssayList();
+    setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+    section.style.transition = 'box-shadow .3s ease';
+    section.style.boxShadow = '0 0 0 3px var(--orange)';
+    setTimeout(() => { section.style.boxShadow = 'none'; }, 1400);
+    toast(isEn ? '📈 Here are your saved essays!' : '📈 내가 쓴 논설문 모음이에요!');
+  } else {
+    section.style.display = 'none';
+  }
 }
 
 async function loadEssay(id) {
@@ -1086,6 +1124,23 @@ const ESSAY_SA_QUESTIONS = [
 const ESSAY_SA_SCALE_LABELS = ['전혀 아니다', '그렇지 않다', '보통이다', '그렇다', '매우 그렇다'];
 let _essaySaRatings = {};
 
+/* 2026 버그 수정: 콘솔 로그상으로는 modal.style.display='flex'가 정상 적용됐는데도
+   화면에는 전혀 보이지 않는 현상이 확인됨. 다른 스크립트/CSS가 조상 요소에
+   transform 등을 걸어 position:fixed 기준점이 틀어졌거나, 외부 CSS가 더 높은
+   우선순위로 숨기고 있을 가능성이 있음. 아래 두 헬퍼는 (1) 모달을 body의 바로
+   자식으로 옮겨 조상 요소의 영향을 원천적으로 배제하고, (2) display를
+   !important로 강제 지정해 어떤 외부 CSS 충돌에도 확실히 보이도록 방어적으로
+   처리한다. 우리 모달들(essaySelfAssessModal, essayRevisionModal)에 모두 적용. */
+function forceShowModal(modal) {
+  if (!modal) return;
+  if (modal.parentElement !== document.body) document.body.appendChild(modal);
+  modal.style.setProperty('display', 'flex', 'important');
+}
+function forceHideModal(modal) {
+  if (!modal) return;
+  modal.style.setProperty('display', 'none', 'important');
+}
+
 /** 자기 평가 모달 열기 — 매번 새로 그려서 이전 응답을 초기화
     (함수명을 launchEssaySaChecklist로 명명: 다른 스크립트 파일의 동명 함수와
      충돌할 가능성을 없애기 위한 방어적 조치) */
@@ -1115,12 +1170,12 @@ function launchEssaySaChecklist() {
   const resultBox = $('essaySaResultBox');
   if (resultBox) { resultBox.style.display = 'none'; resultBox.innerHTML = ''; }
 
-  modal.style.display = 'flex';
+  forceShowModal(modal);
+  console.log('[essay-self-assess] 모달 표시 완료. 최종 display 값:', getComputedStyle(modal).display, '/ 부모 요소:', modal.parentElement);
 }
 
 function dismissEssaySaChecklist() {
-  const modal = $('essaySelfAssessModal');
-  if (modal) modal.style.display = 'none';
+  forceHideModal($('essaySelfAssessModal'));
 }
 
 /** 문항별 1~5점 선택 — 선택된 버튼만 강조 표시 */
@@ -1203,7 +1258,7 @@ async function launchEssayRevision() {
   if (applyAllBtn) applyAllBtn.style.display = 'none';
   if (loadingEl)   loadingEl.style.display = 'block';
   _essayRevisions = [];
-  modal.style.display = 'flex';
+  forceShowModal(modal);
 
   try {
     const result = await reviseEssayWithAI(text);
@@ -1317,8 +1372,7 @@ function applyAllEssayRevisions() {
 }
 
 function dismissEssayRevision() {
-  const modal = $('essayRevisionModal');
-  if (modal) modal.style.display = 'none';
+  forceHideModal($('essayRevisionModal'));
 }
 
 /* AI에게 퇴고(다시쓰기) 제안 요청 — analyzeEssay()의 채점용 프롬프트와는 별도로,
