@@ -224,7 +224,7 @@
 <div class="modal-bg" id="hallModal">
   <div class="modal" style="max-width:700px;">
     <h2>🏆 이주의 명예의 전당</h2>
-    <p style="font-size:12px;color:#aaa;margin-bottom:10px;">묘사력이 높은 베스트 작품들이 전시됩니다. 내 작품이 올라오면 정말 뿌듯하겠죠?</p>
+    <p style="font-size:12px;color:#aaa;margin-bottom:10px;">살아있는 표현이 풍부한 베스트 작품들이 전시됩니다. 내 작품이 올라오면 정말 뿌듯하겠죠?</p>
     <div class="hall-grid" id="hallContent"></div>
     <div class="modal-btns"><button class="mbtn ghost" onclick="closeModal('hallModal')">닫기</button></div>
   </div>
@@ -383,7 +383,7 @@
       <!-- 파트 3 수정: 이음 헤더 버튼에 id 추가 -->
       <button class="hbtn" onclick="newDiary()" id="ieumNewDiaryBtn">✏️ 새 일기</button>
       <span id="ieumAppTitle" style="font-size:15px;">🎨 [이음] AI 그림일기장</span>
-      <span style="font-size:11px;background:rgba(255,255,255,.2);padding:3px 10px;border-radius:20px;word-break:keep-all;display:none;" class="goal-badge-ieum">💡 감각어·감정어·비유를 써볼수록 묘사력이 올라가요</span>
+      <span style="font-size:11px;background:rgba(255,255,255,.2);padding:3px 10px;border-radius:20px;word-break:keep-all;display:none;" class="goal-badge-ieum">💡 감각어·감정어·비유를 써볼수록 살아있는 표현이 올라가요</span>
     </div>
     <div class="h-right">
       <span class="date-badge" id="dateDisplay"></span>
@@ -443,7 +443,7 @@
       <textarea class="manuscript" id="diary" placeholder="오늘 있었던 일을 자세히 적어보세요! 🌟"></textarea>
       
       <div class="richness-bar-wrap">
-        <span id="richnesBarLabel" style="font-size:12px;color:#999;white-space:nowrap;">✏️ 묘사력</span>
+        <span id="richnesBarLabel" style="font-size:12px;color:#999;white-space:nowrap;">✏️ 살아있는 표현</span>
         <div class="richness-track"><div class="richness-fill" id="richnessFill"></div></div>
         <span class="richness-score" id="richnessScore">— 대기중</span>
         <button class="xai-trigger-btn" onclick="openXaiModal()" title="점수 기준 보기" id="xaiTriggerBtn" style="display:none;">💡 왜?</button>
@@ -505,7 +505,7 @@
           <button onclick="hideDiaryError()" id="errorCloseBtn" style="padding:6px 14px;border:none;border-radius:8px;background:#eee;font-family:inherit;font-size:13px;cursor:pointer;">닫기</button>
         </div>
       </div>
-      <div id="diaryDrawTipBox" style="margin-top:6px;background:var(--mint-light);padding:6px;border-radius:8px;text-align:center;font-size:11px;color:var(--mint);">🖍️ 감각어(보글보글, 차갑게, 눈부시게)와 비유(~처럼, ~같이)를 쓸수록 더 풍부한 그림이 나와요!</div>
+      <div id="diaryDrawTipBox" style="margin-top:6px;background:var(--mint-light);padding:6px;border-radius:8px;text-align:center;font-size:11px;color:var(--mint);">🖍️ 감각어(보글보글, 차갑게, 눈부시게)와 비유(~처럼, ~같이)를 쓸수록 살아있는 크레파스 그림이 나와요!</div>
     </section>
   </main>
 
@@ -818,7 +818,7 @@
       <div class="badge-item" id="badge_4"><div class="badge-icon">💬</div><div class="badge-name">수다쟁이</div><div class="badge-desc">글자수 150자 이상</div></div>
       <div class="badge-item" id="badge_5"><div class="badge-icon">🎯</div><div class="badge-name">미션 클리어</div><div class="badge-desc">미션 10점 달성</div></div>
       <div class="badge-item" id="badge_6"><div class="badge-icon">👑</div><div class="badge-name">미션 마스터</div><div class="badge-desc">미션 10점 5회</div></div>
-      <div class="badge-item" id="badge_7"><div class="badge-icon">🎨</div><div class="badge-name">묘사왕 피카소</div><div class="badge-desc">묘사력 10점 달성</div></div>
+      <div class="badge-item" id="badge_7"><div class="badge-icon">🎨</div><div class="badge-name">묘사왕 피카소</div><div class="badge-desc">살아있는 표현 10점 달성</div></div>
       <div class="badge-item" id="badge_8"><div class="badge-icon">👀</div><div class="badge-name">오감술사</div><div class="badge-desc">감각어 5개 이상</div></div>
       <div class="badge-item" id="badge_9"><div class="badge-icon">💖</div><div class="badge-name">감정의 마술사</div><div class="badge-desc">풍부한 감정 표현</div></div>
       <div class="badge-item" id="badge_10"><div class="badge-icon">💡</div><div class="badge-name">상상력 대장</div><div class="badge-desc">창의적인 상상/비유</div></div>
@@ -1189,13 +1189,13 @@
     <!-- Explainable AI 안내 -->
     <div class="dash-explainer-box">
       <div class="dash-explainer-title">💡 AI 피드백 채점 기준 (Explainable AI)</div>
-      묘사력 점수(1~10): <b>오감 표현 +3점</b>, <b>감정 표현 +2점</b>, <b>비유 표현 +2점</b>, <b>구체적 묘사 +2점</b>, <b>독특한 관점 +1점</b><br>
+      살아있는 표현 점수(1~10): <b>오감 표현 +3점</b>, <b>감정 표현 +2점</b>, <b>비유 표현 +2점</b>, <b>구체적 묘사 +2점</b>, <b>독특한 관점 +1점</b><br>
       미션 점수(0~10): 지정된 미션 요소 포함 여부로 자동 측정. 점수 기준은 항상 학생에게도 동일하게 공개됩니다.
     </div>
     <!-- 통계 요약 -->
     <div class="dash-stat-row" id="dashStatRow">
       <div class="dash-stat-card"><div class="dash-stat-num" id="dashTotalStudents">0</div><div class="dash-stat-label">참여 학생</div></div>
-      <div class="dash-stat-card"><div class="dash-stat-num" id="dashAvgScore">—</div><div class="dash-stat-label">평균 묘사력</div></div>
+      <div class="dash-stat-card"><div class="dash-stat-num" id="dashAvgScore">—</div><div class="dash-stat-label">평균 살아있는 표현</div></div>
       <div class="dash-stat-card"><div class="dash-stat-num" id="dashHighCount">0</div><div class="dash-stat-label">상위(7+)</div></div>
       <div class="dash-stat-card"><div class="dash-stat-num" id="dashLowCount">0</div><div class="dash-stat-label">지원 필요(3-)</div></div>
       <div class="dash-stat-card"><div class="dash-stat-num" id="dashTodayCount">0</div><div class="dash-stat-label">오늘 작성</div></div>
@@ -1356,7 +1356,7 @@
     <div class="portfolio-growth-summary" id="portfolioGrowthSummary">
       <div class="portfolio-growth-title">🌱 나의 성장 그래프</div>
       <div class="portfolio-growth-bar-row">
-        <span class="portfolio-growth-label">묘사력</span>
+        <span class="portfolio-growth-label">살아있는 표현</span>
         <div class="portfolio-growth-track"><div class="portfolio-growth-fill" id="pgFillRichness" style="width:0%"></div></div>
         <span style="font-size:12px;color:var(--mint);min-width:40px;text-align:right;" id="pgLabelRichness">—</span>
       </div>
@@ -1379,7 +1379,7 @@
 <!-- ══════ AI 피드백 투명화(XAI) 모달 ══════ -->
 <div class="xai-overlay" id="xaiOverlay">
   <div class="xai-panel">
-    <div class="xai-title">💡 묘사력 점수 — 이렇게 계산됐어요!</div>
+    <div class="xai-title">💡 살아있는 표현 점수 — 이렇게 계산됐어요!</div>
     <div style="font-size:12px;color:#888;margin-bottom:10px;word-break:keep-all;">
       AI가 어떤 기준으로 점수를 줬는지 투명하게 보여드릴게요. 다음에 더 높은 점수를 받으려면 어떻게 써야 할지 알 수 있어요! 🎯
     </div>
