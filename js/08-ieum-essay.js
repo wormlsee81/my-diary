@@ -1433,3 +1433,103 @@ Return ONLY valid JSON (no markdown, no code fences):
   if (!Array.isArray(parsed.revisions)) parsed.revisions = [];
   return parsed;
 }
+
+/* ══════════════════════════════════════════════════════════
+   알(펫) 위젯 — 누를 때마다 다양한 대화가 말풍선에 나타나도록 추가
+   petTap()은 다른 스크립트 파일(예: 01-core-init.js / 02-core-utils.js)에
+   정의되어 있을 가능성이 높아, 그 파일은 직접 수정할 수 없음. 대신 기존
+   petTap()의 동작(경험치 증가, 레벨업 등으로 추정)은 그대로 호출해서 보존하고,
+   "다양한 대화 표시" 기능만 안전하게 덧붙인다.
+   DOMContentLoaded 시점에는 모든 <script> 태그가 이미 실행을 마친 뒤이므로,
+   petTap이 어느 파일에 정의되어 있든, 로딩 순서와 상관없이 항상 마지막에
+   한 번 더 안전하게 감쌀 수 있다.
+══════════════════════════════════════════════════════════ */
+const PET_DIALOGUE_KO = [
+  '오늘도 글쓰기 화이팅이야! 🌱',
+  '꾸욱... 나 지금 알에서 깨어나는 중인가? 두근두근!',
+  '네가 글을 쓸 때마다 나도 무럭무럭 자라는 기분이야!',
+  '심심한데... 나랑 같이 이야기 하나 만들어볼래?',
+  '오늘 날씨가 좋아서 글이 술술 나올 것 같아!',
+  '최고의 문장은 짧고 솔직한 문장이래! 한번 써볼까?',
+  '히히, 너 글씨 진짜 빨리 쓰네? 손가락 안 아파?',
+  '내가 알에서 나오면 무슨 모습일지 궁금하지 않아?',
+  '물방울 모으는 거 잊지 마! 글을 쓰면 쑥쑥 늘어나~',
+  '음... 다음엔 어떤 이야기를 써볼까 고민 중이야',
+  '너랑 매일 만나니까 진짜 좋아!',
+  '쉿... 비밀인데, 사실 나도 글쓰기 좋아해',
+  '오늘 일기엔 무슨 색깔이 어울릴까?',
+  '토닥토닥, 잘하고 있어!',
+  '글쓰기 슬럼프? 한 문장만 써봐, 그게 시작이야!',
+  '나 한번 콕 찔러줄래? 헤헤',
+  '다른 친구들은 오늘 어떤 글을 썼을까 궁금해!',
+  '이야기 속 주인공이 되어보는 건 어떨까?',
+  '오늘의 미션, 벌써 깼어? 대단한데!',
+  '쪼끔만 더 크면... 나 뭐가 될까? 기대돼!',
+  '글을 쓸 때 마음이 편안해지지 않아?',
+  '고마워! 매일 나를 들여다봐줘서!',
+  '혹시 오늘 기분은 어때? 글에 담아봐!',
+  '단어 하나가 모이면 멋진 문장이 된대!',
+  '너의 이야기, 다음 편이 너무 궁금해!',
+  '쉿! 너만 알고 있어, 나는 사실 잠꾸러기야 😴',
+  '글 쓰다가 막히면 그림부터 그려봐도 좋아!',
+  '오늘도 와줘서 고마워! 보고 싶었어~',
+];
+
+const PET_DIALOGUE_EN = [
+  "Keep writing — you're doing great! 🌱",
+  "I wonder what I'll hatch into... so exciting!",
+  "Every sentence you write helps me grow!",
+  "Let's make up a story together!",
+  "Don't forget to collect water drops by writing!",
+  "You write so fast — your fingers must be tired!",
+  "I love spending time with you every day!",
+  "What story should we write next?",
+  "One sentence is all it takes to start!",
+  "I'm curious what I'll look like when I hatch!",
+  "Thanks for checking on me today!",
+  "Writing makes my heart feel warm too 💛",
+  "Got any fun ideas for today's story?",
+  "Shh... don't tell anyone, but I love naps too 😴",
+];
+
+let _petBubbleTimer = null;
+
+/** 말풍선에 무작위 대화를 표시 (가끔은 현재 레벨을 언급하는 멘트도 살짝 섞음) */
+function showRandomPetDialogue() {
+  const bubble = $('petBubble');
+  if (!bubble) return;
+  const isEn = (typeof _currentLang !== 'undefined') && _currentLang === 'en';
+  const pool = isEn ? PET_DIALOGUE_EN : PET_DIALOGUE_KO;
+
+  const lvEl = $('petLevel');
+  const lvNum = lvEl ? parseInt((lvEl.textContent || '').replace(/[^0-9]/g, ''), 10) : NaN;
+
+  let line;
+  if (!isNaN(lvNum) && lvNum > 0 && Math.random() < 0.15) {
+    line = isEn ? `I'm already Lv.${lvNum} thanks to you! 🎉` : `벌써 Lv.${lvNum}이라니, 너 덕분이야! 🎉`;
+  } else {
+    line = pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  bubble.textContent = line;
+  /* petBubble의 정확한 CSS 동작 방식을 알 수 없어(외부 CSS 파일), class 토글과
+     인라인 스타일을 함께 사용해 어떤 구현 방식이든 확실히 보이도록 방어적으로 처리 */
+  bubble.style.display = 'block';
+  bubble.style.opacity  = '1';
+  bubble.classList.add('show');
+  clearTimeout(_petBubbleTimer);
+  _petBubbleTimer = setTimeout(() => {
+    bubble.classList.remove('show');
+    bubble.style.opacity = '0';
+  }, 2600);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const _originalPetTap = (typeof window.petTap === 'function') ? window.petTap : null;
+  window.petTap = function () {
+    if (_originalPetTap) {
+      try { _originalPetTap(); } catch (e) { console.warn('[pet] 기존 petTap() 실행 중 오류:', e); }
+    }
+    showRandomPetDialogue();
+  };
+});
