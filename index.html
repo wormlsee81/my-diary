@@ -14,7 +14,7 @@
 <style>
 /* ════════════════════════════════════════════════════════════
    2026 디자인 개편: 도장(.stamp) 배지를 동그란 전통 도장 느낌으로 변경
-   참고: 동그란 빨간 도장 + 안쪽 이중선 + 살짝 기울어진 모양
+   참고: 동그란 빨간 도장 + 안쪽 이중선 + 살짝 기울어진 모양 + 잉크 번짐 질감
    components.css의 기존 .stamp 규칙을 이 블록이 나중에 로드되며 덮어씀.
    (그림일기 탭의 모사력 도장과 논설문 탭의 Writing 도장이 클래스를 공유하므로
    이 한 곳을 고치면 두 군데 모두 동그란 도장 스타일로 바뀜)
@@ -23,9 +23,9 @@
   width: 100px !important;
   height: 100px !important;
   border-radius: 50% !important;
-  background: #fffdfa !important;
+  background: rgba(255,253,250,0.55) !important;
   border: 3px solid #c0392b !important;
-  box-shadow: inset 0 0 0 4px #fffdfa, inset 0 0 0 6px #c0392b !important;
+  box-shadow: inset 0 0 0 4px rgba(255,253,250,0.55), inset 0 0 0 6px #c0392b !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
@@ -34,6 +34,10 @@
   padding: 8px !important;
   box-sizing: border-box !important;
   rotate: -8deg;
+  /* SVG feTurbulence/feDisplacementMap 필터로 가장자리를 살짝 일그러뜨려
+     인쇄소 도장처럼 도장이 찍힌 듯한 자연스러운 질감을 준다 */
+  filter: url(#inkStampDistress);
+  mix-blend-mode: multiply;
 }
 .stamp .stamp-icon {
   font-size: 22px;
@@ -50,15 +54,15 @@
   letter-spacing: -0.2px;
 }
 /* 등급별 잉크 색상 (s1=노력이 필요해요 ~ s5=참 잘했어요) */
-.stamp.s1 { border-color:#8a8a8a !important; box-shadow: inset 0 0 0 4px #fffdfa, inset 0 0 0 6px #8a8a8a !important; }
+.stamp.s1 { border-color:#8a8a8a !important; box-shadow: inset 0 0 0 4px rgba(255,253,250,0.55), inset 0 0 0 6px #8a8a8a !important; }
 .stamp.s1 .stamp-icon, .stamp.s1 .stamp-text { color:#8a8a8a; }
-.stamp.s2 { border-color:#4a90c2 !important; box-shadow: inset 0 0 0 4px #fffdfa, inset 0 0 0 6px #4a90c2 !important; }
+.stamp.s2 { border-color:#4a90c2 !important; box-shadow: inset 0 0 0 4px rgba(255,253,250,0.55), inset 0 0 0 6px #4a90c2 !important; }
 .stamp.s2 .stamp-icon, .stamp.s2 .stamp-text { color:#4a90c2; }
-.stamp.s3 { border-color:#4caf8a !important; box-shadow: inset 0 0 0 4px #fffdfa, inset 0 0 0 6px #4caf8a !important; }
+.stamp.s3 { border-color:#4caf8a !important; box-shadow: inset 0 0 0 4px rgba(255,253,250,0.55), inset 0 0 0 6px #4caf8a !important; }
 .stamp.s3 .stamp-icon, .stamp.s3 .stamp-text { color:#4caf8a; }
-.stamp.s4 { border-color:#e08a3c !important; box-shadow: inset 0 0 0 4px #fffdfa, inset 0 0 0 6px #e08a3c !important; }
+.stamp.s4 { border-color:#e08a3c !important; box-shadow: inset 0 0 0 4px rgba(255,253,250,0.55), inset 0 0 0 6px #e08a3c !important; }
 .stamp.s4 .stamp-icon, .stamp.s4 .stamp-text { color:#e08a3c; }
-.stamp.s5 { border-color:#c0392b !important; box-shadow: inset 0 0 0 4px #fffdfa, inset 0 0 0 6px #c0392b !important; }
+.stamp.s5 { border-color:#c0392b !important; box-shadow: inset 0 0 0 4px rgba(255,253,250,0.55), inset 0 0 0 6px #c0392b !important; }
 .stamp.s5 .stamp-icon, .stamp.s5 .stamp-text { color:#c0392b; }
 /* 최고 등급에는 참고 이미지처럼 별 5개를 더해 화려하게 */
 .stamp.s5::after {
@@ -69,9 +73,26 @@
   color: #c0392b;
   margin-top: 1px;
 }
+
+/* ── 도장 오버레이: 내가 쓴 글 영역 우측 하단에 도장이 겹쳐 보이도록 ──
+   (.panel을 포지셔닝 기준점으로 쓰고, .stamp-wrap을 절대 위치로 띄움) */
+.panel { position: relative; }
+.stamp-wrap {
+  pointer-events: none;
+  width: auto !important;
+  display: block !important;
+  justify-content: initial !important;
+}
 </style>
 </head>
 <body>
+<!-- 도장(.stamp)에 적용되는 잉크 번짐 질감용 SVG 필터 (화면에 보이지 않는 0x0 크기) -->
+<svg width="0" height="0" style="position:absolute;">
+  <filter id="inkStampDistress" x="-20%" y="-20%" width="140%" height="140%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="7" result="noise"/>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="3.5" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
 <div id="homeScreen">
   <div class="home-card">
     <div class="lang-toggle">
@@ -533,8 +554,18 @@
       </div>
 
       <!-- 메인 글쓰기 창 (모드 토글 없이 항상 표시, 화면을 꽉 채움) -->
-      <textarea class="essay-manuscript" id="essayTextarea" style="flex:1; min-height:300px;"
-        placeholder="🍞 [Intro] 서론 — 문제 상황과 나의 의견을 써보세요.&#10;예) 요즘 스마트폰을 교실에서 써도 되는지에 대한 논쟁이 있습니다. 저는 스마트폰 사용에 찬성합니다.&#10;&#10;🥩 [Body 1] 첫 번째 이유와 예시를 써보세요.&#10;예) 첫째, 모르는 내용을 바로 검색해서 학습에 활용할 수 있습니다.&#10;&#10;🥩 [Body 2] 두 번째 이유와 예시를 써보세요.&#10;예) 둘째, 위급한 상황에서 가족과 빠르게 연락할 수 있습니다.&#10;&#10;🍞 [Conclusion] 결론 — 의견을 다시 강조해보세요.&#10;예) 이와 같은 이유로 저는 스마트폰 사용에 찬성합니다."></textarea>
+      <!-- 2026 개편: 도장이 textarea 위에 오버레이되도록 position:relative 래퍼로 감쌈 -->
+      <div style="position:relative; flex:1; display:flex; min-height:0;">
+        <textarea class="essay-manuscript" id="essayTextarea" style="flex:1; min-height:300px; width:100%; box-sizing:border-box;"
+          placeholder="🍞 [Intro] 서론 — 문제 상황과 나의 의견을 써보세요.&#10;예) 요즘 스마트폰을 교실에서 써도 되는지에 대한 논쟁이 있습니다. 저는 스마트폰 사용에 찬성합니다.&#10;&#10;🥩 [Body 1] 첫 번째 이유와 예시를 써보세요.&#10;예) 첫째, 모르는 내용을 바로 검색해서 학습에 활용할 수 있습니다.&#10;&#10;🥩 [Body 2] 두 번째 이유와 예시를 써보세요.&#10;예) 둘째, 위급한 상황에서 가족과 빠르게 연락할 수 있습니다.&#10;&#10;🍞 [Conclusion] 결론 — 의견을 다시 강조해보세요.&#10;예) 이와 같은 이유로 저는 스마트폰 사용에 찬성합니다."></textarea>
+        <!-- 도장: 내가 쓴 글 마지막(우측 하단)에 오버레이 -->
+        <div class="stamp-wrap" id="essayStampOverlayWrap" style="position:absolute; right:14px; bottom:14px; pointer-events:none; z-index:5;">
+          <div class="stamp" id="essayStamp">
+            <div class="stamp-icon" id="essayStampIcon"></div>
+            <div class="stamp-text"  id="essayStampText"></div>
+          </div>
+        </div>
+      </div>
       <!-- ※ 영단어 SOS 도우미는 모든 탭 우측 하단에 표시되는 전역(global) 위젯을 그대로 사용 — 여기서 중복 표시하지 않음 -->
     </section>
 
@@ -575,13 +606,9 @@
           <span class="richness-score" id="essayBonusScore" style="color:var(--orange);">— waiting</span>
         </div>
 
-        <!-- 도장 + 보너스 잉크 뱃지 -->
+        <!-- 보너스 잉크 뱃지 (도장은 글쓰기 창 위에 오버레이로 이동) -->
         <div class="essay-stamp-wrap" style="padding:8px 10px 0;">
-          <div class="stamp" id="essayStamp">
-            <div class="stamp-icon" id="essayStampIcon"></div>
-            <div class="stamp-text"  id="essayStampText"></div>
-          </div>
-          <div class="bonus-ink-badge" id="essayBonusBadge" style="margin-left:12px;">
+          <div class="bonus-ink-badge" id="essayBonusBadge" style="margin-left:0;">
             💧 +<span id="essayBonusInkNum">0</span> <span id="essayBonusLabel">보너스!</span>
           </div>
         </div>
@@ -1050,7 +1077,7 @@
 <script src="js/05-shared-builders.js"></script>
 <script src="js/06-ttieum.js"></script>
 <script src="js/07-jieum.js"></script>
-<script src="js/08-ieum-essay.js?v=6"></script>
+<script src="js/08-ieum-essay.js?v=7"></script>
 <script src="js/09-sos-dict.js"></script>
 <script src="js/10-i18n.js"></script>
 <script src="js/11-teacher-extras.js"></script>
