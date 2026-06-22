@@ -219,9 +219,9 @@ const STAMPS=[null,
 
 function updateQualityBadge(r){
   const b=$('qualityBadge');
-  if(r<=3){b.className='quality-badge low';b.textContent='기본 묘사';}
+  if(r<=3){b.className='quality-badge low';b.textContent='기본 표현';}
   else if(r<=6){b.className='quality-badge mid';b.textContent='감각·감정 있음';}
-  else{b.className='quality-badge high';b.textContent='생생한 표현 ✨';}
+  else{b.className='quality-badge high';b.textContent='살아있는 표현 ✨';}
 }
 
 function updateStamp(r){
@@ -375,7 +375,7 @@ async function saveDiary(){
     toast('💾 일기 저장 완료!');
   }
   await checkEasterEgg(text);
-  if(curRich>=8) toast(`🌟 묘사력 ${curRich}/10! 명예의 전당 후보입니다!`);
+  if(curRich>=8) toast(`🌟 살아있는 표현 ${curRich}/10! 명예의 전당 후보입니다!`);
 }
 
 async function openListModal(){
@@ -399,7 +399,7 @@ async function loadEntry(id){
   curSpellingAdvice=e.spellingAdvice||'';
   curMissionScore=e.missionScore||0; currentMission=e.mission||null;
   missionDrawn=!!currentMission; // 불러온 일기에 미션이 있으면 표시
-  $('richnessFill').style.width=`${curRich*10}%`;$('richnessScore').textContent=`묘사력 ${curRich}/10`;
+  $('richnessFill').style.width=`${curRich*10}%`;$('richnessScore').textContent=`살아있는 표현 ${curRich}/10`;
   if(currentMission){ $('mTitle').textContent=`🎯 ${currentMission.title}`; $('mDesc').textContent=currentMission.desc; $('missionFill').style.width=`${curMissionScore*10}%`; $('missionScoreText').textContent=`${curMissionScore}/10`; }
   else { $('mTitle').textContent='🎯 오늘의 미션'; $('mDesc').textContent='버튼을 눌러 재미있는 글쓰기 미션을 뽑아보세요!'; $('missionFill').style.width='0%'; $('missionScoreText').textContent='— 대기중'; }
   updateStamp(curRich);updateQualityBadge(curRich);
@@ -453,11 +453,18 @@ If ANY of these apply, return ONLY this JSON immediately:
 {"richness":0,"missionScore":0,"empathy":"","goodExpression":"","nextChallenge":"","spellingAdvice":"","exprAdvice":"","contentAdvice":"","advice":"Try writing a real sentence about your day! 😊","title":"My Diary","imagePrompt":"","badges":[],"voca":""}
 
 RICHNESS SCORE 1-10:
+[Positive points]
 - Sensory details (sight/sound/smell/taste/touch): +3
 - Emotion words (excited, nervous, proud): +2
 - Similes/metaphors (like, as ... as): +2
 - Specific details (not "food" but "sweet and chewy tteokbokki"): +2
 - Unique perspective or creative expression: +1
+
+[Deductions — always apply]
+- Descriptions that feel forced or crammed in just to raise the score (random sensory lists with no connection to the story): -2
+- Unnatural or mismatched exaggeration that doesn't fit the scene (e.g. "the sky glowed with rainbows" inserted into a mundane homework scene): -2
+- Awkward repetition of the same type of sensory/figurative expression piled up unnaturally: -1
+If deductions apply, always point this out specifically in exprAdvice with a kind, concrete example.
 
 ⚠️ ALL fields REQUIRED — never leave empty!
 - empathy: 1 sentence that mentions a SPECIFIC detail from the diary. No vague "That sounds fun!" — reference actual content.
@@ -481,7 +488,7 @@ ONLY return valid JSON (no markdown):
   "contentAdvice":"<2 open questions, bilingual>",
   "advice":"<1 warm specific sentence, bilingual>",
   "title":"<English diary title, max 5 words>",
-  "imagePrompt":"<English ONLY image prompt. MANDATORY RULES:\n1. Read the FULL diary. Find the most vivid/emotional moment.\n2. Include: WHO + WHAT ACTION + WHERE + KEY DETAIL.\n3. Never use vague descriptions or only illustrate the first sentence.\n4. FORMAT: [who] [action] [where], [sensory/emotional detail], soft watercolor Korean picture book style, no text>",
+  "imagePrompt":"<English ONLY image prompt. MANDATORY RULES:\n1. Read the FULL diary. Find the most vivid/emotional moment.\n2. Include: WHO + WHAT ACTION + WHERE + KEY DETAIL.\n3. Never use vague descriptions or only illustrate the first sentence.\n4. STYLE RULE — choose based on the richness score you assigned:\n   • richness 1-3: grayscale, low saturation, very simple minimal sketch, few flat colors, child crayon drawing style, simple shapes only\n   • richness 4-7: simple crayon drawing, limited color palette, warm pastel tones, child-like illustration style, slightly detailed\n   • richness 8-10: vivid colorful crayon drawing, high saturation, rich expressive colors, detailed child-drawn watercolor crayon style, lively and energetic\n5. ALL styles: crayon texture, hand-drawn look, Korean children's picture book feel, no text, no letters, no numbers\n6. FORMAT: [who] [action] [where], [sensory/emotional detail], [STYLE from rule 4 above]>",
   "badges":[],"voca":"<2-3 words from your feedback: word (뜻), word (뜻)>"
 }
 ${missionPrompt}`
@@ -498,12 +505,19 @@ ${missionPrompt}`
 감지 시 반환할 JSON (이것만 반환, 다른 내용 절대 추가 금지):
 {"richness":0,"missionScore":0,"empathy":"","goodExpression":"","nextChallenge":"","spellingAdvice":"","exprAdvice":"","contentAdvice":"","advice":"의미 있는 문장으로 이야기를 들려줄래?","title":"오늘의 일기","imagePrompt":"","badges":[],"voca":""}
 
-묘사력 점수 1-10 기준:
+살아있는 표현 점수 1-10 기준:
+[가산 항목]
 - 오감 표현(보이는 것/소리/냄새/맛/느낌): +3점
 - 감정 표현(기뻤다, 무서웠다, 두근두근): +2점
 - 비유 표현(~처럼, ~같이, 마치 ~인 것 같았다): +2점
 - 구체적 묘사("음식이 맛있었다" 대신 "달콤하고 쫄깃한 떡볶이"): +2점
 - 독특한 관점이나 재미있는 표현: +1점
+
+[감점 항목 — 반드시 적용]
+- 점수를 올리려고 억지로 끼워 넣은 것이 느껴지는 묘사 (내용 흐름과 관계없이 갑자기 색깔·소리·냄새만 나열): -2점
+- 상황에 전혀 어울리지 않는 과장·억지 비유 (예: 밥 먹는 장면에서 갑자기 "하늘이 무지개빛으로 빛났다"처럼 뜬금없는 묘사): -2점
+- 같은 감각 표현이나 비유를 반복적으로 나열해서 부자연스러운 경우: -1점
+감점이 발생한 경우 exprAdvice에서 반드시 구체적으로 짚어줘. 예: '"달콤하고 향긋하고 부드럽고 촉촉하고 따뜻했다"처럼 묘사를 너무 많이 나열하면 오히려 어색해. 가장 기억에 남는 느낌 하나를 골라서 한 문장으로 표현해보면 어떨까?'
 
 ⚠️ 절대 규칙 — 반드시 지켜야 해. 비어있는 값 금지! 모든 필드는 반드시 구체적으로 채워야 해!
 - empathy: 반드시 일기의 구체적 내용을 언급하며 공감하는 1문장. 예: "평양이랑 금강산 구경을 상상하는 게 정말 엉뚱하고 재미있다!" 막연한 "참 재미있겠다" 금지.
@@ -527,7 +541,7 @@ ONLY return valid JSON (no markdown, no explanation):
   "contentAdvice":"<발문 형태의 열린 질문 2개>",
   "advice":"<따뜻하고 구체적인 총평 1문장>",
   "title":"<한국어 제목 최대 10자>",
-  "imagePrompt":"<English ONLY image prompt. MANDATORY RULES — STRICTLY FOLLOW:\n\n🔍 STEP 1 — SCAN THE ENTIRE DIARY (not just the beginning):\n  Read the FULL diary text carefully from start to finish. Find the single MOST VIVID or EMOTIONALLY SIGNIFICANT moment — the scene that best represents the whole diary.\n\n🎯 STEP 2 — EXTRACT THESE 4 ELEMENTS from that key scene:\n  (a) WHO: specific person (e.g. Korean girl, Korean boy, grandmother, friend named Minho)\n  (b) WHAT ACTION: the exact thing they are doing (e.g. eating tteokbokki, crying while reading, laughing with friends)\n  (c) WHERE: the specific place (e.g. school rooftop, grandmother's kitchen, Han River park)\n  (d) KEY DETAIL: one unique sensory or emotional detail from the diary (e.g. steam rising, tears on cheeks, autumn leaves falling)\n\n🚫 STEP 3 — AVOID GENERIC IMAGES:\n  ❌ NEVER use vague descriptions like 'Korean child at school' or 'student writing diary'\n  ❌ NEVER illustrate only the first sentence if the diary's main theme is elsewhere\n  ❌ NEVER invent scenes not mentioned in the diary\n  ✅ ALWAYS base the image on the most emotionally or narratively important moment in the full text\n\n📌 STEP 4 — EXAMPLE TRANSFORMATIONS:\n  Diary about money/earning → show: 'Korean boy counting coins at a desk, excited expression, piggy bank nearby'\n  Diary about fight with friend → show: 'Two Korean girls turning away from each other in classroom, one looking sad'\n  Diary about delicious food → show: 'Korean child eating steaming ramen with wide happy eyes at dinner table'\n\n✏️ FORMAT: [who] [doing what] [where], [key emotional/sensory detail from diary], soft watercolor Korean picture book style, no text, no letters, no numbers>",
+  "imagePrompt":"<English ONLY image prompt. MANDATORY RULES — STRICTLY FOLLOW:\n\n🔍 STEP 1 — SCAN THE ENTIRE DIARY (not just the beginning):\n  Read the FULL diary text carefully from start to finish. Find the single MOST VIVID or EMOTIONALLY SIGNIFICANT moment — the scene that best represents the whole diary.\n\n🎯 STEP 2 — EXTRACT THESE 4 ELEMENTS from that key scene:\n  (a) WHO: specific person (e.g. Korean girl, Korean boy, grandmother, friend named Minho)\n  (b) WHAT ACTION: the exact thing they are doing (e.g. eating tteokbokki, crying while reading, laughing with friends)\n  (c) WHERE: the specific place (e.g. school rooftop, grandmother's kitchen, Han River park)\n  (d) KEY DETAIL: one unique sensory or emotional detail from the diary (e.g. steam rising, tears on cheeks, autumn leaves falling)\n\n🚫 STEP 3 — AVOID GENERIC IMAGES:\n  ❌ NEVER use vague descriptions like 'Korean child at school' or 'student writing diary'\n  ❌ NEVER illustrate only the first sentence if the diary's main theme is elsewhere\n  ❌ NEVER invent scenes not mentioned in the diary\n  ✅ ALWAYS base the image on the most emotionally or narratively important moment in the full text\n\n📌 STEP 4 — EXAMPLE TRANSFORMATIONS:\n  Diary about money/earning → show: 'Korean boy counting coins at a desk, excited expression, piggy bank nearby'\n  Diary about fight with friend → show: 'Two Korean girls turning away from each other in classroom, one looking sad'\n  Diary about delicious food → show: 'Korean child eating steaming ramen with wide happy eyes at dinner table'\n\n🎨 STEP 5 — CHOOSE STYLE based on the richness score you assigned:\n  • richness 1-3 → grayscale, very low saturation, extremely simple minimal sketch, flat gray tones, barely any color, child's rough crayon scribble style, shapes very basic and undetailed\n  • richness 4-7 → simple crayon drawing, limited warm pastel color palette (3-4 colors), child-like crayon illustration, slightly detailed background, soft tones\n  • richness 8-10 → vivid high-saturation crayon drawing, rich colorful palette, expressive energetic child watercolor-crayon style, detailed joyful scene, twinkling stars and decorative elements\n  ALL styles must have: hand-drawn crayon texture, Korean children's picture book feel, no text, no letters, no numbers\n\n✏️ FORMAT: [who] [doing what] [where], [key emotional/sensory detail from diary], [STYLE description from STEP 5]>",
   "badges":[],
   "voca":"<피드백에 사용한 영단어 2~3개: word (뜻), word (뜻)>"
 }
@@ -556,7 +570,7 @@ function onDiaryInput(){
       const r=await analyzeDiary(txt);curRich=r.richness;curAdvice=r.advice;curMissionScore=r.missionScore;
       curEmpathy=r.empathy||'';curGoodExpression=r.goodExpression||'';curNextChallenge=r.nextChallenge||'';
       curExprAdvice=r.exprAdvice||'';curContentAdvice=r.contentAdvice||'';curSpellingAdvice=r.spellingAdvice||'';curVoca=r.voca||''; /* 파트 4 */
-      $('richnessFill').style.width=`${r.richness*10}%`;$('richnessScore').textContent=`묘사력 ${r.richness}/10`;
+      $('richnessFill').style.width=`${r.richness*10}%`;$('richnessScore').textContent=`살아있는 표현 ${r.richness}/10`;
       // 미션 점수는 미션 뽑기 눌렀을 때만 표시
       if(missionDrawn && currentMission){
         $('missionFill').style.width=`${r.missionScore*10}%`; $('missionScoreText').textContent=`${r.missionScore}/10`;
