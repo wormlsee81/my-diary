@@ -11,6 +11,65 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/components.css">
+<style>
+/* ════════════════════════════════════════════════════════════
+   2026 디자인 개편: 도장(.stamp) 배지를 동그란 전통 도장 느낌으로 변경
+   참고: 동그란 빨간 도장 + 안쪽 이중선 + 살짝 기울어진 모양
+   components.css의 기존 .stamp 규칙을 이 블록이 나중에 로드되며 덮어씀.
+   (그림일기 탭의 모사력 도장과 논설문 탭의 Writing 도장이 클래스를 공유하므로
+   이 한 곳을 고치면 두 군데 모두 동그란 도장 스타일로 바뀜)
+   ════════════════════════════════════════════════════════════ */
+.stamp {
+  width: 100px !important;
+  height: 100px !important;
+  border-radius: 50% !important;
+  background: #fffdfa !important;
+  border: 3px solid #c0392b !important;
+  box-shadow: inset 0 0 0 4px #fffdfa, inset 0 0 0 6px #c0392b !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  padding: 8px !important;
+  box-sizing: border-box !important;
+  rotate: -8deg;
+}
+.stamp .stamp-icon {
+  font-size: 22px;
+  line-height: 1;
+  color: #c0392b;
+}
+.stamp .stamp-text {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #c0392b;
+  text-align: center;
+  line-height: 1.2;
+  word-break: keep-all;
+  letter-spacing: -0.2px;
+}
+/* 등급별 잉크 색상 (s1=노력이 필요해요 ~ s5=참 잘했어요) */
+.stamp.s1 { border-color:#8a8a8a !important; box-shadow: inset 0 0 0 4px #fffdfa, inset 0 0 0 6px #8a8a8a !important; }
+.stamp.s1 .stamp-icon, .stamp.s1 .stamp-text { color:#8a8a8a; }
+.stamp.s2 { border-color:#4a90c2 !important; box-shadow: inset 0 0 0 4px #fffdfa, inset 0 0 0 6px #4a90c2 !important; }
+.stamp.s2 .stamp-icon, .stamp.s2 .stamp-text { color:#4a90c2; }
+.stamp.s3 { border-color:#4caf8a !important; box-shadow: inset 0 0 0 4px #fffdfa, inset 0 0 0 6px #4caf8a !important; }
+.stamp.s3 .stamp-icon, .stamp.s3 .stamp-text { color:#4caf8a; }
+.stamp.s4 { border-color:#e08a3c !important; box-shadow: inset 0 0 0 4px #fffdfa, inset 0 0 0 6px #e08a3c !important; }
+.stamp.s4 .stamp-icon, .stamp.s4 .stamp-text { color:#e08a3c; }
+.stamp.s5 { border-color:#c0392b !important; box-shadow: inset 0 0 0 4px #fffdfa, inset 0 0 0 6px #c0392b !important; }
+.stamp.s5 .stamp-icon, .stamp.s5 .stamp-text { color:#c0392b; }
+/* 최고 등급에는 참고 이미지처럼 별 5개를 더해 화려하게 */
+.stamp.s5::after {
+  content: '★★★★★';
+  display: block;
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: #c0392b;
+  margin-top: 1px;
+}
+</style>
 </head>
 <body>
 <div id="homeScreen">
