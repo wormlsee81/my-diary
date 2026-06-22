@@ -1533,3 +1533,52 @@ document.addEventListener('DOMContentLoaded', () => {
     showRandomPetDialogue();
   };
 });
+
+/* ══════════════════════════════════════════════════════════
+   그림일기 도장 오버레이 위치 계산
+   diaryStamp(도장)를 보여주는 로직 자체는 다른 파일(예: 04-ieum-diary.js)에 있어
+   직접 수정할 수 없음. 대신 .stamp-wrap을 position:absolute로 두고, 텍스트 영역
+   (#diary)의 실제 렌더링 위치를 측정해서 그 우측 하단에 항상 겹쳐 보이도록
+   좌표만 동기화한다. MutationObserver로 .show 클래스가 토글되는 순간(=도장이
+   막 나타나는 순간)마다 위치를 다시 계산하므로, 어느 파일이 그 토글을 트리거하든
+   상관없이 항상 올바른 위치에 보인다.
+══════════════════════════════════════════════════════════ */
+function positionDiaryStampOverlay() {
+  const ta = document.getElementById('diary');
+  const stampEl = document.getElementById('diaryStamp');
+  const stampWrap = stampEl ? stampEl.closest('.stamp-wrap') : null;
+  if (!ta || !stampWrap) return;
+  const panel = ta.closest('.panel');
+  if (!panel) return;
+
+  const taRect    = ta.getBoundingClientRect();
+  const panelRect = panel.getBoundingClientRect();
+
+  stampWrap.style.position      = 'absolute';
+  stampWrap.style.right         = Math.max(8, panelRect.right  - taRect.right  + 14) + 'px';
+  stampWrap.style.bottom        = Math.max(8, panelRect.bottom - taRect.bottom + 14) + 'px';
+  stampWrap.style.left          = 'auto';
+  stampWrap.style.top           = 'auto';
+  stampWrap.style.zIndex        = '5';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const diaryTa = document.getElementById('diary');
+  if (!diaryTa) return; // 그림일기 탭 마크업이 없는 경우 안전하게 종료
+
+  positionDiaryStampOverlay();
+  window.addEventListener('resize', positionDiaryStampOverlay);
+
+  const diaryStampEl = document.getElementById('diaryStamp');
+  if (diaryStampEl) {
+    const mo = new MutationObserver(positionDiaryStampOverlay);
+    mo.observe(diaryStampEl, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  // 미션 달성 바 등 주변 요소가 늘어나거나 줄어들며 textarea 높이가 바뀌는 경우도
+  // 대비해, textarea 크기 변화를 직접 감지해 위치를 다시 계산한다
+  if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(positionDiaryStampOverlay);
+    ro.observe(diaryTa);
+  }
+});
