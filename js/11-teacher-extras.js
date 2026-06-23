@@ -224,12 +224,32 @@ function openXaiModal() {
       📊 예상 점수: <b>${Math.min(10, earned)}/10점</b> (AI 실제 점수: <b>${score}/10점</b>)<br>
       <span style="color:#888;font-size:11px;">※ AI는 전체 문맥을 종합적으로 분석하므로 예상치와 약간 다를 수 있어요.</span>
     </div>`);
-  $('xaiOverlay').classList.add('open');
   // 트리거 버튼 표시
   const btn = $('xaiTriggerBtn');
   if (btn) btn.style.display = 'inline-block';
+  // ✅ 버그 수정: classList.add('open')만으로는 부모 요소 z-index·display 영향으로
+  //    모달이 화면에 보이지 않는 경우가 있음 — forceShowModal로 강제 표시
+  const overlay = $('xaiOverlay');
+  if (overlay) {
+    overlay.classList.add('open');
+    if (typeof forceShowModal === 'function') {
+      forceShowModal(overlay);
+    } else {
+      if (overlay.parentElement !== document.body) document.body.appendChild(overlay);
+      overlay.style.setProperty('display', 'flex', 'important');
+    }
+  }
 }
-function closeXaiModal() { $('xaiOverlay').classList.remove('open'); }
+function closeXaiModal() {
+  const overlay = $('xaiOverlay');
+  if (!overlay) return;
+  overlay.classList.remove('open');
+  if (typeof forceHideModal === 'function') {
+    forceHideModal(overlay);
+  } else {
+    overlay.style.setProperty('display', 'none', 'important');
+  }
+}
 
 /* ═══════════════════════════════════════════════════════════
    📝 자기 평가 (Self-Assessment) 루틴
