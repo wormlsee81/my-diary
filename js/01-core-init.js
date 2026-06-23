@@ -701,7 +701,7 @@ async function generateDalle(prompt, richness=5, onStatus, isPhoto=false) {
   // imagePrompt가 비어있으면 기본 장면으로
   const rawPrompt = (prompt && prompt.trim())
     ? prompt.trim()
-    : 'Korean elementary school child in a heartwarming daily life scene, soft watercolor';
+    : 'Korean elementary school child in a heartwarming daily life scene';
 
   const safe = sanitizePrompt(rawPrompt);
   let styleSuffix;
@@ -709,22 +709,16 @@ async function generateDalle(prompt, richness=5, onStatus, isPhoto=false) {
   if (isPhoto) {
     styleSuffix = ' Simple illustration style, clear front view, full body, plain background.';
   } else {
-    // 묘사력에 따라 스타일 변화: 크레파스(낮음) → 수채화(높음)
+    // 묘사력에 따라 스타일 변화: 크레파스(낮음) → 수채화(높음) — 3단계로 명확히 구분
     if (richness <= 3) {
-      // 묘사 부족: 8살 아이 흑백 크레파스 스케치
-      styleSuffix = " 8-year-old Korean child crayon drawing, black and white sketch only, rough simple crayon lines, grayscale monochrome, childlike hand-drawn art, scribbled lines, no color whatsoever, white paper background.";
-    } else if (richness <= 5) {
-      // 중간 낮음: 9-10살 아이 연한 컬러 크레파스
-      styleSuffix = " 9-year-old Korean child crayon drawing style, soft limited pastel crayon colors, rough simple crayon strokes, hand-drawn childlike art, simply colored scene, white paper background.";
+      // 묘사력 1~3: 채도 낮은 회색 톤, 매우 단순한 크레파스 스케치
+      styleSuffix = " 8-year-old Korean child's crayon sketch, black and white only, very simple rough crayon lines, grayscale monochrome, childlike hand-drawn doodle, minimal detail, scribbled unfinished lines, almost no color at all, white paper background.";
     } else if (richness <= 7) {
-      // 중간 높음: 10-11살 아이 진한 컬러 크레파스
-      styleSuffix = " 10-year-old Korean child crayon drawing style, vibrant full colors, bold thick crayon strokes, joyful expressive colors, rich colorful hand-drawn artwork, white paper background.";
-    } else if (richness <= 9) {
-      // 묘사 풍부: 12살 아이 수채화 느낌
-      styleSuffix = " 12-year-old Korean child watercolor painting style, soft translucent watercolor washes, delicate brushstrokes, pastel colors blending gently, hand-painted illustration, light paper texture, children's picture book style.";
+      // 묘사력 4~7: 단순한 그림에 색상은 아주 약간만
+      styleSuffix = " 9-year-old Korean child's crayon drawing, simple clean crayon outlines, only a small touch of soft muted color added here and there, most of the picture left uncolored white, moderate detail, hand-drawn childlike art, white paper background.";
     } else {
-      // 최고 묘사력: 완성도 높은 수채화
-      styleSuffix = " Beautifully detailed Korean children's watercolor illustration, rich translucent watercolor layers, skilled brushwork, vibrant yet soft colors, professional picture book quality, impressionistic wet-on-wet technique, warm glowing colors, light paper texture.";
+      // 묘사력 8~10: 채도 높고 풍성한 수채화 느낌
+      styleSuffix = " Korean child's vivid crayon and watercolor picture-book illustration, highly saturated bright colors, rich translucent watercolor washes blended with bold crayon strokes, fully colored in with no blank areas, joyful and richly detailed scene, skilled hand-painted children's book quality, warm glowing colors, light paper texture.";
     }
   }
 
