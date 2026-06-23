@@ -146,22 +146,22 @@
 <!-- 🚨 SOS 플로팅 버튼 -->
 <button id="globalSosBtn" onclick="toggleGlobalSos()">
   <span class="gsos-dot"></span>
-  🚨 <span id="globalSosBtnLabel">이거 영어로 뭐예요?</span>
+  🚨 <span id="globalSosBtnLabel">다른 표현은 뭐가 있을까?</span>
 </button>
 
 <!-- 💬 SOS 챗봇 패널 -->
 <div id="globalSosPanel">
   <div class="gsos-header">
-    <span>🚨 <span id="gsosPanelTitle">영단어 SOS 도우미</span></span>
+    <span>✨ <span id="gsosPanelTitle">다양한 표현 도우미</span></span>
     <button class="gsos-close-btn" onclick="toggleGlobalSos()">✕</button>
   </div>
   <div class="gsos-hint" id="gsosPanelHint">
-    한글로 단어나 문장을 쓰면 영어로 알려드려요!<br>
+    표현을 더 멋지게 바꿔보고 싶나요? 단어나 문장을 써보세요!<br>
     결과를 클릭하면 글쓰기 창에 바로 입력돼요 ✍️
   </div>
   <div class="gsos-input-row">
     <input class="gsos-input" id="gsosInput"
-      placeholder="예) 사과하다, 그리움..."
+      placeholder="예) 정말 빨리, 신기했다..."
       maxlength="40"
       onkeydown="if(event.key==='Enter') askGlobalSos()">
     <button class="gsos-ask-btn" id="gsosAskBtn" onclick="askGlobalSos()">
@@ -170,7 +170,7 @@
   </div>
   <div class="gsos-result-area" id="gsosResultArea">
     <div style="color:#ccc;font-size:12px;text-align:center;padding:10px 0;" id="gsosPlaceholder">
-      모르는 단어를 한글로 써보세요 🔍
+      바꾸고 싶은 표현을 써보세요 🔍
     </div>
   </div>
   <div class="gsos-history" id="gsosHistory" style="display:none;"></div>
