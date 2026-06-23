@@ -457,12 +457,14 @@ If ANY of these apply, return ONLY this JSON immediately:
 - Keyboard smash (e.g. "asdfgh", "qwerty")
 {"richness":0,"missionScore":0,"empathy":"","goodExpression":"","nextChallenge":"","spellingAdvice":"","exprAdvice":"","contentAdvice":"","advice":"Try writing a real sentence about your day! 😊","title":"My Diary","imagePrompt":"","badges":[],"voca":""}
 
-RICHNESS SCORE 1-10:
-- Sensory details (sight/sound/smell/taste/touch): +3
-- Emotion words (excited, nervous, proud): +2
-- Similes/metaphors (like, as ... as): +2
-- Specific details (not "food" but "sweet and chewy tteokbokki"): +2
-- Unique perspective or creative expression: +1
+RICHNESS SCORE 1-10 — judge EACH of these 5 criteria as true/false and reflect the result
+exactly in richnessBreakdown. The richness total must equal the sum of the criteria points
+that are true (e.g. senses+emotion+specific true → 3+2+2=7):
+- Sensory details (sight/sound/smell/taste/touch): +3 → senses
+- Emotion words (excited, nervous, proud): +2 → emotion
+- Similes/metaphors (like, as ... as): +2 → metaphor
+- Specific details (not "food" but "sweet and chewy tteokbokki"): +2 → specific
+- Unique perspective or creative expression: +1 → unique
 
 ⚠️ ALL fields REQUIRED — never leave empty!
 - empathy: 1 sentence that mentions a SPECIFIC detail from the diary. No vague "That sounds fun!" — reference actual content.
@@ -477,6 +479,7 @@ RICHNESS SCORE 1-10:
 ONLY return valid JSON (no markdown):
 {
   "richness":<1-10>,
+  "richnessBreakdown":{"senses":<true|false>,"emotion":<true|false>,"metaphor":<true|false>,"specific":<true|false>,"unique":<true|false>},
   "missionScore":<0-10>,
   "empathy":"<specific mention of diary content>",
   "goodExpression":"<quoted phrase + bilingual explanation>",
@@ -486,7 +489,7 @@ ONLY return valid JSON (no markdown):
   "contentAdvice":"<2 open questions, bilingual>",
   "advice":"<1 warm specific sentence, bilingual>",
   "title":"<English diary title, max 5 words>",
-  "imagePrompt":"<English ONLY image prompt. MANDATORY RULES:\n1. Read the FULL diary. Find the most vivid/emotional moment.\n2. Include: WHO + WHAT ACTION + WHERE + KEY DETAIL.\n3. Never use vague descriptions or only illustrate the first sentence.\n4. FORMAT: [who] [action] [where], [sensory/emotional detail]. Describe ONLY the scene content — do NOT add any art style words (no 'watercolor', 'cartoon', 'crayon', etc.) since style is added separately afterward.>",
+  "imagePrompt":"<English ONLY image prompt. MANDATORY RULES:\n1. Read the FULL diary. Find the most vivid/emotional moment.\n2. Include: WHO + WHAT ACTION + WHERE + KEY DETAIL.\n3. Never use vague descriptions or only illustrate the first sentence.\n4. If the diary mentions a real, identifiable public figure (politician, head of state, celebrity, historical leader, etc.), do NOT use their real name or specific identity — describe them generically by role/appearance instead (e.g. 'a tall bronze statue of a historical leader' instead of naming a specific president; 'a famous singer performing' instead of a specific celebrity's name). This keeps the scene's content but avoids real-person depiction issues.\n5. FORMAT: [who] [action] [where], [sensory/emotional detail]. Describe ONLY the scene content — do NOT add any art style words (no 'watercolor', 'cartoon', 'crayon', etc.) since style is added separately afterward.>",
   "badges":[],"voca":"<2-3 words from your feedback: word (뜻), word (뜻)>"
 }
 ${missionPrompt}`
@@ -503,12 +506,14 @@ ${missionPrompt}`
 감지 시 반환할 JSON (이것만 반환, 다른 내용 절대 추가 금지):
 {"richness":0,"missionScore":0,"empathy":"","goodExpression":"","nextChallenge":"","spellingAdvice":"","exprAdvice":"","contentAdvice":"","advice":"의미 있는 문장으로 이야기를 들려줄래?","title":"오늘의 일기","imagePrompt":"","badges":[],"voca":""}
 
-묘사력 점수 1-10 기준:
-- 오감 표현(보이는 것/소리/냄새/맛/느낌): +3점
-- 감정 표현(기뻤다, 무서웠다, 두근두근): +2점
-- 비유 표현(~처럼, ~같이, 마치 ~인 것 같았다): +2점
-- 구체적 묘사("음식이 맛있었다" 대신 "달콤하고 쫄깃한 떡볶이"): +2점
-- 독특한 관점이나 재미있는 표현: +1점
+묘사력 점수 1-10 기준 — 아래 5개 기준 각각을 충족했는지(true/false) 반드시 판단하고,
+그 결과를 richnessBreakdown에 정확히 반영해. richness 총점은 충족한 기준들의 점수 합과
+일치해야 해 (예: 오감+감정+구체적 묘사 충족 → 3+2+2=7점):
+- 오감 표현(보이는 것/소리/냄새/맛/느낌): +3점 → senses
+- 감정 표현(기뻤다, 무서웠다, 두근두근): +2점 → emotion
+- 비유 표현(~처럼, ~같이, 마치 ~인 것 같았다): +2점 → metaphor
+- 구체적 묘사("음식이 맛있었다" 대신 "달콤하고 쫄깃한 떡볶이"): +2점 → specific
+- 독특한 관점이나 재미있는 표현: +1점 → unique
 
 ⚠️ 절대 규칙 — 반드시 지켜야 해. 비어있는 값 금지! 모든 필드는 반드시 구체적으로 채워야 해!
 - empathy: 반드시 일기의 구체적 내용을 언급하며 공감하는 1문장. 예: "평양이랑 금강산 구경을 상상하는 게 정말 엉뚱하고 재미있다!" 막연한 "참 재미있겠다" 금지.
@@ -523,6 +528,7 @@ ${missionPrompt}`
 ONLY return valid JSON (no markdown, no explanation):
 {
   "richness":<1-10>,
+  "richnessBreakdown":{"senses":<true|false>,"emotion":<true|false>,"metaphor":<true|false>,"specific":<true|false>,"unique":<true|false>},
   "missionScore":<0-10>,
   "empathy":"<일기 내용 구체적 언급 필수>",
   "goodExpression":"<실제 표현 인용 필수>",
@@ -532,7 +538,7 @@ ONLY return valid JSON (no markdown, no explanation):
   "contentAdvice":"<발문 형태의 열린 질문 2개>",
   "advice":"<따뜻하고 구체적인 총평 1문장>",
   "title":"<한국어 제목 최대 10자>",
-  "imagePrompt":"<English ONLY image prompt. MANDATORY RULES — STRICTLY FOLLOW:\n\n🔍 STEP 1 — SCAN THE ENTIRE DIARY (not just the beginning):\n  Read the FULL diary text carefully from start to finish. Find the single MOST VIVID or EMOTIONALLY SIGNIFICANT moment — the scene that best represents the whole diary.\n\n🎯 STEP 2 — EXTRACT THESE 4 ELEMENTS from that key scene:\n  (a) WHO: specific person (e.g. Korean girl, Korean boy, grandmother, friend named Minho)\n  (b) WHAT ACTION: the exact thing they are doing (e.g. eating tteokbokki, crying while reading, laughing with friends)\n  (c) WHERE: the specific place (e.g. school rooftop, grandmother's kitchen, Han River park)\n  (d) KEY DETAIL: one unique sensory or emotional detail from the diary (e.g. steam rising, tears on cheeks, autumn leaves falling)\n\n🚫 STEP 3 — AVOID GENERIC IMAGES:\n  ❌ NEVER use vague descriptions like 'Korean child at school' or 'student writing diary'\n  ❌ NEVER illustrate only the first sentence if the diary's main theme is elsewhere\n  ❌ NEVER invent scenes not mentioned in the diary\n  ✅ ALWAYS base the image on the most emotionally or narratively important moment in the full text\n\n📌 STEP 4 — EXAMPLE TRANSFORMATIONS:\n  Diary about money/earning → show: 'Korean boy counting coins at a desk, excited expression, piggy bank nearby'\n  Diary about fight with friend → show: 'Two Korean girls turning away from each other in classroom, one looking sad'\n  Diary about delicious food → show: 'Korean child eating steaming ramen with wide happy eyes at dinner table'\n\n✏️ FORMAT: [who] [doing what] [where], [key emotional/sensory detail from diary]. Describe ONLY the scene content — do NOT add any art style words (no 'watercolor', 'cartoon', 'crayon', etc.) since the art style is added separately afterward by code, not by you.>",
+  "imagePrompt":"<English ONLY image prompt. MANDATORY RULES — STRICTLY FOLLOW:\n\n🔍 STEP 1 — SCAN THE ENTIRE DIARY (not just the beginning):\n  Read the FULL diary text carefully from start to finish. Find the single MOST VIVID or EMOTIONALLY SIGNIFICANT moment — the scene that best represents the whole diary.\n\n🎯 STEP 2 — EXTRACT THESE 4 ELEMENTS from that key scene:\n  (a) WHO: specific person (e.g. Korean girl, Korean boy, grandmother, friend named Minho)\n  (b) WHAT ACTION: the exact thing they are doing (e.g. eating tteokbokki, crying while reading, laughing with friends)\n  (c) WHERE: the specific place (e.g. school rooftop, grandmother's kitchen, Han River park)\n  (d) KEY DETAIL: one unique sensory or emotional detail from the diary (e.g. steam rising, tears on cheeks, autumn leaves falling)\n\n🚫 STEP 3 — AVOID GENERIC IMAGES:\n  ❌ NEVER use vague descriptions like 'Korean child at school' or 'student writing diary'\n  ❌ NEVER illustrate only the first sentence if the diary's main theme is elsewhere\n  ❌ NEVER invent scenes not mentioned in the diary\n  ✅ ALWAYS base the image on the most emotionally or narratively important moment in the full text\n\n⚠️ STEP 3-1 — REAL PUBLIC FIGURES (매우 중요):\n  일기에 실제 존재하는 공인(정치 지도자, 역사 인물, 유명인, 연예인 등)이 언급되면,\n  절대 실명/특정 신원으로 표현하지 말고 역할이나 외형으로만 일반화해서 묘사할 것\n  (예: '김일성 동상' → 'a tall bronze statue of a historical leader',\n  특정 연예인 이름 → 'a famous singer performing'). 장면의 내용은 살리되 실제 인물\n  특정은 피해야 이미지 생성 안전 정책에 걸리지 않는다.\n\n📌 STEP 4 — EXAMPLE TRANSFORMATIONS:\n  Diary about money/earning → show: 'Korean boy counting coins at a desk, excited expression, piggy bank nearby'\n  Diary about fight with friend → show: 'Two Korean girls turning away from each other in classroom, one looking sad'\n  Diary about delicious food → show: 'Korean child eating steaming ramen with wide happy eyes at dinner table'\n\n✏️ FORMAT: [who] [doing what] [where], [key emotional/sensory detail from diary]. Describe ONLY the scene content — do NOT add any art style words (no 'watercolor', 'cartoon', 'crayon', etc.) since the art style is added separately afterward by code, not by you.>",
   "badges":[],
   "voca":"<피드백에 사용한 영단어 2~3개: word (뜻), word (뜻)>"
 }
@@ -541,13 +547,76 @@ ${missionPrompt}`,
     messages:[{role:'user',content: isEn ? `Diary:\n${text}` : `일기:\n${text}`}]
   });
   /* 파트 4 수정: voca 필드 fallback 포함 */
-  const data = parseJSON(raw)||{richness:3,missionScore:0,empathy:'',goodExpression:'',nextChallenge:'',spellingAdvice:'',exprAdvice:'',contentAdvice:'',advice: isEn ? 'Great diary! Keep writing! 😊' : '일기를 잘 썼어요!',title: isEn ? 'My Diary' : '오늘의 일기',imagePrompt:'',badges:[],voca:''};
+  const data = parseJSON(raw)||{richness:3,richnessBreakdown:{senses:false,emotion:false,metaphor:false,specific:false,unique:false},missionScore:0,empathy:'',goodExpression:'',nextChallenge:'',spellingAdvice:'',exprAdvice:'',contentAdvice:'',advice: isEn ? 'Great diary! Keep writing! 😊' : '일기를 잘 썼어요!',title: isEn ? 'My Diary' : '오늘의 일기',imagePrompt:'',badges:[],voca:''};
+  if (!data.richnessBreakdown) data.richnessBreakdown = {senses:false,emotion:false,metaphor:false,specific:false,unique:false};
   if(!data.voca) data.voca = '';
   if(data.badges && data.badges.length > 0) { data.badges.forEach(b => addBadge(b)); }
   // ✅ 캐시 저장
   _lastAnalyzedText = text;
   _lastAnalysis = data;
   return data;
+}
+
+/* ══════════════════════════════════════════════════════════
+   💡 "왜?" 버튼 — 묘사력 점수 산출 기준 투명화(XAI) 모달
+   index.html에 모달 HTML/CSS(.xai-overlay 등)는 이미 준비돼 있었지만
+   openXaiModal()/closeXaiModal() 자체가 어느 파일에도 정의돼 있지 않아
+   버튼을 눌러도 아무 반응이 없던 것 — 여기서 새로 구현.
+   analyzeDiary()가 이미 만들어 캐시해 둔 _lastAnalysis.richnessBreakdown을
+   그대로 사용하므로 추가 API 호출 없이 즉시 표시된다.
+══════════════════════════════════════════════════════════ */
+const XAI_CRITERIA_KO = [
+  { key:'senses',   label:'오감 표현 (보이는 것·소리·냄새·맛·느낌)',         points:3 },
+  { key:'emotion',  label:'감정 표현 (기뻤다, 무서웠다, 두근두근 등)',        points:2 },
+  { key:'metaphor', label:'비유 표현 (~처럼, ~같이, 마치 ~인 것 같았다)',     points:2 },
+  { key:'specific', label:'구체적인 묘사 (막연한 표현 대신 자세하게)',       points:2 },
+  { key:'unique',   label:'독특한 관점이나 재미있는 표현',                   points:1 },
+];
+const XAI_CRITERIA_EN = [
+  { key:'senses',   label:'Sensory details (sight, sound, smell, taste, touch)', points:3 },
+  { key:'emotion',  label:'Emotion words (excited, nervous, proud...)',          points:2 },
+  { key:'metaphor', label:'Similes/metaphors (like..., as...as...)',             points:2 },
+  { key:'specific', label:'Specific details instead of vague words',             points:2 },
+  { key:'unique',   label:'Unique perspective or creative expression',          points:1 },
+];
+
+function openXaiModal() {
+  const overlay = $('xaiOverlay');
+  if (!overlay) return;
+  const r = _lastAnalysis;
+  const isEn = _currentLang === 'en';
+
+  const scoreBig = $('xaiScoreBig');
+  if (scoreBig) scoreBig.textContent = (r && typeof r.richness === 'number') ? r.richness : '—';
+
+  const criteriaEl = $('xaiCriteria');
+  if (criteriaEl) {
+    if (!r) {
+      criteriaEl.innerHTML = `<div style="font-size:12px;color:#999;text-align:center;padding:10px 0;">${isEn ? 'Write your diary first to see your score breakdown!' : '일기를 먼저 써야 점수 기준을 볼 수 있어요!'}</div>`;
+    } else {
+      const breakdown = r.richnessBreakdown || {};
+      const criteriaList = isEn ? XAI_CRITERIA_EN : XAI_CRITERIA_KO;
+      criteriaEl.innerHTML = criteriaList.map(c => {
+        const earned = !!breakdown[c.key];
+        const pointLabel = isEn ? `${earned ? '+' + c.points : '0'}pt` : `${earned ? '+' + c.points : '0'}점`;
+        return `
+          <div class="xai-row">
+            <div class="xai-row-label">${earned ? '✅' : '⬜'} ${c.label}</div>
+            <div class="xai-row-score ${earned ? 'earned' : 'not-earned'}">${pointLabel}</div>
+          </div>`;
+      }).join('');
+    }
+  }
+
+  overlay.classList.add('open');
+  overlay.style.display = 'flex'; // 클래스 토글이 외부 CSS와 충돌하는 경우를 대비한 안전망
+}
+
+function closeXaiModal() {
+  const overlay = $('xaiOverlay');
+  if (!overlay) return;
+  overlay.classList.remove('open');
+  overlay.style.display = 'none';
 }
 
 let hintTimer;

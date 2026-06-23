@@ -684,6 +684,12 @@ function sanitizePrompt(p) {
     [/\b(cctv|surveillance)\b/gi,'camera'],
     // monster/criminal은 완전 제거하지 않고 'cartoon character'로만 변환
     [/\b(suspect|criminal)\b/gi,'character'],
+    // 2026 추가: 실제 정치 지도자 이름은 이미지 생성 안전 정책에 걸리기 매우 쉬움.
+    // AI에게 이미 일반화해서 쓰도록 지시했지만(analyzeDiary), 혹시 그대로 새어나온
+    // 경우를 대비한 방어적 2차 안전망 (시각적 특징은 보존: '동상' 언급은 유지)
+    [/\bKim\s*Il[\s-]?[Ss]ung\b/g, 'a historical leader'],
+    [/\bKim\s*Jong[\s-]?[Uu]n\b/g, 'a political leader'],
+    [/\bKim\s*Jong[\s-]?[Ii]l\b/g, 'a political leader'],
   ];
   let s = p;
   // 한국어/일본어/중국어 문자 제거 → Together AI FLUX가 글자를 이미지에 렌더링하면 깨짐
@@ -764,12 +770,16 @@ async function generateDalle(prompt, richness=5, onStatus, isPhoto=false) {
   let rawB64 = '';
   if (!res.ok) {
     // 안전 정책 오류 시 기본 장면으로 재시도
+    // (2026 수정: 이전에는 항상 "warm watercolor"로 고정되어 있어 묘사력 점수와
+    //  무관하게 그림체가 어긋나 보였음 — 같은 richness 기반 styleSuffix를 그대로
+    //  이어서 사용해 그림체만큼은 일관되게 유지하고, 학생에게도 무슨 일이 있었는지
+    //  알려준다)
     if (data.error?.message?.includes('safety') || data.error?.message?.includes('content_policy') || data.error?.message?.includes('moderat')) {
-      if (onStatus) onStatus('프롬프트 조정 후 재시도...');
+      if (onStatus) onStatus('일부 내용이 안전 정책에 걸려 그림을 조정하고 있어요...');
       const fb = {
         target: 'together-image',
         model: togetherModel,
-        prompt: "Korean elementary school child in a cheerful daily scene, warm watercolor illustration, no text, no letters, plain background.",
+        prompt: `Korean elementary school child in a cheerful daily scene${styleSuffix}${NO_TEXT_SUFFIX}`,
         width: GEN_SIZE, height: GEN_SIZE, steps: 4, n: 1,
       };
       const res2 = await fetch(PROXY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fb) });
@@ -778,6 +788,7 @@ async function generateDalle(prompt, richness=5, onStatus, isPhoto=false) {
       if (!d2.data?.[0]?.b64_json) throw new Error('이미지 데이터가 없습니다 (fallback)');
       updateCost(0.001);
       rawB64 = `data:image/png;base64,${d2.data[0].b64_json}`;
+      if (onStatus) onStatus('⚠️ 일부 표현이 바뀌어 그려졌어요. 실제 일기 내용과 다를 수 있어요.');
     } else {
       throw new Error(data.error?.message || `HTTP ${res.status}`);
     }
