@@ -581,8 +581,10 @@ const XAI_CRITERIA_EN = [
 ];
 
 function openXaiModal() {
+  console.log('[xai-modal] openXaiModal() 호출됨');
   const overlay = $('xaiOverlay');
-  if (!overlay) return;
+  console.log('[xai-modal] overlay element:', overlay);
+  if (!overlay) { console.warn('[xai-modal] #xaiOverlay 요소를 찾을 수 없음'); return; }
   const r = _lastAnalysis;
   const isEn = _currentLang === 'en';
 
@@ -609,14 +611,29 @@ function openXaiModal() {
   }
 
   overlay.classList.add('open');
-  overlay.style.display = 'flex'; // 클래스 토글이 외부 CSS와 충돌하는 경우를 대비한 안전망
+  // 2026 버그 수정: 에세이 탭의 자기평가 모달에서 겪었던 것과 동일한 증상
+  // (display:flex를 줘도 화면에 안 보이는 현상) — 다른 스크립트/CSS가 조상 요소에
+  // 영향을 줄 가능성에 대비해, body의 바로 자식으로 옮기고 !important로 강제 표시.
+  // forceShowModal/forceHideModal은 08-ieum-essay.js에 정의되어 있고, 클릭 시점에는
+  // 모든 스크립트가 이미 로드되어 있으므로 로딩 순서와 무관하게 안전하게 호출 가능.
+  if (typeof forceShowModal === 'function') {
+    forceShowModal(overlay);
+  } else {
+    if (overlay.parentElement !== document.body) document.body.appendChild(overlay);
+    overlay.style.setProperty('display', 'flex', 'important');
+  }
+  console.log('[xai-modal] 모달 표시 완료. 최종 display 값:', getComputedStyle(overlay).display, '/ 부모 요소:', overlay.parentElement);
 }
 
 function closeXaiModal() {
   const overlay = $('xaiOverlay');
   if (!overlay) return;
   overlay.classList.remove('open');
-  overlay.style.display = 'none';
+  if (typeof forceHideModal === 'function') {
+    forceHideModal(overlay);
+  } else {
+    overlay.style.setProperty('display', 'none', 'important');
+  }
 }
 
 let hintTimer;
