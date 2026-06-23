@@ -445,7 +445,7 @@ async function analyzeDiary(text){
   const isEn = _currentLang === 'en';
 
   const raw=await callClaude({
-    model:'claude-haiku-4-5-20251001', max_tokens:1400,
+    model:'claude-haiku-4-5-20251001', max_tokens:2800,
     system: isEn
       ? `You are a warm and encouraging English Writing Coach for Korean elementary school students (ages 10-13).
 Read the student's diary entry carefully and provide specific, helpful bilingual (English + Korean) feedback.
@@ -546,8 +546,31 @@ ONLY return valid JSON (no markdown, no explanation):
 ${missionPrompt}`,
     messages:[{role:'user',content: isEn ? `Diary:\n${text}` : `일기:\n${text}`}]
   });
-  /* 파트 4 수정: voca 필드 fallback 포함 */
-  const data = parseJSON(raw)||{richness:3,richnessBreakdown:{senses:false,emotion:false,metaphor:false,specific:false,unique:false},missionScore:0,empathy:'',goodExpression:'',nextChallenge:'',spellingAdvice:'',exprAdvice:'',contentAdvice:'',advice: isEn ? 'Great diary! Keep writing! 😊' : '일기를 잘 썼어요!',title: isEn ? 'My Diary' : '오늘의 일기',imagePrompt:'',badges:[],voca:''};
+  /* ✅ JSON 파싱 — 잘린 JSON 부분 복구 시도 후 fallback */
+  let data = parseJSON(raw);
+  if (!data) {
+    // max_tokens 초과로 JSON이 잘렸을 때: 닫힌 부분까지만 파싱 재시도
+    const cleaned = raw.replace(/```json|```/gi, '').trim();
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (lastBrace > 0) {
+      try { data = JSON.parse(cleaned.slice(0, lastBrace + 1)); } catch { data = null; }
+    }
+  }
+  if (!data) {
+    // 전체 실패 시 일기 내용에서 직접 imagePrompt 생성해 fallback
+    const excerpt = text.replace(/[\n\r]+/g, ' ').trim().slice(0, 200);
+    data = {
+      richness: 3,
+      richnessBreakdown: {senses:false, emotion:false, metaphor:false, specific:false, unique:false},
+      missionScore: 0, empathy: '', goodExpression: '', nextChallenge: '',
+      spellingAdvice: '', exprAdvice: '', contentAdvice: '',
+      advice: isEn ? 'Great diary! Keep writing! 😊' : '일기를 잘 썼어요!',
+      title: isEn ? 'My Diary' : '오늘의 일기',
+      // fallback imagePrompt: 일기 앞부분을 그대로 장면화 (한국어 제거는 generateDalle>sanitizePrompt가 처리)
+      imagePrompt: `Korean child in a meaningful scene from diary: "${excerpt}"`,
+      badges: [], voca: ''
+    };
+  }
   if (!data.richnessBreakdown) data.richnessBreakdown = {senses:false,emotion:false,metaphor:false,specific:false,unique:false};
   if(!data.voca) data.voca = '';
   if(data.badges && data.badges.length > 0) { data.badges.forEach(b => addBadge(b)); }
