@@ -215,6 +215,13 @@ function addBubble(text, sender, isRedirectable=false) {
   let f = text
     .replace(/^#{1,3}\s+(.+)$/gm, '<b>$1</b>')   // # 헤더 → 볼드
     .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')        // **볼드**
+    .replace(/\n---\n/g, '<hr style="border:none;border-top:1px dashed #c9b8ff;margin:8px 0;">')  // --- 구분선
+    .replace(/^---$/gm, '<hr style="border:none;border-top:1px dashed #c9b8ff;margin:8px 0;">')   // --- 단독 줄
+    .replace(/(⚔️\s*AI\s*반박:|⚔️\s*AI\s*Rebuttal:)/g, '<span style="color:#e55;font-weight:bold;">$1</span>')  // 반박 레이블 강조
+    .replace(/(💡\s*네\s*차례:|💡\s*Your\s*turn:)/g, '<span style="color:#8a7ce8;font-weight:bold;">$1</span>')  // 네 차례 레이블
+    .replace(/(🔥\s*잘한\s*점:|🔥\s*Great\s*point:)/g, '<span style="color:#f49f5a;font-weight:bold;">$1</span>')  // 칭찬 레이블
+    .replace(/(🤔\s*더\s*필요한\s*부분:|🤔\s*What\'s\s*missing:)/g, '<span style="color:#62b3a4;font-weight:bold;">$1</span>')  // 부족 레이블
+    .replace(/(❓\s*생각해볼\s*질문:|❓\s*Think\s*about\s*this:)/g, '<span style="color:#4a90e2;font-weight:bold;">$1</span>')  // 질문 레이블
     .replace(/\n/g, '<br>');
   
   // AI 말풍선: 마지막 질문 문장만 하이라이트 (안전한 방식)
@@ -330,10 +337,12 @@ async function sendRedirectInstruction(id) {
 ③ Evidence: Is there specific support such as experience, facts, or examples?
 
 📌 Response order (always follow this order):
-1. Specifically praise the criterion the student did well on (1 sentence).
-2. Point out ONE missing part clearly (1 sentence).
-3. Guide the student to fill the gap themselves with a question (1 sentence).
-4. Keep the entire response within 4-5 sentences.
+1. Specifically praise the criterion the student did well on (1 sentence). Label: "🔥 Great point:"
+2. Point out ONE missing part clearly (1 sentence). Label: "🤔 What's missing:"
+3. Guide the student to fill the gap themselves with a question (1 sentence). Label: "❓ Think about this:"
+4. Add a "---" divider, then write a logical AI counterargument (1-2 sentences) from the opposing side. Simple language. Label: "⚔️ AI Rebuttal:"
+5. End by inviting the student to respond. Label: "💡 Your turn:"
+6. Keep the entire response within 6-8 sentences.
 If the student gives a redirect instruction, incorporate it in your re-analysis.
 
 ⚠️ Important: Do NOT give the answer directly or complete the logic for the student.`;
@@ -356,17 +365,19 @@ If the student gives a redirect instruction, incorporate it in your re-analysis.
 ③ 근거: 경험, 사실, 예시 등 구체적인 뒷받침이 있는가?
 
 📌 답변 순서 (반드시 이 순서로):
-1. 세 기준 중 학생이 잘 갖춘 부분을 먼저 구체적으로 칭찬해줘 (1문장).
-2. 부족한 부분 1가지를 콕 찍어 "주장/이유/근거 중 ○○이 조금 더 필요해"처럼 명확하게 알려줘 (1문장).
-3. 부족한 부분을 스스로 보완할 수 있도록 발문으로 유도해줘 (1문장).
-4. 전체 답변은 4~5문장 이내로.
+1. 세 기준 중 학생이 잘 갖춘 부분을 먼저 구체적으로 칭찬해줘 (1문장). 앞에 "🔥 잘한 점:" 레이블 붙이기.
+2. 부족한 부분 1가지를 콕 찍어 "주장/이유/근거 중 ○○이 조금 더 필요해"처럼 명확하게 알려줘 (1문장). 앞에 "🤔 더 필요한 부분:" 레이블 붙이기.
+3. 부족한 부분을 스스로 보완할 수 있도록 발문으로 유도해줘 (1문장). 앞에 "❓ 생각해볼 질문:" 레이블 붙이기.
+4. "---" 구분선을 넣은 뒤, AI 반박을 추가해. 학생의 주장에 반대하는 입장에서 논리적인 반박 1~2문장을 써줘. 앞에 "⚔️ AI 반박:" 레이블 붙이기. 단, 초등학생 수준에서 이해할 수 있는 쉬운 말로.
+5. 마지막에 학생이 AI 반박에 다시 반박할 수 있도록 짧게 넘겨줘. 앞에 "💡 네 차례:" 레이블 붙이기.
+6. 전체 답변은 6~8문장 이내로.
 학생의 수정 지시가 있으면 그것을 반드시 반영해서 다시 분석해.
 
 ⚠️ 주의: 정답을 직접 알려주거나 학생 대신 논리를 완성하지 마. 스스로 생각하게 유도하는 것이 목표야.`;
   }
 
   try {
-    const t = await callClaude({ model: 'claude-haiku-4-5-20251001', max_tokens: 350,
+    const t = await callClaude({ model: 'claude-haiku-4-5-20251001', max_tokens: 550,
       system: sysPrompt, messages: [{ role: 'user', content: `So far:\n${fullStory}\n\nAI:` }] });
     $(lid)?.remove();
     addBubble(t, 'ai', true);
@@ -406,10 +417,12 @@ async function sendStory(){
 ③ Evidence: Is there specific support such as experience, facts, or examples?
 
 📌 Response order (always follow this order):
-1. Specifically praise the criterion the student did well on (1 sentence).
-2. Point out ONE missing part clearly, e.g. "Your claim/reason/evidence needs a little more work." (1 sentence).
-3. Guide the student to fill the gap themselves with a question (1 sentence). e.g. "Can you give a reason for your claim in one sentence?", "Do you have a personal experience or example to support your argument?", "What might people who disagree say?"
-4. Keep the entire response within 4-5 sentences.
+1. Specifically praise the criterion the student did well on (1 sentence). Label: "🔥 Great point:"
+2. Point out ONE missing part clearly, e.g. "Your claim/reason/evidence needs a little more work." (1 sentence). Label: "🤔 What's missing:"
+3. Guide the student to fill the gap themselves with a question (1 sentence). Label: "❓ Think about this:"
+4. Add a "---" divider, then write a logical AI counterargument (1-2 sentences) from the opposing side. Use simple language an elementary student can understand. Label: "⚔️ AI Rebuttal:"
+5. End by inviting the student to respond to the rebuttal. e.g. "How would you argue back? Give it a try! 💪" Label: "💡 Your turn:"
+6. Keep the entire response within 6-8 sentences.
 
 ⚠️ Important: Do NOT give the answer directly or complete the logic for the student. The goal is to guide them to think for themselves.`;
   } else {
@@ -432,16 +445,18 @@ async function sendStory(){
 ③ 근거: 경험, 사실, 예시 등 구체적인 뒷받침이 있는가?
 
 📌 답변 순서 (반드시 이 순서로):
-1. 세 기준 중 학생이 잘 갖춘 부분을 먼저 구체적으로 칭찬해줘 (1문장).
-2. 부족한 부분 1가지를 콕 찍어 "주장/이유/근거 중 ○○이 조금 더 필요해"처럼 명확하게 알려줘 (1문장).
-3. 부족한 부분을 스스로 보완할 수 있도록 발문으로 유도해줘 (1문장). 예: "왜 그렇게 생각하는지 이유를 한 문장으로 말해볼 수 있어?", "네 주장을 뒷받침할 경험이나 예시가 있어?", "반대로 생각하는 사람들은 어떤 이유를 댈 것 같아?"
-4. 전체 답변은 4~5문장 이내로.
+1. 세 기준 중 학생이 잘 갖춘 부분을 먼저 구체적으로 칭찬해줘 (1문장). 앞에 "🔥 잘한 점:" 레이블 붙이기.
+2. 부족한 부분 1가지를 콕 찍어 "주장/이유/근거 중 ○○이 조금 더 필요해"처럼 명확하게 알려줘 (1문장). 앞에 "🤔 더 필요한 부분:" 레이블 붙이기.
+3. 부족한 부분을 스스로 보완할 수 있도록 발문으로 유도해줘 (1문장). 앞에 "❓ 생각해볼 질문:" 레이블 붙이기.
+4. "---" 구분선을 넣은 뒤, AI 반박을 추가해. 학생의 주장에 반대하는 입장에서 논리적인 반박 1~2문장을 써줘. 앞에 "⚔️ AI 반박:" 레이블 붙이기. 단, 초등학생 수준에서 이해할 수 있는 쉬운 말로.
+5. 마지막에 학생이 AI 반박에 다시 반박할 수 있도록 짧게 넘겨줘. 예: "이 반박에 어떻게 답할 수 있을까? 다시 도전해봐! 💪" 앞에 "💡 네 차례:" 레이블 붙이기.
+6. 전체 답변은 6~8문장 이내로.
 
 ⚠️ 주의: 정답을 직접 알려주거나 학생 대신 논리를 완성하지 마. 스스로 생각하게 유도하는 것이 목표야.`;
   }
 
   try{
-    const t=await callClaude({model:'claude-haiku-4-5-20251001',max_tokens:350,
+    const t=await callClaude({model:'claude-haiku-4-5-20251001',max_tokens:550,
       system:sysPrompt, messages:[{role:'user',content:`So far:\n${fullStory}\n\nAI:`}]});
     document.getElementById(lid)?.remove();
     addBubble(t,'ai', true);  // isRedirectable=true
