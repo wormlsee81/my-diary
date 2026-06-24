@@ -229,6 +229,8 @@
         <button id="dodumTab_montage" class="hbtn" onclick="switchDodumTab('montage')" style="background:rgba(255,255,255,.9);color:var(--blue);font-weight:bold;border:2px solid white;">🕵️ <span id="dodumTabLabel_montage">몽타주</span></button>
         <button id="dodumTab_word" class="hbtn" onclick="switchDodumTab('word')" style="background:rgba(255,255,255,.2);">🎰 <span id="dodumTabLabel_word">단어자판기</span></button>
         <button id="dodumTab_poem" class="hbtn" onclick="switchDodumTab('poem')" style="background:rgba(255,255,255,.2);">💎 <span id="dodumTabLabel_poem">시어출력기</span></button>
+        <!-- 감상문 쓰기(Review) 1단계: 인물의 뇌구조도 + 벤 다이어그램 -->
+        <button id="dodumTab_review" class="hbtn" onclick="switchDodumTab('review')" style="background:rgba(255,255,255,.2);">🧠 <span id="dodumTabLabel_review">감상 브레인맵</span></button>
       </div>
       <span id="dodumGoalBadge" style="font-size:11px;background:rgba(255,255,255,.2);padding:3px 10px;border-radius:20px;word-break:keep-all;">💡 <span id="dodumGoalBadgeText">오늘의 목표: 본 것을 언어로 정확하게 표현하기</span></span>
     </div>
@@ -345,6 +347,63 @@
     </div>
   </main>
 
+  <!-- ▼ 감상문 쓰기(Review) 1단계: 감상 브레인맵 — 기본 숨김 -->
+  <main id="dodumContent_review" style="display:none; flex-direction:column; padding:16px; gap:12px; overflow-y:auto;">
+    <div class="rv-panel">
+      <div class="rv-panel-title">🧠 인물의 뇌구조도</div>
+      <div style="font-size:12px;color:#888;margin-bottom:10px;word-break:keep-all;">주인공의 머릿속에 들어가본다면? 가장 큰 생각 1개와 주변 생각 3개를 적어보세요!</div>
+      <div class="rv-brainmap">
+        <div class="rv-brain-core-wrap">
+          <label class="rv-input-label">⭐ 가장 큰 핵심 생각</label>
+          <textarea id="rvBrainCore" class="rv-textarea rv-brain-core" placeholder="주인공이 그 순간 가장 크게 느꼈을 생각이나 감정은?"></textarea>
+        </div>
+        <div class="rv-brain-peripherals">
+          <div class="rv-brain-p"><label class="rv-input-label">주변 생각 1</label><textarea id="rvBrainP1" class="rv-textarea"></textarea></div>
+          <div class="rv-brain-p"><label class="rv-input-label">주변 생각 2</label><textarea id="rvBrainP2" class="rv-textarea"></textarea></div>
+          <div class="rv-brain-p"><label class="rv-input-label">주변 생각 3</label><textarea id="rvBrainP3" class="rv-textarea"></textarea></div>
+        </div>
+      </div>
+      <button class="mission-btn" id="rvBrainSubmitBtn" style="background:var(--review);margin-top:10px;" onclick="rvSubmitBrainMap()">🤖 AI 선생님께 보여주기</button>
+      <div id="rvBrainFeedbackBox" style="display:none;margin-top:10px;">
+        <div class="teacher-box" style="flex-direction:column;gap:0;padding:0;min-height:auto;align-items:stretch;">
+          <div style="display:flex;gap:8px;align-items:center;padding:8px 10px;">
+            <div class="teacher-face">🧠</div>
+            <div style="flex:1;min-width:0;"><div class="teacher-msg" id="rvBrainFeedbackText"></div></div>
+          </div>
+        </div>
+        <button class="mission-btn" id="rvBrainSendBtn" style="background:var(--mint);margin-top:8px;display:none;" onclick="rvSendBrainToIeum()">💌 이 생각을 [이음]으로 보내기</button>
+      </div>
+    </div>
+
+    <div class="rv-panel">
+      <div class="rv-panel-title">🔵🔴 나와 주인공 벤 다이어그램</div>
+      <div style="font-size:12px;color:#888;margin-bottom:10px;word-break:keep-all;">주인공과 나, 서로 다른 점과 닮은 점을 찾아보세요!</div>
+      <div class="rv-venn-visual">
+        <div class="rv-venn-circle left">주인공</div>
+        <div class="rv-venn-circle right">나</div>
+        <div class="rv-venn-label">공통점</div>
+      </div>
+      <div class="rv-venn-inputs">
+        <div class="rv-venn-input-col"><label class="rv-input-label">주인공의 특징</label><textarea id="rvVennChar" class="rv-textarea"></textarea></div>
+        <div class="rv-venn-input-col"><label class="rv-input-label">나의 특징</label><textarea id="rvVennMe" class="rv-textarea"></textarea></div>
+      </div>
+      <label class="rv-input-label">🤝 우리의 공통점</label>
+      <textarea id="rvVennCommon" class="rv-textarea" style="min-height:60px;"></textarea>
+      <button class="mission-btn" id="rvVennSubmitBtn" style="background:var(--review);margin-top:10px;" onclick="rvSubmitVenn()">🤖 멋진 문장 만들기</button>
+      <div id="rvVennFeedbackBox" style="display:none;margin-top:10px;">
+        <div class="teacher-box" style="flex-direction:column;gap:0;padding:0;min-height:auto;align-items:stretch;">
+          <div style="display:flex;gap:8px;align-items:center;padding:8px 10px;">
+            <div class="teacher-face">✨</div>
+            <div style="flex:1;min-width:0;"><div class="teacher-msg" id="rvVennFeedbackText"></div></div>
+          </div>
+        </div>
+        <div id="rvVennSentenceBox" style="margin-top:8px;padding:10px 12px;background:var(--review-light);border:2px dashed var(--review-border);border-radius:10px;font-size:13px;color:#5a4a35;"></div>
+        <button class="mission-btn" id="rvVennSendBtn" style="background:var(--mint);margin-top:8px;display:none;" onclick="rvSendVennToIeum()">💌 이 문장을 [이음]으로 보내기</button>
+      </div>
+    </div>
+  </main>
+  <!-- ▲ 감상 브레인맵 화면 끝 -->
+
 </div>
 </div>
 
@@ -372,6 +431,7 @@
     <button class="ieum-tab active" id="ieumTab_diary" onclick="switchIeumTab('diary')">📖 그림일기</button>
     <button class="ieum-tab" id="ieumTab_essay" onclick="switchIeumTab('essay')">📝 논설문 쓰기</button>
     <button class="ieum-tab" id="ieumTab_peer" onclick="switchIeumTab('peer')">🤝 동료 피드백</button>
+    <button class="ieum-tab" id="ieumTab_review" onclick="switchIeumTab('review')">💌 감상문 쓰기</button>
   </div>
   <main id="ieumContent_diary">
     <section class="panel" style="display:flex; flex-direction:column;">
@@ -683,6 +743,65 @@
   </main>
   <!-- ▲ 동료 피드백 화면 끝 -->
 
+  <!-- ▼ 감상문 쓰기(Review) 2단계 화면 — 기본 숨김 -->
+  <main id="ieumContent_review" style="display:none;">
+    <section class="panel" style="display:flex; flex-direction:column; flex:6;">
+      <div class="panel-title">[ 💌 감상문 쓰기 ]</div>
+
+      <div style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; flex-shrink:0;">
+        <input type="text" id="reviewTitleInput" placeholder="📚 책/영화 제목" style="flex:1; min-width:120px; padding:8px 12px; border:2px solid var(--review-border); border-radius:10px; font-family:inherit; font-size:13px; outline:none;">
+        <input type="text" id="reviewCharInput" placeholder="🧑 주인공 이름" style="flex:1; min-width:100px; padding:8px 12px; border:2px solid var(--review-border); border-radius:10px; font-family:inherit; font-size:13px; outline:none;">
+      </div>
+
+      <label class="rv-input-label">① 가장 인상 깊었던 장면이나 대사 (사실)</label>
+      <div style="display:flex; justify-content:flex-end; margin-bottom: 4px;">
+        <button class="tool-btn voice" onclick="startSTT('reviewFact')">🎤 음성 입력</button>
+      </div>
+      <textarea id="reviewFact" class="rv-textarea rv-textarea-fact" placeholder="예) 주인공이 친구를 구하기 위해 다시 불타는 집으로 뛰어들어갔다." oninput="rvOnFactInput()"></textarea>
+
+      <label class="rv-input-label" style="margin-top:10px;">② 그 장면을 고른 이유와 내 생각</label>
+      <div style="display:flex; justify-content:flex-end; margin-bottom: 4px;">
+        <button class="tool-btn voice" onclick="startSTT('reviewThought')">🎤 음성 입력</button>
+      </div>
+      <textarea id="reviewThought" class="rv-textarea rv-textarea-thought" placeholder="그 장면이 왜 기억에 남는지, 그때 어떤 기분이 들었는지 자유롭게 써보세요!"></textarea>
+
+      <div style="display:flex; gap:8px; margin:8px 0; flex-shrink:0;">
+        <button class="mission-btn" style="background:var(--review);" onclick="rvMergeReview()">📎 감상문 하나로 합치기</button>
+      </div>
+
+      <label class="rv-input-label">③ 완성된 감상문 (자유롭게 다듬어보세요)</label>
+      <textarea id="reviewFinalText" class="rv-textarea rv-textarea-final" placeholder="[감상문 하나로 합치기] 버튼을 누르면 여기에 감상문이 만들어져요!"></textarea>
+
+      <button class="mission-btn" id="reviewSubmitBtn" style="background:var(--orange); margin-top:8px;" onclick="rvSubmitReview()">✅ 감상문 완성하기</button>
+    </section>
+
+    <section class="panel" style="display:flex; flex-direction:column; flex:4; overflow-y:auto;">
+      <div class="panel-title">[ 🤖 AI 선생님 & 표현 도우미 ]</div>
+
+      <div class="teacher-box" style="flex-direction:column;gap:0;padding:0;min-height:auto;align-items:stretch;flex-shrink:0;margin-bottom:10px;">
+        <div style="display:flex;gap:8px;align-items:center;padding:8px 10px;">
+          <div class="teacher-face" id="reviewTeacherFace">📖</div>
+          <div style="flex:1;min-width:0;">
+            <div class="teacher-msg" id="reviewTeacherMsg"><span class="teacher-hi">감상문 선생님</span><br>인상 깊은 장면을 적어보면, 생각을 더 깊게 만들어줄 질문을 드릴게요! 😊</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex-shrink:0;margin-bottom:10px;">
+        <div style="font-size:12px;color:#999;margin-bottom:6px;">💡 클릭하면 감상문에 바로 들어가요! 쓰면 잉크 보너스 💧</div>
+        <div id="reviewChips" style="display:flex; flex-wrap:wrap; gap:7px; min-height:36px; align-items:center;"></div>
+      </div>
+
+      <div style="flex-shrink:0;">
+        <div style="background:var(--review-light);border:2px solid var(--review-border);border-radius:10px;padding:8px 12px;font-size:12px;">
+          <b style="color:var(--review);">🧠 돋움에서 받은 생각</b>
+          <div id="reviewDodumReceived" style="margin-top:6px;font-size:11.5px;color:#7a6a55;line-height:1.6;">아직 받은 내용이 없어요. [돋움] 탭에서 뇌구조도나 벤다이어그램을 채우고 보내보세요!</div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <!-- ▲ 감상문 쓰기 화면 끝 -->
+
 </div>
 
 <div class="modal-bg" id="revisionModal">
@@ -917,6 +1036,7 @@
       <div class="jieum-tabs">
         <button class="j-tab active" id="tabBook" onclick="switchTab('book')">📖 그림책</button>
         <button class="j-tab" id="tabPoem" onclick="switchTab('poem')">🌸 시화</button>
+        <button class="j-tab" id="tabReview" onclick="switchTab('review')">🗞️ 감상문 출판</button>
       </div>
     </div>
     <div style="display:flex;gap:6px;" id="jieumHeaderBtns">
@@ -929,6 +1049,8 @@
       <button class="hbtn" id="poemPrintBtn" onclick="openPoemJpgSave()" style="display:none;">🖼️ 시화 JPG 저장</button>
       <button class="hbtn" id="poemLoadBtn" onclick="openPoemListModal()" style="display:none;">📂 목록</button>
       <button class="hbtn" id="poemResetBtn" onclick="resetPoem()" style="display:none;">🔄 초기화</button>
+      <button class="hbtn orange" id="reviewJpgBtn" onclick="rvExportJpg()" style="display:none;">🖼️ JPG 저장</button>
+      <button class="hbtn" id="reviewPdfBtn" onclick="rvExportPdf()" style="display:none;">📄 PDF 저장</button>
     </div>
   </header>
   <main>
@@ -997,6 +1119,35 @@
         </section>
       </div>
     </div>
+    <div class="j-tab-content" id="tabContentReview">
+      <div class="poem-inner">
+        <section class="p-panel" style="border-color:var(--review-border);">
+          <div class="p-panel-title" style="color:var(--review);">1. 감상문 출판 갈래 고르기</div>
+          <div id="reviewSourceSummary" style="background:var(--review-light);border-radius:10px;padding:9px 12px;margin-bottom:10px;font-size:12px;color:#7a6a55;line-height:1.6;flex-shrink:0;">
+            먼저 [이음] 탭에서 감상문을 완성해주세요! ✍️
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <button class="rv-template-card" onclick="rvGenerateNewspaper()">
+              <div style="font-size:30px;">🗞️</div>
+              <div style="font-weight:bold;font-size:15px;">신문 기사형</div>
+              <div style="font-size:11px;color:#888;">감상문을 보도 기사로! 인상 깊은 장면은 삽화로 그려드려요</div>
+            </button>
+            <button class="rv-template-card" onclick="rvGenerateCertificate()">
+              <div style="font-size:30px;">🏆</div>
+              <div style="font-weight:bold;font-size:15px;">상장 수여형</div>
+              <div style="font-size:11px;color:#888;">주인공에게 수여하는 멋진 상장 문구로 만들어드려요</div>
+            </button>
+          </div>
+        </section>
+        <section class="p-panel preview" style="border-color:var(--review-border);">
+          <div class="p-panel-title" style="color:var(--review);">2. 완성된 작품</div>
+          <div class="p-preview-wrap" id="reviewPreviewWrap" style="display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:14px;background:linear-gradient(160deg,var(--review-light),#fff);border-color:var(--review-border);">
+            <div id="exportArea"></div>
+            <div id="reviewPlaceholder" class="p-placeholder" style="color:var(--review);"><div style="font-size:36px;">🗞️🏆</div><div>왼쪽에서 갈래를 고르면<br>여기에 작품이 완성돼요!</div></div>
+          </div>
+        </section>
+      </div>
+    </div>
   </main>
 </div>
 <div class="modal-bg" id="bookListModal"><div class="modal"><h2>📚 저장된 그림책</h2><div id="bookListContent"></div><div class="modal-btns"><button class="mbtn ghost" onclick="closeModal('bookListModal')">닫기</button></div></div></div>
@@ -1046,14 +1197,15 @@
 <script src="js/01-core-init.js?v=2"></script>
 <script src="js/02-core-utils.js"></script>
 <script src="js/03-dodum.js"></script>
-<script src="js/04-ieum-diary.js?v=3"></script>
+<script src="js/04-ieum-diary.js?v=4"></script>
 <script src="js/05-shared-builders.js"></script>
 <script src="js/06-ttieum.js"></script>
 <script src="js/07-jieum.js"></script>
 <script src="js/08-ieum-essay.js?v=7"></script>
-<script src="js/09-sos-dict.js"></script>
+<script src="js/09-sos-dict.js?v=2"></script>
 <script src="js/10-i18n.js"></script>
 <script src="js/11-teacher-extras.js"></script>
+<script src="js/12-ieum-review.js?v=1"></script>
 <!-- ✅ [신규] 스캐폴딩 힌트 팝업 (SOS 버튼 누를 때) -->
 <div class="scaffolding-hint-popup" id="scaffoldingHintPopup">
   <div class="scaffolding-hint-card">
