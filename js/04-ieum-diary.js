@@ -375,7 +375,7 @@ async function saveDiary(){
     toast('💾 일기 저장 완료!');
   }
   await checkEasterEgg(text);
-  if(curRich>=8) toast(`🌟 살아있는 표현 ${curRich}/10! 명예의 전당 후보입니다!`);
+  if(curRich>=8) toast(`🌟 묘사력 ${curRich}/10! 명예의 전당 후보입니다!`);
 }
 
 async function openListModal(){
@@ -399,7 +399,7 @@ async function loadEntry(id){
   curSpellingAdvice=e.spellingAdvice||'';
   curMissionScore=e.missionScore||0; currentMission=e.mission||null;
   missionDrawn=!!currentMission; // 불러온 일기에 미션이 있으면 표시
-  $('richnessFill').style.width=`${curRich*10}%`;$('richnessScore').textContent=`살아있는 표현 ${curRich}/10`;
+  $('richnessFill').style.width=`${curRich*10}%`;$('richnessScore').textContent=`묘사력 ${curRich}/10`;
   if(currentMission){ $('mTitle').textContent=`🎯 ${currentMission.title}`; $('mDesc').textContent=currentMission.desc; $('missionFill').style.width=`${curMissionScore*10}%`; $('missionScoreText').textContent=`${curMissionScore}/10`; }
   else { $('mTitle').textContent='🎯 오늘의 미션'; $('mDesc').textContent='버튼을 눌러 재미있는 글쓰기 미션을 뽑아보세요!'; $('missionFill').style.width='0%'; $('missionScoreText').textContent='— 대기중'; }
   updateStamp(curRich);updateQualityBadge(curRich);
@@ -506,7 +506,7 @@ ${missionPrompt}`
 감지 시 반환할 JSON (이것만 반환, 다른 내용 절대 추가 금지):
 {"richness":0,"missionScore":0,"empathy":"","goodExpression":"","nextChallenge":"","spellingAdvice":"","exprAdvice":"","contentAdvice":"","advice":"의미 있는 문장으로 이야기를 들려줄래?","title":"오늘의 일기","imagePrompt":"","badges":[],"voca":""}
 
-살아있는 표현 점수 1-10 기준 — 아래 5개 기준 각각을 충족했는지(true/false) 반드시 판단하고,
+묘사력 점수 1-10 기준 — 아래 5개 기준 각각을 충족했는지(true/false) 반드시 판단하고,
 그 결과를 richnessBreakdown에 정확히 반영해. richness 총점은 충족한 기준들의 점수 합과
 일치해야 해 (예: 오감+감정+구체적 묘사 충족 → 3+2+2=7점):
 - 오감 표현(보이는 것/소리/냄새/맛/느낌): +3점 → senses
@@ -558,7 +558,7 @@ ${missionPrompt}`,
 }
 
 /* ══════════════════════════════════════════════════════════
-   💡 "왜?" 버튼 — 살아있는 표현 점수 산출 기준 투명화(XAI) 모달
+   💡 "왜?" 버튼 — 묘사력 점수 산출 기준 투명화(XAI) 모달
    index.html에 모달 HTML/CSS(.xai-overlay 등)는 이미 준비돼 있었지만
    openXaiModal()/closeXaiModal() 자체가 어느 파일에도 정의돼 있지 않아
    버튼을 눌러도 아무 반응이 없던 것 — 여기서 새로 구현.
@@ -641,13 +641,15 @@ function onDiaryInput(){
   clearTimeout(hintTimer);const txt=$('diary').value.trim();
   // 텍스트가 바뀌면 캐시 무효화
   if(txt !== _lastAnalyzedText){ _lastAnalysis=null; }
-  if(txt.length<10){setTeacher('idle');return;}setTeacher('thinking');
+  // ✅ 비용 절약: 최소 40자 미만은 분석 생략 (기존 10자)
+  if(txt.length<40){setTeacher('idle');return;}setTeacher('thinking');
+  // ✅ 비용 절약: debounce 6000ms (기존 2800ms) — 타이핑 중 불필요한 API 호출 감소
   hintTimer=setTimeout(async()=>{
     try{
       const r=await analyzeDiary(txt);curRich=r.richness;curAdvice=r.advice;curMissionScore=r.missionScore;
       curEmpathy=r.empathy||'';curGoodExpression=r.goodExpression||'';curNextChallenge=r.nextChallenge||'';
       curExprAdvice=r.exprAdvice||'';curContentAdvice=r.contentAdvice||'';curSpellingAdvice=r.spellingAdvice||'';curVoca=r.voca||''; /* 파트 4 */
-      $('richnessFill').style.width=`${r.richness*10}%`;$('richnessScore').textContent=`살아있는 표현 ${r.richness}/10`;
+      $('richnessFill').style.width=`${r.richness*10}%`;$('richnessScore').textContent=`묘사력 ${r.richness}/10`;
       // 미션 점수는 미션 뽑기 눌렀을 때만 표시
       if(missionDrawn && currentMission){
         $('missionFill').style.width=`${r.missionScore*10}%`; $('missionScoreText').textContent=`${r.missionScore}/10`;
@@ -657,7 +659,7 @@ function onDiaryInput(){
       updateStamp(r.richness);updateQualityBadge(r.richness);
       setTeacher('advice',r.advice,r.goodExpression,r.nextChallenge,r.exprAdvice,r.contentAdvice,r.empathy,r.spellingAdvice,r.voca||'');
     }catch{setTeacher('idle');}
-  },2800);
+  },6000);
 }
 
 function setTeacher(st, msg, goodExpr, nextChallenge, exprAdvice, contentAdvice, empathy, spellingAdvice, voca){

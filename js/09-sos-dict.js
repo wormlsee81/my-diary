@@ -230,6 +230,8 @@ function escAttr(s) {
 ══════════════════════════════════════════════════════════ */
 
 const _gsosHistory = []; // 최근 SOS 검색 히스토리 (최대 5개)
+// ✅ 비용 절약: 세션 내 동일 검색어 캐시 (API 재호출 방지)
+const _gsosCache = {}; // { "query|lang": data }
 let _gsosPanelOpen = false;
 
 /**
@@ -331,6 +333,13 @@ async function askGlobalSos() {
     return;
   }
 
+  // ✅ 비용 절약: 캐시 히트 시 API 호출 생략
+  const cacheKey = `${query}|${_currentLang}`;
+  if (_gsosCache[cacheKey]) {
+    _renderGsosResult(_gsosCache[cacheKey], query);
+    return;
+  }
+
   // 로딩 표시
   if (askBtn) { askBtn.disabled = true; askBtn.innerHTML = '<span class="gsos-spinner"></span>'; }
   resultEl.innerHTML = `<div class="gsos-loading"><div class="gsos-spinner"></div> <span>${_currentLang === 'en' ? 'Looking it up...' : '찾아보는 중...'}</span></div>`;
@@ -401,63 +410,12 @@ Rules:
       return;
     }
 
-    // 히스토리에 추가 (최대 5개)
-    const firstResult = data.results[0];
-    const histEntry = { query, word: firstResult.word };
-    const existIdx = _gsosHistory.findIndex(h => h.query === query);
-    if (existIdx >= 0) _gsosHistory.splice(existIdx, 1);
-    _gsosHistory.unshift(histEntry);
-    if (_gsosHistory.length > 5) _gsosHistory.pop();
+    // ✅ 비용 절약: 성공 결과 캐시 저장 (세션 유지, 최대 50건)
+    const cacheKeys = Object.keys(_gsosCache);
+    if (cacheKeys.length >= 50) delete _gsosCache[cacheKeys[0]];
+    _gsosCache[cacheKey] = data;
 
-    // 결과 렌더링 (언어별 분기)
-    resultEl.innerHTML = data.results.map(r => {
-      const wordSafe    = escHtml(r.word || '');
-      const koreanSafe  = escHtml(r.korean || '');
-      const exSafe      = escHtml(r.example || '');
-      const exKoSafe    = escHtml(r.example_ko || '');
-
-      if (isEn) {
-        return `
-          <div class="gsos-result-item">
-            <div class="gsos-result-word">
-              🔤 <b>${wordSafe}</b>
-              <span style="font-size:12px;color:#888;font-weight:normal;">(${koreanSafe})</span>
-            </div>
-            <div class="gsos-result-ex">
-              📝 ${exSafe}<br>
-              <span style="color:#aaa;font-style:normal;font-size:11px;">→ ${exKoSafe}</span>
-            </div>
-            <button class="gsos-insert-btn"
-              onclick="gsosInsertWord('${escAttr(r.word)}')"
-              title="Insert into writing area">
-              ✏️ Insert
-            </button>
-          </div>`;
-      }
-
-      // 한국어 모드: 영어 번역 없이 '표현 추천' 카드
-      return `
-        <div class="gsos-result-item">
-          <div class="gsos-result-word">
-            ✨ <b>${wordSafe}</b>
-            ${koreanSafe ? `<span style="font-size:12px;color:#888;font-weight:normal;">(${koreanSafe})</span>` : ''}
-          </div>
-          <div class="gsos-result-ex">
-            📝 ${exSafe}
-          </div>
-          <button class="gsos-insert-btn"
-            onclick="gsosInsertWord('${escAttr(r.word)}')"
-            title="글쓰기 창에 삽입">
-            ✏️ 삽입하기
-          </button>
-        </div>`;
-    }).join('');
-
-    // 히스토리 렌더링
-    renderGsosHistory();
-
-    // 입력창 초기화
-    if (inputEl) inputEl.value = '';
+    _renderGsosResult(data, query);
 
   } catch (err) {
     resultEl.innerHTML = `<div style="color:#e55;font-size:12px;text-align:center;padding:10px;">⚠️ ${_currentLang === 'en' ? 'Error. Please try again.' : '오류가 발생했어요. 다시 시도해보세요.'}</div>`;
@@ -468,6 +426,77 @@ Rules:
       askBtn.innerHTML = `<span id="gsosAskBtnLabel">${_currentLang === 'en' ? 'Ask!' : '물어보기'}</span>`;
     }
   }
+}
+
+/**
+ * ✅ 비용 절약: 캐시 히트·API 성공 시 공통 렌더링 함수
+ * askGlobalSos()에서 캐시 재사용 시에도 동일하게 호출
+ */
+function _renderGsosResult(data, query) {
+  const resultEl = $('gsosResultArea');
+  const inputEl  = $('gsosInput');
+  if (!resultEl || !data || !Array.isArray(data.results)) return;
+
+  const isEn = (_currentLang === 'en');
+
+  // 히스토리에 추가 (중복 제거, 최대 5개)
+  const firstResult = data.results[0];
+  if (firstResult) {
+    const histEntry = { query, word: firstResult.word };
+    const existIdx = _gsosHistory.findIndex(h => h.query === query);
+    if (existIdx >= 0) _gsosHistory.splice(existIdx, 1);
+    _gsosHistory.unshift(histEntry);
+    if (_gsosHistory.length > 5) _gsosHistory.pop();
+  }
+
+  // 결과 렌더링 (언어별 분기)
+  resultEl.innerHTML = data.results.map(r => {
+    const wordSafe   = escHtml(r.word || '');
+    const koreanSafe = escHtml(r.korean || '');
+    const exSafe     = escHtml(r.example || '');
+    const exKoSafe   = escHtml(r.example_ko || '');
+
+    if (isEn) {
+      return `
+        <div class="gsos-result-item">
+          <div class="gsos-result-word">
+            🔤 <b>${wordSafe}</b>
+            <span style="font-size:12px;color:#888;font-weight:normal;">(${koreanSafe})</span>
+          </div>
+          <div class="gsos-result-ex">
+            📝 ${exSafe}<br>
+            <span style="color:#aaa;font-style:normal;font-size:11px;">→ ${exKoSafe}</span>
+          </div>
+          <button class="gsos-insert-btn"
+            onclick="gsosInsertWord('${escAttr(r.word)}')"
+            title="Insert into writing area">
+            ✏️ Insert
+          </button>
+        </div>`;
+    }
+    // 한국어 모드: 표현 추천 카드
+    return `
+      <div class="gsos-result-item">
+        <div class="gsos-result-word">
+          ✨ <b>${wordSafe}</b>
+          ${koreanSafe ? `<span style="font-size:12px;color:#888;font-weight:normal;">(${koreanSafe})</span>` : ''}
+        </div>
+        <div class="gsos-result-ex">
+          📝 ${exSafe}
+        </div>
+        <button class="gsos-insert-btn"
+          onclick="gsosInsertWord('${escAttr(r.word)}')"
+          title="글쓰기 창에 삽입">
+          ✏️ 삽입하기
+        </button>
+      </div>`;
+  }).join('');
+
+  // 히스토리 칩 갱신
+  renderGsosHistory();
+
+  // 입력창 초기화
+  if (inputEl) inputEl.value = '';
 }
 
 /**
