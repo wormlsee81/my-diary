@@ -375,7 +375,7 @@ async function saveDiary(){
     toast('💾 일기 저장 완료!');
   }
   await checkEasterEgg(text);
-  if(curRich>=8) toast(`🌟 묘사력 ${curRich}/10! 명예의 전당 후보입니다!`);
+  if(curRich>=8) toast(`🌟 살아있는 표현 ${curRich}/10! 명예의 전당 후보입니다!`);
 }
 
 async function openListModal(){
@@ -399,7 +399,7 @@ async function loadEntry(id){
   curSpellingAdvice=e.spellingAdvice||'';
   curMissionScore=e.missionScore||0; currentMission=e.mission||null;
   missionDrawn=!!currentMission; // 불러온 일기에 미션이 있으면 표시
-  $('richnessFill').style.width=`${curRich*10}%`;$('richnessScore').textContent=`묘사력 ${curRich}/10`;
+  $('richnessFill').style.width=`${curRich*10}%`;$('richnessScore').textContent=`살아있는 표현 ${curRich}/10`;
   if(currentMission){ $('mTitle').textContent=`🎯 ${currentMission.title}`; $('mDesc').textContent=currentMission.desc; $('missionFill').style.width=`${curMissionScore*10}%`; $('missionScoreText').textContent=`${curMissionScore}/10`; }
   else { $('mTitle').textContent='🎯 오늘의 미션'; $('mDesc').textContent='버튼을 눌러 재미있는 글쓰기 미션을 뽑아보세요!'; $('missionFill').style.width='0%'; $('missionScoreText').textContent='— 대기중'; }
   updateStamp(curRich);updateQualityBadge(curRich);
@@ -445,7 +445,7 @@ async function analyzeDiary(text){
   const isEn = _currentLang === 'en';
 
   const raw=await callClaude({
-    model:'claude-haiku-4-5-20251001', max_tokens:2800,
+    model:'claude-haiku-4-5-20251001', max_tokens:1400,
     system: isEn
       ? `You are a warm and encouraging English Writing Coach for Korean elementary school students (ages 10-13).
 Read the student's diary entry carefully and provide specific, helpful bilingual (English + Korean) feedback.
@@ -506,7 +506,7 @@ ${missionPrompt}`
 감지 시 반환할 JSON (이것만 반환, 다른 내용 절대 추가 금지):
 {"richness":0,"missionScore":0,"empathy":"","goodExpression":"","nextChallenge":"","spellingAdvice":"","exprAdvice":"","contentAdvice":"","advice":"의미 있는 문장으로 이야기를 들려줄래?","title":"오늘의 일기","imagePrompt":"","badges":[],"voca":""}
 
-묘사력 점수 1-10 기준 — 아래 5개 기준 각각을 충족했는지(true/false) 반드시 판단하고,
+살아있는 표현 점수 1-10 기준 — 아래 5개 기준 각각을 충족했는지(true/false) 반드시 판단하고,
 그 결과를 richnessBreakdown에 정확히 반영해. richness 총점은 충족한 기준들의 점수 합과
 일치해야 해 (예: 오감+감정+구체적 묘사 충족 → 3+2+2=7점):
 - 오감 표현(보이는 것/소리/냄새/맛/느낌): +3점 → senses
@@ -546,31 +546,8 @@ ONLY return valid JSON (no markdown, no explanation):
 ${missionPrompt}`,
     messages:[{role:'user',content: isEn ? `Diary:\n${text}` : `일기:\n${text}`}]
   });
-  /* ✅ JSON 파싱 — 잘린 JSON 부분 복구 시도 후 fallback */
-  let data = parseJSON(raw);
-  if (!data) {
-    // max_tokens 초과로 JSON이 잘렸을 때: 닫힌 부분까지만 파싱 재시도
-    const cleaned = raw.replace(/```json|```/gi, '').trim();
-    const lastBrace = cleaned.lastIndexOf('}');
-    if (lastBrace > 0) {
-      try { data = JSON.parse(cleaned.slice(0, lastBrace + 1)); } catch { data = null; }
-    }
-  }
-  if (!data) {
-    // 전체 실패 시 일기 내용에서 직접 imagePrompt 생성해 fallback
-    const excerpt = text.replace(/[\n\r]+/g, ' ').trim().slice(0, 200);
-    data = {
-      richness: 3,
-      richnessBreakdown: {senses:false, emotion:false, metaphor:false, specific:false, unique:false},
-      missionScore: 0, empathy: '', goodExpression: '', nextChallenge: '',
-      spellingAdvice: '', exprAdvice: '', contentAdvice: '',
-      advice: isEn ? 'Great diary! Keep writing! 😊' : '일기를 잘 썼어요!',
-      title: isEn ? 'My Diary' : '오늘의 일기',
-      // fallback imagePrompt: 일기 앞부분을 그대로 장면화 (한국어 제거는 generateDalle>sanitizePrompt가 처리)
-      imagePrompt: `Korean child in a meaningful scene from diary: "${excerpt}"`,
-      badges: [], voca: ''
-    };
-  }
+  /* 파트 4 수정: voca 필드 fallback 포함 */
+  const data = parseJSON(raw)||{richness:3,richnessBreakdown:{senses:false,emotion:false,metaphor:false,specific:false,unique:false},missionScore:0,empathy:'',goodExpression:'',nextChallenge:'',spellingAdvice:'',exprAdvice:'',contentAdvice:'',advice: isEn ? 'Great diary! Keep writing! 😊' : '일기를 잘 썼어요!',title: isEn ? 'My Diary' : '오늘의 일기',imagePrompt:'',badges:[],voca:''};
   if (!data.richnessBreakdown) data.richnessBreakdown = {senses:false,emotion:false,metaphor:false,specific:false,unique:false};
   if(!data.voca) data.voca = '';
   if(data.badges && data.badges.length > 0) { data.badges.forEach(b => addBadge(b)); }
@@ -581,7 +558,7 @@ ${missionPrompt}`,
 }
 
 /* ══════════════════════════════════════════════════════════
-   💡 "왜?" 버튼 — 묘사력 점수 산출 기준 투명화(XAI) 모달
+   💡 "왜?" 버튼 — 살아있는 표현 점수 산출 기준 투명화(XAI) 모달
    index.html에 모달 HTML/CSS(.xai-overlay 등)는 이미 준비돼 있었지만
    openXaiModal()/closeXaiModal() 자체가 어느 파일에도 정의돼 있지 않아
    버튼을 눌러도 아무 반응이 없던 것 — 여기서 새로 구현.
@@ -670,7 +647,7 @@ function onDiaryInput(){
       const r=await analyzeDiary(txt);curRich=r.richness;curAdvice=r.advice;curMissionScore=r.missionScore;
       curEmpathy=r.empathy||'';curGoodExpression=r.goodExpression||'';curNextChallenge=r.nextChallenge||'';
       curExprAdvice=r.exprAdvice||'';curContentAdvice=r.contentAdvice||'';curSpellingAdvice=r.spellingAdvice||'';curVoca=r.voca||''; /* 파트 4 */
-      $('richnessFill').style.width=`${r.richness*10}%`;$('richnessScore').textContent=`묘사력 ${r.richness}/10`;
+      $('richnessFill').style.width=`${r.richness*10}%`;$('richnessScore').textContent=`살아있는 표현 ${r.richness}/10`;
       // 미션 점수는 미션 뽑기 눌렀을 때만 표시
       if(missionDrawn && currentMission){
         $('missionFill').style.width=`${r.missionScore*10}%`; $('missionScoreText').textContent=`${r.missionScore}/10`;

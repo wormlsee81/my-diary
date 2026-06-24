@@ -146,7 +146,7 @@ function renderDashList(students, filter) {
     return `
     <div class="dash-student-row">
       <span class="dash-student-name">${escHtml(s.nick)}</span>
-      <span class="dash-score-chip ${cls}">${cls2} 묘사력 ${sc}/10</span>
+      <span class="dash-score-chip ${cls}">${cls2} 살아있는 표현 ${sc}/10</span>
       <span class="dash-score-chip mid">🎯 미션 ${s.latestMission}/10</span>
       <span class="dash-score-chip mid">📝 ${s.entryCount}편</span>
       ${s.isToday ? '<span style="font-size:11px;background:#eaf6f4;color:var(--mint);padding:2px 8px;border-radius:10px;">오늘 작성 ✅</span>' : ''}
@@ -224,32 +224,12 @@ function openXaiModal() {
       📊 예상 점수: <b>${Math.min(10, earned)}/10점</b> (AI 실제 점수: <b>${score}/10점</b>)<br>
       <span style="color:#888;font-size:11px;">※ AI는 전체 문맥을 종합적으로 분석하므로 예상치와 약간 다를 수 있어요.</span>
     </div>`);
+  $('xaiOverlay').classList.add('open');
   // 트리거 버튼 표시
   const btn = $('xaiTriggerBtn');
   if (btn) btn.style.display = 'inline-block';
-  // ✅ 버그 수정: classList.add('open')만으로는 부모 요소 z-index·display 영향으로
-  //    모달이 화면에 보이지 않는 경우가 있음 — forceShowModal로 강제 표시
-  const overlay = $('xaiOverlay');
-  if (overlay) {
-    overlay.classList.add('open');
-    if (typeof forceShowModal === 'function') {
-      forceShowModal(overlay);
-    } else {
-      if (overlay.parentElement !== document.body) document.body.appendChild(overlay);
-      overlay.style.setProperty('display', 'flex', 'important');
-    }
-  }
 }
-function closeXaiModal() {
-  const overlay = $('xaiOverlay');
-  if (!overlay) return;
-  overlay.classList.remove('open');
-  if (typeof forceHideModal === 'function') {
-    forceHideModal(overlay);
-  } else {
-    overlay.style.setProperty('display', 'none', 'important');
-  }
-}
+function closeXaiModal() { $('xaiOverlay').classList.remove('open'); }
 
 /* ═══════════════════════════════════════════════════════════
    📝 자기 평가 (Self-Assessment) 루틴
@@ -346,9 +326,9 @@ async function renderPortfolio() {
   if (fillMiss) fillMiss.style.width = `${avgMission*10}%`;
   if (labMiss)  labMiss.textContent  = `${avgMission}/10`;
   if (growthNote) {
-    if (lastScore > firstScore) growthNote.textContent = `✨ 처음(${firstScore}점) → 지금(${lastScore}점) — 묘사력이 자랐어요! 🌱`;
+    if (lastScore > firstScore) growthNote.textContent = `✨ 처음(${firstScore}점) → 지금(${lastScore}점) — 살아있는 표현이 자랐어요! 🌱`;
     else if (lastScore === firstScore) growthNote.textContent = `📊 꾸준히 ${lastScore}점을 유지하고 있어요!`;
-    else growthNote.textContent = `💪 묘사력 ${firstScore}점 → ${lastScore}점. 도전을 계속해봐요!`;
+    else growthNote.textContent = `💪 살아있는 표현 ${firstScore}점 → ${lastScore}점. 도전을 계속해봐요!`;
   }
   // 타임라인 렌더
   timeline.innerHTML = recent.map((e, idx) => {
@@ -362,12 +342,12 @@ async function renderPortfolio() {
         <div class="portfolio-dot" style="background:${scoreColor};box-shadow:0 0 0 2px ${scoreColor};"></div>
         ${!isLast ? '<div class="portfolio-line"></div>' : ''}
       </div>
-      <div class="portfolio-card" onclick="toast('이 일기: 묘사력 ${score}점 | 미션 ${e.missionScore||0}점')">
+      <div class="portfolio-card" onclick="toast('이 일기: 살아있는 표현 ${score}점 | 미션 ${e.missionScore||0}점')">
         <div class="portfolio-card-date">${e.date || '날짜 없음'}</div>
         <div class="portfolio-card-title">${escHtml((e.title||'오늘의 일기').slice(0,18))}</div>
         <div style="font-size:11px;color:#888;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.5;">${escHtml((e.text||'').slice(0,60))}…</div>
         <div class="portfolio-score-row">
-          <span class="portfolio-score-chip" style="color:${scoreColor};border-color:${scoreColor};background:${scoreColor}18;">묘사력 ${score}/10</span>
+          <span class="portfolio-score-chip" style="color:${scoreColor};border-color:${scoreColor};background:${scoreColor}18;">살아있는 표현 ${score}/10</span>
           ${e.missionScore ? `<span class="portfolio-score-chip" style="color:var(--purple);border-color:var(--purple);background:#f3f0ff;">미션 ${e.missionScore}/10</span>` : ''}
           ${e.imageUrl ? '<span class="portfolio-score-chip">🖼️ 그림 있음</span>' : ''}
         </div>

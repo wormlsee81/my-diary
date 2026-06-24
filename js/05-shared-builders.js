@@ -22,7 +22,7 @@ async function generateImage(){
     curRich=a.richness;curAdvice=a.advice;curMissionScore=a.missionScore;
     curEmpathy=a.empathy||'';curGoodExpression=a.goodExpression||'';curNextChallenge=a.nextChallenge||'';
     curExprAdvice=a.exprAdvice||'';curContentAdvice=a.contentAdvice||'';curSpellingAdvice=a.spellingAdvice||'';curVoca=a.voca||''; /* 파트 4 */
-    $('richnessFill').style.width=`${a.richness*10}%`;$('richnessScore').textContent=`묘사력 ${a.richness}/10`;
+    $('richnessFill').style.width=`${a.richness*10}%`;$('richnessScore').textContent=`살아있는 표현 ${a.richness}/10`;
     updateStamp(a.richness);updateQualityBadge(a.richness);
     setTeacher('advice',a.advice,a.goodExpression,a.nextChallenge,a.exprAdvice,a.contentAdvice,a.empathy,a.spellingAdvice,a.voca||'');
     if(a.title)$('imgTitle').textContent=`[ ${a.title} ]`;
@@ -34,20 +34,13 @@ async function generateImage(){
     if (a.imagePrompt && a.imagePrompt.trim()) {
       imagePrompt = a.imagePrompt;
     } else {
-      // fallback: Claude에게 별도로 imagePrompt만 요청 (한국어 일기 → 영어 장면 묘사)
-      // sanitizePrompt()가 한국어 문자를 제거하므로 한국어를 직접 FLUX에 넣으면 빈 프롬프트가 됨
-      try {
-        const promptRaw = await callClaude({
-          model: 'claude-haiku-4-5-20251001', max_tokens: 120,
-          system: `Read this Korean diary and return ONLY a short English image prompt (max 25 words).
-Format: [who] [doing what] [where], [key emotional detail].
-No art style words. No Korean characters. English only.`,
-          messages: [{ role: 'user', content: text.slice(0, 500) }]
-        });
-        imagePrompt = (promptRaw || '').replace(/```/g, '').trim();
-      } catch {
-        imagePrompt = 'Korean child experiencing a meaningful moment, expressive emotion, detailed scene';
-      }
+      // 일기 전체를 기반으로 가장 생생한 장면 묘사 추출 (앞부분만 자르지 않음)
+      const fullDiary = text.replace(/[\n\r]+/g, ' ').trim();
+      // 일기가 길면 중간~끝 부분도 포함해 핵심 장면 포착
+      const excerpt = fullDiary.length > 300
+        ? fullDiary.slice(0, 150) + ' ... ' + fullDiary.slice(-150)
+        : fullDiary;
+      imagePrompt = `Children's picture book illustration of the most vivid scene from this Korean diary: "${excerpt}". Show the key emotional moment, specific character and setting. Soft watercolor art, Korean picture book style, warm colors, no text, no letters, no numbers.`;
     }
     const b64=await generateDalle(imagePrompt, a.richness, msg=>{$('loadingMsg').textContent=msg;});
     curImgB64=b64;
@@ -55,7 +48,7 @@ No art style words. No Korean characters. English only.`,
     await sleep(200);
     $('dLoading').style.display='none';$('placeholder').style.display='none';
     $('imgMain').src=b64;$('imgMain').style.display='block';
-    $('richnessBadge').textContent=`🎨 묘사력 ${a.richness}/10`;$('richnessBadge').style.display='block';
+    $('richnessBadge').textContent=`🎨 살아있는 표현 ${a.richness}/10`;$('richnessBadge').style.display='block';
     $('missionFill').style.width=`${curMissionScore*10}%`;
     $('missionScoreText').textContent=missionDrawn&&currentMission?`${curMissionScore}/10`:'— 대기중';
     await checkLocalBadges(text, curRich, curMissionScore);
@@ -150,7 +143,7 @@ async function executePromptWorkshop() {
       await sleep(200);
       $('dLoading').style.display = 'none'; $('placeholder').style.display = 'none';
       $('imgMain').src = b64; $('imgMain').style.display = 'block';
-      $('richnessBadge').textContent = `🎨 묘사력 ${_pwRichness}/10`; $('richnessBadge').style.display = 'block';
+      $('richnessBadge').textContent = `🎨 살아있는 표현 ${_pwRichness}/10`; $('richnessBadge').style.display = 'block';
       $('missionFill').style.width = `${curMissionScore * 10}%`;
       $('missionScoreText').textContent = currentMission ? `${curMissionScore}/10` : '— 대기중';
       await checkLocalBadges($('diary').value.trim(), curRich, curMissionScore);
@@ -435,7 +428,7 @@ function buildDiaryHTML(e){
     <!-- ⑥ 하단 바 -->
     <div style="padding:5px 14px;background:#f0e8d8;display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#bbb;">
       <span>✍️ 지음 프로젝트</span>
-      <span>묘사력 ${rich}/10</span>
+      <span>살아있는 표현 ${rich}/10</span>
     </div>
   </div>`;
 }

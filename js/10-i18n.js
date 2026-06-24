@@ -443,7 +443,7 @@ function setLang(lang) {
 
   /* ── 이음 기타 UI 요소 전환 ── */
   const richnesBarLabel = document.getElementById('richnesBarLabel');
-  if (richnesBarLabel) richnesBarLabel.textContent = isEn ? '✏️ Richness' : '✏️ 묘사력';
+  if (richnesBarLabel) richnesBarLabel.textContent = isEn ? '✏️ Richness' : '✏️ 살아있는 표현';
   const missionBarLabel = document.getElementById('missionBarLabel');
   if (missionBarLabel) missionBarLabel.textContent = isEn ? '🎯 Mission' : '🎯 미션 달성';
   const teacherLabel = document.getElementById('teacherLabel');
