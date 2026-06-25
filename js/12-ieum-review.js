@@ -27,6 +27,8 @@ let _rvLastReview = null;     // 마지막으로 저장된 감상문 데이터 (
 let _rvFactDebounceTimer = null;
 let _rvLastFactAsked = '';    // 같은 내용으로 중복 질문 방지
 let _rvExportHtmlCache = '';  // PDF 저장용 — 마지막으로 렌더링한 템플릿 HTML 원본
+let _rvEditorKind = null;     // 'news' | 'cert' — 지음 단계에서 현재 편집 중인 갈래
+let _rvNewsImageB64 = null;   // 신문 삽화 (텍스트 편집과 독립적으로 재생성 가능)
 
 /* ════════════════════════════════════════════════════════════
  * ① 돋움(dodumApp) — 감상 브레인맵 탭
@@ -42,21 +44,22 @@ if (typeof DODUM_TAB_GOALS !== 'undefined') {
   DODUM_TAB_GOALS.review = '💡 인물의 생각을 정리하고, 나와 비교해보며 감상문 아이디어를 모아보세요!';
 }
 
-/* 1. 인물의 뇌구조도 — AI 피드백 */
+/* 1. 인물의 뇌구조도 — AI 피드백 (핵심 생각 1개 + 주변 생각 최대 8개) */
 async function rvSubmitBrainMap() {
   const core = ($('rvBrainCore')?.value || '').trim();
-  const p1 = ($('rvBrainP1')?.value || '').trim();
-  const p2 = ($('rvBrainP2')?.value || '').trim();
-  const p3 = ($('rvBrainP3')?.value || '').trim();
-  if (!core || !p1 || !p2 || !p3) { toast('빈 칸을 모두 채워주세요! ✏️'); return; }
+  const peripherals = [1, 2, 3, 4, 5, 6, 7, 8]
+    .map(n => ($('rvBrainP' + n)?.value || '').trim())
+    .filter(Boolean);
+  if (!core) { toast('가운데 핵심 생각을 먼저 적어주세요! ✏️'); return; }
+  if (peripherals.length < 2) { toast('주변 생각도 2개 이상 적어주세요! ✏️'); return; }
 
   const btn = $('rvBrainSubmitBtn');
   if (btn) { btn.disabled = true; btn.textContent = '🤖 AI 선생님이 읽고 있어요...'; }
   try {
     const raw = await callClaude({
       model: 'claude-haiku-4-5-20251001', max_tokens: 300,
-      system: '너는 독서/영화 지도 교사야. 학생이 작성한 인물의 뇌구조(가장 큰 생각 1개, 주변 생각 3개)를 보고, 인물의 심리를 잘 파악했다고 칭찬해. 그리고 "이 생각을 일기장(감상문)에 적어보면 어떨까?"라며 3문장 이내의 다정한 말투로 조언해줘. 출력은 반드시 {"feedback": "..."} 형태의 JSON으로 해.',
-      messages: [{ role: 'user', content: `가장 큰 핵심 생각: ${core}\n주변 생각 1: ${p1}\n주변 생각 2: ${p2}\n주변 생각 3: ${p3}` }]
+      system: '너는 독서/영화 지도 교사야. 학생이 작성한 인물의 뇌구조(가장 큰 생각 1개, 주변 생각 여러 개)를 보고, 인물의 심리를 잘 파악했다고 칭찬해. 그리고 "이 생각을 일기장(감상문)에 적어보면 어떨까?"라며 3문장 이내의 다정한 말투로 조언해줘. 출력은 반드시 {"feedback": "..."} 형태의 JSON으로 해.',
+      messages: [{ role: 'user', content: `가장 큰 핵심 생각: ${core}\n주변 생각: ${peripherals.join(', ')}` }]
     });
     const cleaned = (raw || '').replace(/```json/gi, '').replace(/```/g, '').trim();
     const data = parseJSON(cleaned);
@@ -66,8 +69,7 @@ async function rvSubmitBrainMap() {
     $('rvBrainFeedbackBox').style.display = 'block';
     $('rvBrainFeedbackText').textContent = feedback;
     $('rvBrainSendBtn').style.display = 'inline-block';
-    $('rvBrainSendBtn').dataset.payload =
-      `${core}. ${[p1, p2, p3].filter(Boolean).join(', ')}.`;
+    $('rvBrainSendBtn').dataset.payload = `${core}. ${peripherals.join(', ')}.`;
     await addInk(10);
   } catch (e) {
     toast('AI 선생님과 연결이 잠시 끊겼어요 😢 다시 시도해주세요.');
@@ -337,39 +339,123 @@ function rvShowExportPlaceholder(show) {
   if (ph) ph.style.display = show ? '' : 'none';
 }
 
-/* 3-A. 신문 기사형 */
-async function rvGenerateNewspaper() {
+/* ── 갈래 선택 → 편집 폼 표시 (학생이 스스로 쓰거나, AI 초안을 받아 자유롭게 고칠 수 있다) ── */
+function rvOpenEditor(kind) {
   const rv = rvRequireReview();
   if (!rv) return;
-  showOverlay('신문 기사를 작성하는 중...');
+  _rvEditorKind = kind;
+  $('reviewTemplatePicker').style.display = 'none';
+  $('reviewEditorBox').style.display = 'block';
+  $('reviewEditorNews').style.display = (kind === 'news') ? 'block' : 'none';
+  $('reviewEditorCert').style.display = (kind === 'cert') ? 'block' : 'none';
+
+  // 처음 여는 경우에만 학생이 직접 쓴 감상문으로 기본값을 채워준다 (AI를 안 써도 바로 출판 가능)
+  if (kind === 'news' && !$('rvNewsBody').value.trim()) rvResetNewsToOriginal();
+  if (kind === 'cert' && !$('rvCertCitation').value.trim()) rvResetCertToOriginal();
+  rvApplyEditorToPreview();
+}
+
+function rvBackToTemplates() {
+  $('reviewTemplatePicker').style.display = 'flex';
+  $('reviewEditorBox').style.display = 'none';
+}
+
+/* 학생이 이음에서 쓴 원래 글로 편집칸을 되돌린다 (언제든 직접 쓰기로 돌아갈 수 있도록) */
+function rvResetNewsToOriginal() {
+  const rv = rvRequireReview();
+  if (!rv) return;
+  $('rvNewsHeadline').value = rv.title ? `『${rv.title}』를 읽고` : '나의 감상문 이야기';
+  $('rvNewsLead').value = '';
+  $('rvNewsBody').value = rv.finalText || '';
+  $('rvNewsQuote').value = '';
+  rvApplyEditorToPreview();
+}
+function rvResetCertToOriginal() {
+  const rv = rvRequireReview();
+  if (!rv) return;
+  $('rvCertTitle').value = '';
+  $('rvCertCitation').value = rv.finalText || '';
+  rvApplyEditorToPreview();
+}
+
+/* 편집칸의 현재 내용을 그대로 #exportArea 미리보기에 반영 — AI를 거치지 않아도 동작한다 */
+function rvApplyEditorToPreview() {
+  const rv = rvRequireReview();
+  if (!rv) return;
+  if (_rvEditorKind === 'news') {
+    const data = {
+      headline: $('rvNewsHeadline').value.trim() || (rv.title ? `『${rv.title}』를 읽고` : '나의 감상문'),
+      lead: $('rvNewsLead').value.trim(),
+      body: $('rvNewsBody').value.trim(),
+      quote: $('rvNewsQuote').value.trim()
+    };
+    rvRenderNewspaper(data, _rvNewsImageB64, rv);
+  } else if (_rvEditorKind === 'cert') {
+    const data = {
+      awardTitle: $('rvCertTitle').value.trim() || '감동상',
+      citation: $('rvCertCitation').value.trim()
+    };
+    rvRenderCertificate(data, rv);
+  }
+}
+
+/* 3-A. 신문 기사형 — AI 기자에게 다듬어달라기 (편집칸의 현재 내용을 기반으로 다시 써줌) */
+async function rvAiAssistNews() {
+  const rv = rvRequireReview();
+  if (!rv) return;
+  const draftBody = $('rvNewsBody').value.trim() || rv.finalText;
+  showOverlay('AI 기자가 다듬는 중...');
   try {
     const raw = await callClaude({
       model: 'claude-haiku-4-5-20251001', max_tokens: 700,
-      system: `너는 어린이 신문 기자야. 학생이 쓴 독서·영화 감상문을 읽고 신문 보도기사처럼 재작성해줘.
+      system: `너는 어린이 신문 기자야. 학생이 쓴 독서·영화 감상문(또는 그 초안)을 읽고 신문 보도기사처럼 재작성해줘.
 - 모든 문장은 "~했습니다", "~라고 밝혔습니다"처럼 기사체 말투로 끝나야 해.
 - 학생의 의견이나 느낀 점은 버리지 말고 "본지 평론가 ○○ 학생"의 인터뷰로 직접 인용해서 살려줘.
 - 학생이 알려준 책/영화 제목과 주인공 이름을 기사에 자연스럽게 포함해.
 - 출력은 반드시 아래 JSON 형식으로만 해 (마크다운, 코드블록 금지):
-{"headline":"<12~22자 헤드라인>","lead":"<기사 첫 요약 문장 1개>","body":"<기사 본문 2~3문단, 문단 사이는 \\n\\n으로 구분>","quote":"<학생 의견을 살린 인터뷰 인용문 1~2문장>","scenePromptEn":"<삽화용 영어 장면 묘사 1문장. 인물의 행동과 배경 중심으로, 글자는 절대 포함하지 말 것>"}`,
-      messages: [{ role: 'user', content: `책/영화 제목: ${rv.title || '(제목 없음)'}\n주인공 이름: ${rv.character || '(이름 없음)'}\n학생 이름: ${currentNick}\n감상문 내용:\n${rv.finalText}` }]
+{"headline":"<12~22자 헤드라인>","lead":"<기사 첫 요약 문장 1개>","body":"<기사 본문 2~3문단, 문단 사이는 \\n\\n으로 구분>","quote":"<학생 의견을 살린 인터뷰 인용문 1~2문장>"}`,
+      messages: [{ role: 'user', content: `책/영화 제목: ${rv.title || '(제목 없음)'}\n주인공 이름: ${rv.character || '(이름 없음)'}\n학생 이름: ${currentNick}\n학생 글(초안):\n${draftBody}\n현재 헤드라인 초안: ${$('rvNewsHeadline').value.trim()}\n현재 인용문 초안: ${$('rvNewsQuote').value.trim()}` }]
     });
     const cleaned = (raw || '').replace(/```json/gi, '').replace(/```/g, '').trim();
     const data = parseJSON(cleaned);
-    if (!data) { console.warn('[rvGenerateNewspaper] JSON 파싱 실패, 원본:', raw); throw new Error('AI 응답을 이해하지 못했어요'); }
+    if (!data) { console.warn('[rvAiAssistNews] JSON 파싱 실패, 원본:', raw); throw new Error('AI 응답을 이해하지 못했어요'); }
 
-    $('overlayMsg').textContent = '신문 삽화를 그리는 중...';
-    let imgB64 = null;
-    try {
-      imgB64 = await generateDalle(
-        `${data.scenePromptEn || (rv.character + ' in a dramatic story scene')}. Vintage retro newspaper sketch illustration, black and white pen-and-ink line art, halftone dot print texture.`,
-        5, null, true
-      );
-    } catch (e) { console.warn('[rvGenerateNewspaper] 삽화 생성 실패', e); }
-
-    rvRenderNewspaper(data, imgB64, rv);
+    $('rvNewsHeadline').value = data.headline || $('rvNewsHeadline').value;
+    $('rvNewsLead').value = data.lead || $('rvNewsLead').value;
+    $('rvNewsBody').value = data.body || draftBody;
+    $('rvNewsQuote').value = data.quote || $('rvNewsQuote').value;
+    rvApplyEditorToPreview();
+    toast('🤖 AI 기자가 다듬어줬어요! 더 고치고 싶은 곳은 직접 수정해보세요 ✏️');
   } catch (e) {
-    toast('기사 생성에 실패했어요: ' + e.message);
-    console.warn('[rvGenerateNewspaper]', e);
+    toast('AI 기자 호출에 실패했어요: ' + e.message);
+    console.warn('[rvAiAssistNews]', e);
+  } finally {
+    hideOverlay();
+  }
+}
+
+/* 신문 삽화 — 텍스트 편집과는 독립적으로 따로 그리고 다시 그릴 수 있다 */
+async function rvRegenerateNewsImage() {
+  const rv = rvRequireReview();
+  if (!rv) return;
+  showOverlay('삽화를 그리는 중...');
+  try {
+    const sceneRaw = await callClaude({
+      model: 'claude-haiku-4-5-20251001', max_tokens: 120,
+      system: '학생이 쓴 감상문에서 가장 인상 깊은 장면을 한 문장의 영어로 묘사해줘. 인물의 행동과 배경 중심으로 적고, 그림 속에 글자가 들어가면 안 돼. 다른 설명 없이 영어 한 문장만 출력해.',
+      messages: [{ role: 'user', content: `주인공: ${rv.character || 'a character'}\n인상 깊은 장면: ${rv.fact || rv.finalText}` }]
+    });
+    const scenePrompt = (sceneRaw || '').replace(/```/g, '').replace(/^["']|["']$/g, '').trim()
+      || `${rv.character || 'a character'} in a dramatic story scene`;
+    _rvNewsImageB64 = await generateDalle(
+      `${scenePrompt}. Vintage retro newspaper sketch illustration, black and white pen-and-ink line art, halftone dot print texture.`,
+      5, null, true
+    );
+    rvApplyEditorToPreview();
+    toast('🎨 삽화를 새로 그렸어요!');
+  } catch (e) {
+    toast('삽화 생성에 실패했어요: ' + e.message);
+    console.warn('[rvRegenerateNewsImage]', e);
   } finally {
     hideOverlay();
   }
@@ -394,7 +480,7 @@ function rvRenderNewspaper(data, imgB64, rv) {
     ${imgB64 ? `<div style="padding:0 18px;"><img src="${imgB64}" style="width:100%;border:2px solid #1a1410;display:block;filter:grayscale(.15);"></div>
     <div style="padding:4px 18px 0;font-size:9px;color:#aaa;text-align:right;">▲ ${rv.character || '주인공'}의 모습을 그린 본지 삽화</div>` : ''}
     <div style="padding:12px 18px;font-size:13.5px;line-height:1.85;color:#2a2420;word-break:keep-all;">
-      <p style="margin:0 0 10px;font-weight:bold;">${data.lead || ''}</p>
+      ${data.lead ? `<p style="margin:0 0 10px;font-weight:bold;">${data.lead}</p>` : ''}
       ${bodyParas}
     </div>
     ${data.quote ? `<div style="margin:0 18px 16px;padding:10px 14px;background:#f0ebe0;border-left:4px solid #5a4632;font-size:12.5px;color:#4a3e30;line-height:1.7;">
@@ -405,28 +491,32 @@ function rvRenderNewspaper(data, imgB64, rv) {
   rvCommitExport(html);
 }
 
-/* 3-B. 상장 수여형 */
-async function rvGenerateCertificate() {
+/* 3-B. 상장 수여형 — AI에게 문구 다듬어달라기 (편집칸의 현재 내용을 기반으로 다시 써줌) */
+async function rvAiAssistCert() {
   const rv = rvRequireReview();
   if (!rv) return;
-  showOverlay('상장 문구를 만드는 중...');
+  const draftCitation = $('rvCertCitation').value.trim() || rv.finalText;
+  showOverlay('AI가 상장 문구를 다듬는 중...');
   try {
     const raw = await callClaude({
       model: 'claude-haiku-4-5-20251001', max_tokens: 400,
-      system: `너는 따뜻한 말솜씨를 가진 시상식 진행자야. 학생이 쓴 독서·영화 감상문을 읽고, 그 이야기의 주인공에게 수여하는 '상장 문구'로 재작성해줘.
+      system: `너는 따뜻한 말솜씨를 가진 시상식 진행자야. 학생이 쓴 독서·영화 감상문(또는 그 초안)을 읽고, 그 이야기의 주인공에게 수여하는 '상장 문구'로 재작성해줘.
 - 격식있는 상장 말투를 쓰고, 문구의 마지막은 반드시 "~하였으므로 이 상장을 수여합니다." 형태로 끝나야 해.
 - 학생이 감상문에서 느낀 감동이나 배운 점을 문구 속에 자연스럽게 녹여 넣어줘.
 - 출력은 반드시 아래 JSON 형식으로만 해 (마크다운, 코드블록 금지):
 {"awardTitle":"<4~6자 상장 이름, 예: 감동상/우정상/용기상>","citation":"<상장 본문 2~4문장. '~하였으므로 이 상장을 수여합니다.'로 끝남>"}`,
-      messages: [{ role: 'user', content: `책/영화 제목: ${rv.title || '(제목 없음)'}\n주인공 이름: ${rv.character || '주인공'}\n감상문 내용:\n${rv.finalText}` }]
+      messages: [{ role: 'user', content: `책/영화 제목: ${rv.title || '(제목 없음)'}\n주인공 이름: ${rv.character || '주인공'}\n학생 글(초안):\n${draftCitation}\n현재 상장 이름 초안: ${$('rvCertTitle').value.trim()}` }]
     });
     const cleaned = (raw || '').replace(/```json/gi, '').replace(/```/g, '').trim();
     const data = parseJSON(cleaned);
-    if (!data) { console.warn('[rvGenerateCertificate] JSON 파싱 실패, 원본:', raw); throw new Error('AI 응답을 이해하지 못했어요'); }
-    rvRenderCertificate(data, rv);
+    if (!data) { console.warn('[rvAiAssistCert] JSON 파싱 실패, 원본:', raw); throw new Error('AI 응답을 이해하지 못했어요'); }
+    $('rvCertTitle').value = data.awardTitle || $('rvCertTitle').value;
+    $('rvCertCitation').value = data.citation || draftCitation;
+    rvApplyEditorToPreview();
+    toast('🤖 AI가 상장 문구를 다듬어줬어요! 더 고치고 싶은 곳은 직접 수정해보세요 ✏️');
   } catch (e) {
-    toast('상장 생성에 실패했어요: ' + e.message);
-    console.warn('[rvGenerateCertificate]', e);
+    toast('AI 호출에 실패했어요: ' + e.message);
+    console.warn('[rvAiAssistCert]', e);
   } finally {
     hideOverlay();
   }
@@ -524,6 +614,10 @@ function rvApplyLangVisibility() {
     if ($('ieumTab_review')?.classList.contains('active')) switchIeumTab('diary');
     if ($('tabReview')?.classList.contains('active')) switchTab('book');
   }
+  // 💾 일기저장 버튼이 그림일기 패널로 이동되면서 10-i18n.js의 기존 텍스트 교체("💾 저장"/"💾 Save")를
+  // 덮어써야 한다 — 원본 파일은 건드리지 않고 setLang() 실행 직후 한 번 더 보정한다.
+  const saveBtn = $('ieumSaveDiaryBtn');
+  if (saveBtn) saveBtn.textContent = isEn ? '💾 Save Diary' : '💾 일기저장';
 }
 
 if (typeof setLang === 'function') {
