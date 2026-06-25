@@ -44,10 +44,16 @@ async function generateImage(){
     }
     const b64=await generateDalle(imagePrompt, a.richness, msg=>{$('loadingMsg').textContent=msg;});
     curImgB64=b64;
+    if (typeof _lastGeneratedText !== 'undefined') _lastGeneratedText = text; // ✅ 이 그림이 어떤 글에 대해 그려졌는지 기록
     clearInterval(progTimer);$('progressFill').style.width='100%';$('progressLabel').textContent='100%';
     await sleep(200);
     $('dLoading').style.display='none';$('placeholder').style.display='none';
     $('imgMain').src=b64;$('imgMain').style.display='block';
+    if (typeof checkImageStale === 'function') checkImageStale();
+    // ⚠️ 안전 정책으로 그림 내용이 일기와 다르게 대체된 경우, 로딩 메시지가 사라진 뒤에도
+    // 계속 보이는 배지로 알려준다 (이전에는 onStatus 메시지만 잠깐 떴다 사라져 눈치채기 어려웠음)
+    const fbBadge = $('imgFallbackBadge');
+    if (fbBadge) fbBadge.style.display = window._rvLastImageFallback ? 'block' : 'none';
     $('richnessBadge').textContent=`🎨 살아있는 표현 ${a.richness}/10`;$('richnessBadge').style.display='block';
     $('missionFill').style.width=`${curMissionScore*10}%`;
     $('missionScoreText').textContent=missionDrawn&&currentMission?`${curMissionScore}/10`:'— 대기중';

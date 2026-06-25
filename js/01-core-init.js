@@ -704,6 +704,11 @@ function sanitizePrompt(p) {
 const NO_TEXT_SUFFIX = ' absolutely NO text, NO letters, NO words, NO captions, NO watermarks, NO writing of any kind in the image.';
 
 async function generateDalle(prompt, richness=5, onStatus, isPhoto=false) {
+  // ⚠️ 안전 정책 때문에 원래 요청과 다른 "기본 장면"으로 대체되었는지 호출부에서 알 수 있게 플래그로 노출
+  // (이전에는 onStatus 메시지로만 잠깐 떴다가 로딩이 끝나면 사라져, 그림이 일기 내용과 달라도
+  //  학생/교사가 알아채기 어려웠음 — 05-shared-builders.js의 generateImage()가 이 값을 읽어
+  //  그림 위에 지속적인 배지로 표시한다)
+  window._rvLastImageFallback = false;
   // imagePrompt가 비어있으면 기본 장면으로
   const rawPrompt = (prompt && prompt.trim())
     ? prompt.trim()
@@ -788,6 +793,7 @@ async function generateDalle(prompt, richness=5, onStatus, isPhoto=false) {
       if (!d2.data?.[0]?.b64_json) throw new Error('이미지 데이터가 없습니다 (fallback)');
       updateCost(0.001);
       rawB64 = `data:image/png;base64,${d2.data[0].b64_json}`;
+      window._rvLastImageFallback = true; // ✅ 호출부가 지속적인 배지를 띄울 수 있도록 표시
       if (onStatus) onStatus('⚠️ 일부 표현이 바뀌어 그려졌어요. 실제 일기 내용과 다를 수 있어요.');
     } else {
       throw new Error(data.error?.message || `HTTP ${res.status}`);

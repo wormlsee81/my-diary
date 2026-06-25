@@ -206,6 +206,7 @@ function drawMission() {
 }
 
 let curImgB64=null,curRich=0,curEntryId=null,progTimer=null;
+let _lastGeneratedText=''; // 그림(또는 불러온 그림)이 어떤 글에 대해 생성됐는지 추적 — 글이 바뀌면 ⚠️ 배지로 안내
 let curAdvice='잘 썼어요!',curGoodExpression='',curNextChallenge='',curExprAdvice='',curContentAdvice='',curEmpathy='',curSpellingAdvice='',curVoca=''; /* 파트 4: voca 변수 추가 */
 // ✅ 분석 캐시: 동일 텍스트 재분석 방지
 let _lastAnalyzedText='', _lastAnalysis=null;
@@ -404,8 +405,10 @@ async function loadEntry(id){
   else { $('mTitle').textContent='🎯 오늘의 미션'; $('mDesc').textContent='버튼을 눌러 재미있는 글쓰기 미션을 뽑아보세요!'; $('missionFill').style.width='0%'; $('missionScoreText').textContent='— 대기중'; }
   updateStamp(curRich);updateQualityBadge(curRich);
   setTeacher('advice',curAdvice,e.goodExpression||'',e.nextChallenge||'',e.exprAdvice||'',e.contentAdvice||'',e.empathy||'',e.spellingAdvice||'',e.voca||'');
-  if(e.imgB64){$('imgMain').src=e.imgB64;$('imgMain').style.display='block';$('placeholder').style.display='none';}
-  else{$('imgMain').style.display='none';$('imgMain').src='';$('placeholder').style.display='flex';}
+  if(e.imgB64){$('imgMain').src=e.imgB64;$('imgMain').style.display='block';$('placeholder').style.display='none';_lastGeneratedText=e.text||'';}
+  else{$('imgMain').style.display='none';$('imgMain').src='';$('placeholder').style.display='flex';_lastGeneratedText='';}
+  checkImageStale();
+  { const fbBadge=$('imgFallbackBadge'); if(fbBadge) fbBadge.style.display='none'; }
   closeModal('listModal');toast('📖 불러왔어요!');
 }
 
@@ -427,6 +430,9 @@ function newDiary(){
   const s=$('diaryStamp');s.classList.remove('show','s1','s2','s3','s4','s5');
   hideDiaryError();$('dLoading').style.display='none';clearInterval(progTimer);
   setTeacher('idle');curEntryId=null;curImgB64=null;curRich=0;curAdvice='잘 썼어요!';curGoodExpression='';curNextChallenge='';curSpellingAdvice='';
+  _lastGeneratedText='';
+  const staleBadge=$('imgStaleBadge'); if(staleBadge) staleBadge.style.display='none';
+  const fbBadge=$('imgFallbackBadge'); if(fbBadge) fbBadge.style.display='none';
   curMissionScore=0; currentMission=null; curEmpathy=''; curVoca=''; missionDrawn=false; /* 파트 4 */
   updateQualityBadge(0);
 }
@@ -637,10 +643,17 @@ function closeXaiModal() {
 }
 
 let hintTimer;
+function checkImageStale(){
+  const badge=$('imgStaleBadge'); if(!badge) return;
+  const txt=$('diary').value.trim();
+  const hasImg = $('imgMain') && $('imgMain').style.display==='block';
+  badge.style.display = (hasImg && txt && txt!==_lastGeneratedText) ? 'block' : 'none';
+}
 function onDiaryInput(){
   clearTimeout(hintTimer);const txt=$('diary').value.trim();
   // 텍스트가 바뀌면 캐시 무효화
   if(txt !== _lastAnalyzedText){ _lastAnalysis=null; }
+  checkImageStale(); // 그림 생성 당시 글과 달라졌으면 ⚠️ 안내 배지 표시
   // 비용 절약: 너무 짧은 글은 분석하지 않음 (10자 → 40자)
   if(txt.length<40){setTeacher('idle');return;}setTeacher('thinking');
   hintTimer=setTimeout(async()=>{
