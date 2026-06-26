@@ -87,8 +87,10 @@
       <div class="home-nick-label" id="homeNickLabel">내 이름:</div>
       <div class="home-nick-row">
         <input class="nick-input" id="nickInput" maxlength="10" placeholder="이름을 입력해주세요">
-        <button class="nick-confirm-btn" onclick="confirmNick()">확인 ✓</button>
+        <input class="nick-input" id="nickPwInput" type="password" maxlength="12" autocomplete="off" placeholder="비밀번호" style="flex:0.85;">
       </div>
+      <button class="nick-confirm-btn" onclick="confirmNick()" style="width:100%;padding:12px;">확인 ✓</button>
+      <div class="anon-hint" id="nickPwHint">🔐 처음 쓰는 이름이면 지금 비밀번호로 새로 등록돼요. 다음에도 같은 이름 + 비밀번호로 들어와주세요!</div>
     </div>
 
     <!-- 익명 계정 모드 (Zero PII) -->
@@ -1239,7 +1241,7 @@
 </div>
 
 <script src="js/01-core-init.js?v=3"></script>
-<script src="js/02-core-utils.js"></script>
+<script src="js/02-core-utils.js?v=2"></script>
 <script src="js/03-dodum.js"></script>
 <script src="js/04-ieum-diary.js?v=6"></script>
 <script src="js/05-shared-builders.js?v=2"></script>
@@ -1247,8 +1249,8 @@
 <script src="js/07-jieum.js?v=2"></script>
 <script src="js/08-ieum-essay.js?v=7"></script>
 <script src="js/09-sos-dict.js?v=2"></script>
-<script src="js/10-i18n.js"></script>
-<script src="js/11-teacher-extras.js"></script>
+<script src="js/10-i18n.js?v=2"></script>
+<script src="js/11-teacher-extras.js?v=2"></script>
 <script src="js/12-ieum-review.js?v=3"></script>
 <!-- ✅ [신규] 스캐폴딩 힌트 팝업 (SOS 버튼 누를 때) -->
 <div class="scaffolding-hint-popup" id="scaffoldingHintPopup">
