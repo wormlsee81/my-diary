@@ -56,8 +56,14 @@ async function lsSet(k, v) {
 window.addEventListener('DOMContentLoaded', async () => {
   // localStorage → IndexedDB 마이그레이션 (최초 1회)
   await migrateFromLocalStorage();
-  try { const s = await lsGet(SK.nick); if(s){currentNick=s; $('nickInput').value=s;} } catch{}
-  $('nickInput').addEventListener('keydown',e=>{if(e.key==='Enter')confirmNick();});
+  // ⚠️ [보안 수정] 이전에는 저장된 닉네임이 있으면 비밀번호 확인 없이 곧바로
+  // currentNick을 설정해서, 새로고침/재방문만 해도 비밀번호 검증 없이 이전
+  // 사용자의 데이터에 그대로 접근할 수 있었음(같은 기기를 다음 학생이 열어도 동일).
+  // → 이름 입력칸에 마지막으로 쓴 이름만 편의상 채워주고, currentNick(접근 권한)은
+  //   confirmNick()에서 비밀번호 확인을 통과해야만 설정되도록 분리함.
+  try { const s = await lsGet(SK.nick); if(s){ $('nickInput').value=s; } } catch{}
+  $('nickInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('nickPwInput')?.focus();});
+  $('nickPwInput')?.addEventListener('keydown',e=>{if(e.key==='Enter')confirmNick();});
   $('anonCodeInput')?.addEventListener('keydown',e=>{if(e.key==='Enter')$('anonPwInput')?.focus();});
   $('anonPwInput')?.addEventListener('keydown',e=>{if(e.key==='Enter')loginAnonymous();});
   resetStory();
@@ -263,6 +269,8 @@ async function forceLogout() {
   // 6. 입력창 초기화
   const nickInput = $('nickInput');
   if (nickInput) nickInput.value = '';
+  const nickPw = $('nickPwInput');
+  if (nickPw) nickPw.value = '';
   const anonCode = $('anonCodeInput');
   if (anonCode) anonCode.value = '';
   const anonPw = $('anonPwInput');
@@ -609,10 +617,39 @@ const _patchDiaryInput = () => {
 };
 
 /* ════════════════════════════════════════════════════════════════
-   확인 닉네임 함수 (원본 유지)
+   확인 닉네임 함수 — ✅ [신규] 닉네임별 비밀번호 보호 추가
+   같은 기기/학급에서 닉네임이 우연히 겹쳐도(예: 두 명이 '민준') 서로의
+   글을 못 보도록, 닉네임마다 비밀번호를 등록해서 확인한다.
+   - 처음 쓰는 닉네임 → 지금 입력한 비밀번호로 새로 등록
+   - 이미 등록된 닉네임 → 비밀번호가 일치해야만 진입 허용
+   비밀번호는 hashPassword()(PBKDF2-SHA256, loginAnonymous()와 동일 방식)로
+   해시만 저장하고 원문은 저장하지 않는다.
 ════════════════════════════════════════════════════════════════ */
 async function confirmNick(){
   const v=$('nickInput').value.trim();if(!v){$('setupError').textContent='이름을 입력해주세요!';return;}
+  const pw=($('nickPwInput')?.value || '').trim();
+  if(!pw){$('setupError').textContent='🔐 비밀번호도 입력해주세요! (4자 이상)';return;}
+  if(pw.length<4){$('setupError').textContent='🔐 비밀번호는 4자 이상으로 정해주세요!';return;}
+
+  $('setupError').textContent='🔑 확인 중...';
+  try{
+    const pwMap = (await lsGet('mdj_nick_pw')) || {};
+    const inputHash = await hashPassword(pw, 'nick-'+v);
+    if (pwMap[v]) {
+      if (pwMap[v] !== inputHash) {
+        $('setupError').textContent = '❌ 비밀번호가 틀렸어요! 다시 확인해주세요.';
+        return; // currentNick을 설정하지 않고 종료 — 진입 차단
+      }
+    } else {
+      // 처음 쓰는 이름 — 지금 비밀번호로 신규 등록
+      pwMap[v] = inputHash;
+      await lsSet('mdj_nick_pw', pwMap);
+    }
+  }catch(e){
+    $('setupError').textContent = '⚠️ 확인 중 오류가 발생했어요: ' + e.message;
+    return;
+  }
+
   currentNick=v; await lsSet(SK.nick,v);
   $('setupError').textContent='저장됐어요! 앱을 선택하세요 🎉';
   resetSessionTimer();
@@ -620,7 +657,15 @@ async function confirmNick(){
 }
 
 async function launchApp(n){
-  if(!currentNick){const v=$('nickInput').value.trim();if(v)await confirmNick();else{alert('이름을 먼저 입력해주세요!');$('nickInput').focus();return;}}
+  if(!currentNick){
+    const v=$('nickInput').value.trim();
+    if(v){
+      await confirmNick();
+      if(!currentNick){ return; } // 비밀번호가 틀렸거나 오류 발생 — 앱으로 들어가지 않음
+    } else {
+      alert('이름을 먼저 입력해주세요!');$('nickInput').focus();return;
+    }
+  }
   $('homeScreen').style.display='none';$('appWrapper').style.display='flex';
   document.querySelectorAll('.app-screen').forEach(el=>el.classList.remove('active'));
   $(`${n}App`).classList.add('active');

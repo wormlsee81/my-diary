@@ -243,10 +243,23 @@ async function restoreData(file) {
     const parsed = JSON.parse(text);
     if (!parsed.data || !parsed.nick) { toast('❌ 올바른 백업 파일이 아니에요.'); return; }
     if (!confirm(`"${parsed.nick}"의 데이터를 복원할까요?\n현재 데이터 위에 덮어씌워집니다.`)) return;
+
+    // ⚠️ [보안 수정] 이 기기에 이미 그 닉네임의 비밀번호가 등록되어 있는데
+    // 지금 로그인된 사람이 그 닉네임이 아니라면, 복원 기능으로 비밀번호 확인을
+    // 건너뛰고 다른 학생인 척 들어오는 것을 막기 위해 비밀번호를 한 번 더 확인한다.
+    const pwMap = (await lsGet('mdj_nick_pw')) || {};
+    if (pwMap[parsed.nick] && parsed.nick !== currentNick) {
+      const pw = prompt(`🔐 "${parsed.nick}"의 비밀번호를 입력해주세요:`);
+      if (pw === null) { return; }
+      const inputHash = await hashPassword(pw.trim(), 'nick-' + parsed.nick);
+      if (inputHash !== pwMap[parsed.nick]) { toast('❌ 비밀번호가 틀려서 복원할 수 없어요.'); return; }
+    }
+
     for (const [k, v] of Object.entries(parsed.data)) {
       await lsSet(k, v);
     }
     currentNick = parsed.nick;
+    await lsSet(SK.nick, currentNick);
     await refreshInkUI(); await initStreakUI(); await renderPet();
     toast('✅ 데이터 복원 완료! 앱을 새로고침하세요.');
   } catch(e) { toast('복원 실패: ' + e.message); }
