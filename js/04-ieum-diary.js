@@ -15,12 +15,17 @@ async function getWitnessReport(){
   try{
     const raw=await callClaude({
       model:'claude-haiku-4-5-20251001', max_tokens: 250,
-      system:`Create a random target for a witness memory. Randomly choose between a 'unique human', a 'cute animal thief', OR a 'fun fantasy creature/monster' based on the crime.
+      system:`Create a random target for a witness memory game for Korean elementary students.
+Choose the target type using this rough distribution so results don't always end up as animals:
+- about 60% of the time: a "unique, stylish human character" — vary age, hairstyle, hair color, clothing style/color, and accessories (hats, glasses, ribbons, scarves, bags) every single time so no two generations look alike. Think colorful Korean webtoon/caricature-style characters with personality.
+- about 25% of the time: a "cute animal thief" (cat, raccoon, squirrel, dog, etc.)
+- about 15% of the time: a "fun fantasy creature/monster"
+Vary pose and expression too. Avoid repeating the same look (e.g. don't always make it a cat in a scarf).
 Return ONLY valid JSON format:
 {
-  "features": "한국어 외형 묘사 2-3문장",
+  "features": "한국어 외형 묘사 2-3문장 (헤어스타일/색, 옷차림과 색깔, 독특한 액세서리 포함)",
   "crime": "초등학생이 웃을 수 있는 귀여운 범행 내용 (예: 몰래 냉장고 푸딩 다 먹고 도망친 죄 등)",
-  "prompt": "clear front view character design, full body, caught on cctv, highly detailed"
+  "prompt": "clear front view character design, full body, caught on cctv, highly detailed, expressive pose"
 }`,
       messages:[{role:'user',content:'Create'}]
     });

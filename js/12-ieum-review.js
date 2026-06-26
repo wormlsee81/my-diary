@@ -132,6 +132,13 @@ function rvSendToIeum(text, sourceLabel) {
   if (ta) {
     ta.value = ta.value.trim() ? `${ta.value.trim()}\n${text}` : text;
   }
+  // 📚 책/영화 제목, 🧑 등장인물 이름도 함께 전송 (이음 단계 칸이 비어있을 때만 — 이미 쓴 내용을 덮어쓰지 않음)
+  const brainTitle = ($('rvBrainTitleInput')?.value || '').trim();
+  const brainChar = ($('rvBrainCharInput')?.value || '').trim();
+  const ieumTitle = $('reviewTitleInput'), ieumChar = $('reviewCharInput');
+  if (brainTitle && ieumTitle && !ieumTitle.value.trim()) ieumTitle.value = brainTitle;
+  if (brainChar && ieumChar && !ieumChar.value.trim()) ieumChar.value = brainChar;
+
   const box = $('reviewDodumReceived');
   if (box) {
     box.innerHTML = `✅ <b>[${sourceLabel}]</b>에서 받은 내용이 ②번 칸에 추가되었어요!`;
