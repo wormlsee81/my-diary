@@ -453,6 +453,16 @@
         <button class="mission-btn" onclick="drawMission()" id="missionDrawBtn">미션 뽑기 🎲</button>
       </div>
 
+      <!-- ✅ [신규] 관심사 기반 맞춤 미션 -->
+      <div style="display:flex; gap:6px; align-items:center; margin:6px 0 10px;">
+        <input type="text" id="interestInput" maxlength="20" placeholder="🎯 내가 좋아하는 것 (예: 공룡, 축구, 케이팝)"
+          style="flex:1; min-width:0; padding:8px 10px; border:2px solid var(--border); border-radius:10px; font-family:inherit; font-size:12px; outline:none; box-sizing:border-box;"
+          onfocus="this.style.borderColor='var(--mint)'" onblur="this.style.borderColor='var(--border)'"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();generatePersonalizedMission();}">
+        <button onclick="generatePersonalizedMission()" id="interestMissionBtn"
+          style="padding:8px 12px; background:var(--mint); color:white; border:none; border-radius:10px; font-family:inherit; font-size:12px; cursor:pointer; white-space:nowrap; flex-shrink:0;">맞춤 미션 만들기 ✨</button>
+      </div>
+
       <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 6px;">
         <div style="display:flex;align-items:center;gap:8px;">
           <span id="diaryFreeWriteHint" style="font-size:12px; color:#999; padding-left:4px;">✏️ 자유롭게 적어보세요</span>
@@ -494,6 +504,13 @@
         <span id="missionBarLabel" style="font-size:12px;color:#999;white-space:nowrap;">🎯 미션 달성</span>
         <div class="mission-track"><div class="mission-fill" id="missionFill"></div></div>
         <span class="mission-score" id="missionScoreText">— 대기중</span>
+      </div>
+
+      <!-- ✅ [신규] 협동 미션 — 우리 반 전체 오늘의 목표 -->
+      <div class="mission-bar-wrap" id="coopGoalBox" style="display:none;">
+        <span style="font-size:12px;color:#999;white-space:nowrap;">🤝 반 목표</span>
+        <div class="mission-track"><div class="mission-fill" id="coopGoalFill" style="background:var(--purple, #8a7ce8);"></div></div>
+        <span class="mission-score" id="coopGoalText" style="white-space:nowrap;">—</span>
       </div>
 
       <div class="stamp-wrap"><div class="stamp" id="diaryStamp"><div class="stamp-icon" id="diaryStampIcon"></div><div class="stamp-text" id="diaryStampText"></div></div></div>
@@ -1120,6 +1137,7 @@
           <div class="p-preview-wrap" id="pPreviewWrap">
             <div class="p-placeholder" id="pPlaceholder"><div style="font-size:36px;">🌸</div><div>시를 쓰고 [시화로 꾸미기]를 누르면<br>시화가 완성돼요!</div></div>
             <img id="poemCanvas" alt="시화">
+            <div id="poemTextOverlay" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#fff; text-shadow:0 2px 6px rgba(0,0,0,.55), 0 0 2px rgba(0,0,0,.4); padding:24px; box-sizing:border-box; pointer-events:none; font-family:'Jua',sans-serif; line-height:1.7; word-break:keep-all; white-space:pre-wrap;"></div>
             <div class="p-loading" id="pLoading">
               <div style="font-size:30px;animation:spin 1s linear infinite;">🌀</div>
               <div id="pLoadingMsg" style="font-size:13px;color:var(--poem);">시화 생성 중... 🎨</div>
@@ -1241,17 +1259,17 @@
 </div>
 
 <script src="js/01-core-init.js?v=4"></script>
-<script src="js/02-core-utils.js?v=3"></script>
+<script src="js/02-core-utils.js?v=5"></script>
 <script src="js/03-dodum.js"></script>
-<script src="js/04-ieum-diary.js?v=6"></script>
+<script src="js/04-ieum-diary.js?v=8"></script>
 <script src="js/05-shared-builders.js?v=2"></script>
-<script src="js/06-ttieum.js"></script>
-<script src="js/07-jieum.js?v=2"></script>
-<script src="js/08-ieum-essay.js?v=7"></script>
+<script src="js/06-ttieum.js?v=2"></script>
+<script src="js/07-jieum.js?v=3"></script>
+<script src="js/08-ieum-essay.js?v=8"></script>
 <script src="js/09-sos-dict.js?v=2"></script>
 <script src="js/10-i18n.js?v=2"></script>
-<script src="js/11-teacher-extras.js?v=2"></script>
-<script src="js/12-ieum-review.js?v=3"></script>
+<script src="js/11-teacher-extras.js?v=4"></script>
+<script src="js/12-ieum-review.js?v=4"></script>
 <!-- ✅ [신규] 스캐폴딩 힌트 팝업 (SOS 버튼 누를 때) -->
 <div class="scaffolding-hint-popup" id="scaffoldingHintPopup">
   <div class="scaffolding-hint-card">
@@ -1379,6 +1397,10 @@
       <button class="dash-filter-btn" onclick="filterDash('mid', this)">중위 (4~6)</button>
       <button class="dash-filter-btn" onclick="filterDash('low', this)">지원 필요 (3-)</button>
       <button class="dash-filter-btn" onclick="filterDash('today', this)">오늘 작성</button>
+    </div>
+    <!-- ✅ [신규] 학급 문집 자동 생성 -->
+    <div style="margin:4px 0 10px;">
+      <button onclick="generateClassAnthology()" style="width:100%;padding:11px;background:var(--teacher);color:white;border:none;border-radius:12px;font-family:inherit;font-size:14px;font-weight:bold;cursor:pointer;">📚 학급 문집 만들기 (학생별 대표작 PDF)</button>
     </div>
     <!-- 학생 목록 -->
     <div class="dash-student-list" id="dashStudentList">
