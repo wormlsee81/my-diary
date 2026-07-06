@@ -6,7 +6,7 @@ let fullStory='';
 let ttieumMode = 'story'; 
 
 const DEBATE_TOPICS = [
-  "초등학생의 교내 화장을 허용해야 한다.", "초등학생도 이성 교제(연애)를 해도 괜찮다.",
+  "초등학생의 교내 화장을 허용해야 한다.", "초등학생도 머리 모양이나 염색을 자유롭게 할 수 있어야 한다.",
   "학교 쉬는 시간을 10분에서 20분으로 늘려야 연다.", "학교 급식 메뉴를 학생들이 직접 투표로 정해야 한다.",
   "초등학생 교복 착용을 의무화해야 한다.", "학원 숙제를 법으로 금지해야 한다.",
   "체육 시간을 매일 1시간씩 배정해야 한다.", "방학 숙제를 완전히 없애야 한다.",
@@ -83,7 +83,7 @@ const DEBATE_TOPICS_EN = [
   "Acts of kindness should be rewarded with money by the government.",
   "All schools should serve vegetables, and students must eat them.",
   "Class presidents should be abolished so everyone can take turns leading.",
-  "Elementary students should be allowed to date.",
+  "Elementary students should be allowed to choose their own hairstyle.",
   "School cafeteria menus should be determined by student vote."
 ];
 

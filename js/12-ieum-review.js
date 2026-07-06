@@ -419,8 +419,9 @@ async function rvAiAssistNews() {
 - 모든 문장은 "~했습니다", "~라고 밝혔습니다"처럼 기사체 말투로 끝나야 해.
 - 학생의 의견이나 느낀 점은 버리지 말고 "본지 평론가 ○○ 학생"의 인터뷰로 직접 인용해서 살려줘.
 - 학생이 알려준 책/영화 제목과 주인공 이름을 기사에 자연스럽게 포함해.
+- body(기사 본문)에는 책/영화 내용 그대로인 '사실'과, 학생이 느낀 '생각·감상'이 섞여 있을 텐데, 이 둘을 문장 단위로 명확히 구분해서 써줘 (사실 문장과 의견 문장을 뒤섞지 말 것).
 - 출력은 반드시 아래 JSON 형식으로만 해 (마크다운, 코드블록 금지):
-{"headline":"<12~22자 헤드라인>","lead":"<기사 첫 요약 문장 1개>","body":"<기사 본문 2~3문단, 문단 사이는 \\n\\n으로 구분>","quote":"<학생 의견을 살린 인터뷰 인용문 1~2문장>"}`,
+{"headline":"<12~22자 헤드라인>","lead":"<기사 첫 요약 문장 1개>","body":"<기사 본문 2~3문단, 문단 사이는 \\n\\n으로 구분>","quote":"<학생 의견을 살린 인터뷰 인용문 1~2문장>","mediaTip":"<이 기사에서 '사실'과 '의견'을 구분해보라고 권하는, 학생을 향한 다정한 질문 1문장. 예: '기사에서 어떤 문장이 책 내용 그대로의 사실이고, 어떤 문장이 ○○ 학생의 생각일까? 좋은 뉴스는 이 둘을 헷갈리지 않게 써요!'>"}`,
       messages: [{ role: 'user', content: `책/영화 제목: ${rv.title || '(제목 없음)'}\n주인공 이름: ${rv.character || '(이름 없음)'}\n학생 이름: ${currentNick}\n학생 글(초안):\n${draftBody}\n현재 헤드라인 초안: ${$('rvNewsHeadline').value.trim()}\n현재 인용문 초안: ${$('rvNewsQuote').value.trim()}` }]
     });
     const cleaned = (raw || '').replace(/```json/gi, '').replace(/```/g, '').trim();
@@ -433,6 +434,9 @@ async function rvAiAssistNews() {
     $('rvNewsQuote').value = data.quote || $('rvNewsQuote').value;
     rvApplyEditorToPreview();
     toast('🤖 AI 기자가 다듬어줬어요! 더 고치고 싶은 곳은 직접 수정해보세요 ✏️');
+    if (data.mediaTip) {
+      setTimeout(() => toast('🔍 ' + data.mediaTip), 3400);
+    }
   } catch (e) {
     toast('AI 기자 호출에 실패했어요: ' + e.message);
     console.warn('[rvAiAssistNews]', e);

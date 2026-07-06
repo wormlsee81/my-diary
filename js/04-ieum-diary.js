@@ -127,7 +127,9 @@ Return ONLY JSON format: {
 }
 
 /* ═══════════════════════════════════════════════
-   2단계: 이음 (50종 미션 전체 복원 및 일기 + 퇴고)
+   2단계: 이음 (53종 미션 전체 복원 및 일기 + 퇴고)
+   ※ m51~m52: 설명하는 글[6국03-01] 보강 (2026-07 추가)
+   ※ m53: 편지 형식[4국03-04] 보강, template 필드로 형식 틀 자동 제공 (2026-07 추가)
 ═══════════════════════════════════════════════ */
 const DIARY_MISSIONS = [
   { id: 'm1', title: '색깔 사냥꾼 🎨', desc: '오늘 본 가장 예쁜 색깔 3가지를 찾고, 왜 예뻤는지 이유 적기.', aiRule: 'Check if text mentions at least 3 colors and reasons.' },
@@ -179,7 +181,10 @@ const DIARY_MISSIONS = [
   { id: 'm47', title: '4컷 만화 🖼️', desc: '만화책이나 웹툰 형식으로 오늘 하루를 4컷으로 나누어 쓰기.', aiRule: 'Check if diary is divided into 4 distinct scenes/panels.' },
   { id: 'm48', title: '나를 광고하라 📢', desc: '나 자신을 다른 사람에게 홍보하는 짧은 광고 문구 만들기.', aiRule: 'Check if user writes an advertisement copy promoting themselves.' },
   { id: 'm49', title: '스마트폰 반성문 📱', desc: '오늘 나의 스크린 타임 기록을 확인해보고 내 사용 습관 평가하기.', aiRule: 'Check if user evaluates their screen time and smartphone habits.' },
-  { id: 'm50', title: '내일의 시나리오 📝', desc: '내일 하루 동안 일어났으면 하는 일들을 영화 대본처럼 써보기.', aiRule: 'Check if user writes their wishes for tomorrow in a script format.' }
+  { id: 'm50', title: '내일의 시나리오 📝', desc: '내일 하루 동안 일어났으면 하는 일들을 영화 대본처럼 써보기.', aiRule: 'Check if user writes their wishes for tomorrow in a script format.' },
+  { id: 'm51', title: '신입생 가이드 🧭', desc: '우리 학교(또는 우리 반)를 하나도 모르는 전학생에게, 급식실 이용법이나 청소 순서처럼 꼭 알아야 할 방법을 순서대로 설명하기.', aiRule: 'Check if the user explains a process or set of steps in a clear order (first, then, next) so that someone unfamiliar with it could follow along, focusing on procedure and clarity rather than personal feelings.' },
+  { id: 'm52', title: '척척박사 사전 📚', desc: '내가 가장 잘 아는 것(동물, 취미, 게임, 음식 등) 하나를 골라, 한 번도 들어본 적 없는 사람도 알 수 있게 특징을 조리 있게 설명하기.', aiRule: 'Check if the user clearly explains the defining characteristics/features of a chosen subject in an organized way (not just personal opinions or feelings about it), as if teaching someone who has never heard of it.' },
+  { id: 'm53', title: '편지 형식 마스터 ✉️', desc: '받는 사람에게 하고 싶은 말을, 아래에 나타난 편지 형식(받는 사람 → 첫인사 → 하고 싶은 말 → 끝인사 → 보낸 사람) 틀에 맞춰 채워서 완성하기.', aiRule: 'Check if the text follows all 5 parts of Korean letter format in order: recipient (받는 사람), opening greeting (첫인사), main message (하고 싶은 말), closing greeting (끝인사), sender name with date (보낸 사람). Give a lower score if a part is missing or left as unedited placeholder text in brackets.', template: '받는 사람: (예: 사랑하는 엄마께)\n\n(여기에 첫인사를 써보세요! 예: 엄마, 그동안 잘 지내셨어요?)\n\n\n(여기에 하고 싶은 말을 자유롭게 써보세요!)\n\n\n(여기에 끝인사를 써보세요! 예: 항상 건강하시고 사랑해요.)\n\n20XX년 X월 X일\n보낸 사람: (내 이름)' }
 ];
 
 let currentMission = null, curMissionScore = 0;
@@ -203,6 +208,11 @@ function drawMission() {
     missionDrawn = true;
     $('mTitle').textContent = `🎯 ${currentMission.title}`;
     $('mDesc').textContent = currentMission.desc;
+    // ✅ [신규] 편지 형식처럼 template이 있는 미션은, 일기장이 비어있을 때만 형식 틀을 채워줌
+    // (이미 쓰고 있던 내용을 덮어쓰지 않도록 안전장치)
+    if (currentMission.template && !$('diary').value.trim()) {
+      $('diary').value = currentMission.template;
+    }
   }
   // 미션 뽑으면 점수 표시 활성화 (현재 일기 내용으로 즉시 채점)
   $('missionFill').style.width = `${curMissionScore*10}%`;
@@ -211,6 +221,93 @@ function drawMission() {
 }
 
 let curImgB64=null,curRich=0,curEntryId=null,progTimer=null;
+
+// ✅ [신규] 협동 미션 — 우리 반 전체가 오늘 함께 목표를 채우면 다같이 잉크 보너스
+// 필요시 이 두 숫자만 조정하면 됨 (학급 인원/난이도에 맞게)
+const COOP_DAILY_GOAL = 15; // 학급 전체 하루 목표 편수
+const COOP_BONUS_INK = 300; // 목표 달성 시 지급할 보너스 잉크
+
+async function checkCoopGoal() {
+  try {
+    const todayKey = new Date().toDateString(); // 로케일 무관, 내부 비교 전용
+    const claimKey = `mdj_coop_claimed_${todayKey}`;
+
+    let allKeys = [];
+    try { allKeys = await localforage.keys(); } catch (e) {}
+    let todayTotal = 0;
+    for (const key of allKeys) {
+      if (!key.startsWith('mdj_entries_')) continue;
+      const entries = (await lsGet(key)) || [];
+      todayTotal += entries.filter(e => e.createdAt && new Date(e.createdAt).toDateString() === todayKey).length;
+    }
+
+    const alreadyClaimed = await lsGet(claimKey);
+    updateCoopUI(todayTotal, !!alreadyClaimed);
+
+    if (!alreadyClaimed && todayTotal >= COOP_DAILY_GOAL) {
+      await lsSet(claimKey, true);
+      await addInk(COOP_BONUS_INK, window.innerWidth / 2, 200);
+      toast(`🎉 우리 반이 오늘 ${COOP_DAILY_GOAL}편을 함께 썼어요! 다같이 +${COOP_BONUS_INK}💧 보너스!`);
+      updateCoopUI(todayTotal, true);
+    }
+  } catch (e) { console.warn('[checkCoopGoal]', e); }
+}
+
+function updateCoopUI(count, completed) {
+  const box = $('coopGoalBox'), bar = $('coopGoalFill'), text = $('coopGoalText');
+  if (!box || !bar || !text) return;
+  // 같은 기기에 학생 일기 데이터가 1명분만 있으면(교사 개인 테스트 등) 굳이 노출하지 않음
+  if (count < 1) { box.style.display = 'none'; return; }
+  box.style.display = '';
+  const pct = Math.min(100, Math.round((count / COOP_DAILY_GOAL) * 100));
+  bar.style.width = `${pct}%`;
+  text.textContent = completed
+    ? `🎉 달성! (${count}/${COOP_DAILY_GOAL})`
+    : `${count}/${COOP_DAILY_GOAL}편`;
+}
+
+// ✅ [신규] 관심사 기반 맞춤 미션 생성 — 학생이 좋아하는 것을 입력하면 AI가 그 소재로 미션을 즉석에서 만들어줌
+async function generatePersonalizedMission() {
+  const inputEl = $('interestInput');
+  const interest = (inputEl?.value || '').trim();
+  if (!interest) { toast('좋아하는 것을 한 가지 적어주세요! (예: 공룡, 축구, 케이팝)'); return; }
+  if (interest.length > 20) { toast('조금 더 짧게 적어주세요! (20자 이내)'); return; }
+
+  const btn = $('interestMissionBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '만드는 중... ⏳'; }
+
+  try {
+    await lsSet(SK.interests(currentNick), interest); // 다음 방문 때도 기억하도록 저장
+
+    const raw = await callClaude({
+      model: 'claude-haiku-4-5-20251001', max_tokens: 400,
+      system: `너는 초등학생을 위한 창의적 글쓰기 미션을 만드는 선생님이야. 학생이 좋아하는 것을 활용해서, 기존 일기 미션들과 비슷한 톤(짧고 재미있고 상상력을 자극하는)의 새로운 글쓰기 미션을 하나 만들어줘.
+- 학생이 좋아하는 것과 관련된 소재를 자연스럽게 넣되, 실제로 글쓰기 실력(관찰력, 감각 표현, 상상력, 감정 표현 중 하나 이상)을 기를 수 있는 미션이어야 해.
+- 폭력적이거나 무섭거나 부적절한 내용, 실제 사고파는 행위(도박, 결제 유도 등)는 절대 포함하지 마.
+- title은 10자 이내로 짧고 이모지 1개를 포함해.
+- desc는 1~2문장으로, 무엇을 쓰면 되는지 초등학생이 바로 이해할 수 있게 명확히 안내해.
+- 출력은 반드시 아래 JSON 형식으로만 해 (마크다운, 코드블록, 설명 문구 금지):
+{"title":"<제목>","desc":"<미션 설명>","aiRule":"<이 미션을 잘 수행했는지 채점 기준 1문장 — 영어로 작성>"}`,
+      messages: [{ role: 'user', content: `학생이 좋아하는 것: ${interest}` }]
+    });
+    const cleaned = (raw || '').replace(/```json/gi, '').replace(/```/g, '').trim();
+    const data = parseJSON(cleaned);
+    if (!data || !data.title || !data.desc || !data.aiRule) throw new Error('AI 응답 형식이 올바르지 않아요');
+
+    currentMission = { id: 'custom_' + Date.now(), title: data.title, desc: data.desc, aiRule: data.aiRule, custom: true };
+    missionDrawn = true;
+    $('mTitle').textContent = `🎯 ${currentMission.title}`;
+    $('mDesc').textContent = currentMission.desc;
+    $('missionFill').style.width = `${curMissionScore * 10}%`;
+    $('missionScoreText').textContent = `${curMissionScore}/10`;
+    toast(`${interest} 미션이 도착했어요! 💌`);
+  } catch (e) {
+    console.warn('[generatePersonalizedMission]', e);
+    toast('미션을 만들지 못했어요. 잠시 후 다시 시도해주세요!');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '맞춤 미션 만들기 ✨'; }
+  }
+}
 let _lastGeneratedText=''; // 그림(또는 불러온 그림)이 어떤 글에 대해 생성됐는지 추적 — 글이 바뀌면 ⚠️ 배지로 안내
 let curAdvice='잘 썼어요!',curGoodExpression='',curNextChallenge='',curExprAdvice='',curContentAdvice='',curEmpathy='',curSpellingAdvice='',curVoca=''; /* 파트 4: voca 변수 추가 */
 // ✅ 분석 캐시: 동일 텍스트 재분석 방지
@@ -376,6 +473,7 @@ async function saveDiary(){
     await recordTodayWrite();
     await addPetExp(Math.floor(inkEarned/3));
     petSay(`새 일기 저장! +${inkEarned}💧 획득! 퇴고로 더 많이 받아요!`);
+    await checkCoopGoal(); // ✅ [신규] 새 일기 저장 시 반 전체 목표 진행 상황 갱신
   } else {
     petSay(`일기가 수정되었어요! ✏️`);
     toast('💾 일기 저장 완료!');

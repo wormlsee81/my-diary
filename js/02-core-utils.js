@@ -7,7 +7,7 @@
 ═══════════════════════════════════════════════ */
 let currentNick = '';
 const $ = id => document.getElementById(id);
-const SK = { nick:'mdj_nick', entries:u=>`mdj_entries_${u}`, bookList:u=>`mdj_books_${u}`, poems:u=>`mdj_poems_${u}`, stories:u=>`mdj_stories_${u}`, badges:u=>`mdj_badges_${u}` };
+const SK = { nick:'mdj_nick', entries:u=>`mdj_entries_${u}`, bookList:u=>`mdj_books_${u}`, poems:u=>`mdj_poems_${u}`, stories:u=>`mdj_stories_${u}`, badges:u=>`mdj_badges_${u}`, interests:u=>`mdj_interests_${u}` };
 const dateLabel = (() => { const d=new Date(), days=['일','월','화','수','목','금','토']; return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 ${days[d.getDay()]}요일`; })();
 function parseJSON(s){ try{return JSON.parse(s.replace(/```json|```/gi, '').trim());}catch{return null;} }
 let toastT;
@@ -677,7 +677,16 @@ async function launchApp(n){
   /* ✅ [신규] 공용 기기 세션 방어 시작 */
   startSessionGuard();
   /* ✅ [신규] 스캐폴딩 UI 업데이트 */
-  if(n==='ieum') { updateScaffoldingUI(); _patchDiaryInput(); }
+  if(n==='ieum') {
+    updateScaffoldingUI(); _patchDiaryInput();
+    // ✅ [신규] 관심사 기반 맞춤 미션 — 저장된 관심사가 있으면 입력창에 불러오기
+    const savedInterest = await lsGet(SK.interests(currentNick));
+    if (savedInterest && $('interestInput') && !$('interestInput').value) {
+      $('interestInput').value = savedInterest;
+    }
+    // ✅ [신규] 협동 미션 — 화면 진입 시 반 전체 진행 상황 표시
+    if (typeof checkCoopGoal === 'function') checkCoopGoal();
+  }
   /* ✅ [신규] 저장된 초안 복원 안내 */
   if(n==='ieum') {
     const draftKey = `jieum_draft_${currentNick}`;

@@ -122,6 +122,53 @@ async function refreshDashboard() {
   renderDashList(students, _dashFilter);
 }
 
+// ✅ [신규] 학급 문집 자동 생성 — 학생별 '살아있는 표현' 최고점 일기 1편씩 모아 PDF로 출력
+async function generateClassAnthology() {
+  const students = await getDashboardData();
+  if (!students.length) { toast('아직 모인 학생 일기가 없어요!'); return; }
+
+  // 학생별 최고 점수 일기 1편 선정 (동점이면 배열 순서상 먼저 나오는 것 = 최신 항목)
+  const picks = students
+    .map(s => ({ nick: s.nick, entry: [...s.entries].sort((a,b) => (b.richness||0) - (a.richness||0))[0] }))
+    .filter(x => x.entry && (x.entry.text || '').trim())
+    .sort((a,b) => a.nick.localeCompare(b.nick, 'ko'));
+
+  if (!picks.length) { toast('문집에 담을 완성된 일기가 없어요!'); return; }
+  if (!confirm(`${picks.length}명의 대표 일기 1편씩을 모아 학급 문집 PDF를 만들까요?\n(각 학생의 '살아있는 표현' 최고 점수 일기가 자동 선택됩니다)`)) return;
+
+  showOverlay(`학급 문집을 만드는 중... (0/${picks.length})`);
+  const savedNick = currentNick; // ⚠️ buildDiaryHTML()이 이름 칸에 전역 currentNick을 그대로 표시하므로, 학생마다 임시로 바꿔줘야 함
+  try {
+    const todayStr = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
+    const coverHtml = `<div style="width:794px;height:1000px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#62b3a4,#f49f5a);font-family:'Jua',sans-serif;color:white;text-align:center;box-sizing:border-box;">
+      <div style="font-size:64px;margin-bottom:20px;">📖</div>
+      <div style="font-size:48px;font-weight:bold;margin-bottom:14px;">우리 반 이야기 모음</div>
+      <div style="font-size:22px;opacity:0.9;margin-bottom:50px;">이음 AI 그림일기장</div>
+      <div style="font-size:18px;background:rgba(255,255,255,0.25);padding:10px 28px;border-radius:30px;">${todayStr}</div>
+      <div style="font-size:16px;margin-top:30px;opacity:0.85;">${picks.length}명의 이야기가 담겨 있어요</div>
+    </div>`;
+    const pages = [{ html: coverHtml }];
+
+    for (let i = 0; i < picks.length; i++) {
+      if ($('overlayMsg')) $('overlayMsg').textContent = `학급 문집을 만드는 중... (${i + 1}/${picks.length})`;
+      currentNick = picks[i].nick; // buildDiaryHTML 내부 "이름" 칸에 이 학생 이름이 찍히도록 임시 교체
+      const cardHtml = buildDiaryHTML(picks[i].entry);
+      pages.push({ html: `<div style="width:794px;min-height:1000px;display:flex;align-items:center;justify-content:center;background:#fdf1ed;box-sizing:border-box;padding:50px;"><div style="transform:scale(1.5);">${cardHtml}</div></div>` });
+      await sleep(50); // 진행 상황 메시지가 화면에 반영될 시간 확보
+    }
+
+    const doc = await buildPDF(pages);
+    doc.save(`우리반_문집_${Date.now()}.pdf`);
+    toast(`📚 학급 문집 완성! (${picks.length}명 참여)`);
+  } catch (e) {
+    console.warn('[generateClassAnthology]', e);
+    toast('문집 생성에 실패했어요: ' + e.message);
+  } finally {
+    currentNick = savedNick; // 오류가 나더라도 반드시 원래 로그인 사용자로 복구
+    hideOverlay();
+  }
+}
+
 function renderDashList(students, filter) {
   const list = $('dashStudentList');
   if (!list) return;
@@ -152,6 +199,7 @@ function renderDashList(students, filter) {
       ${s.isToday ? '<span style="font-size:11px;background:#eaf6f4;color:var(--mint);padding:2px 8px;border-radius:10px;">오늘 작성 ✅</span>' : ''}
       <span class="dash-preview">${escHtml(s.latestText)}…</span>
       <button class="dash-comment-btn" onclick="openDashComment('${escAttr(s.nick)}')">💬 피드백</button>
+      <button class="dash-comment-btn" onclick="resetStudentNickPassword('${escAttr(s.nick)}')" style="background:#fff3cd;color:#8a6d1f;" title="학생이 비밀번호를 잊어버렸을 때 초기화해주세요">🔑 비번 초기화</button>
       ${teacherComment ? `<span style="font-size:10px;color:var(--teacher);background:var(--teacher-bg);padding:2px 8px;border-radius:8px;max-width:120px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" title="${escHtml(teacherComment)}">💌 ${escHtml(teacherComment.slice(0,20))}…</span>` : ''}
     </div>`;
   }).join('');
@@ -162,6 +210,22 @@ function filterDash(filter, btn) {
   document.querySelectorAll('.dash-filter-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   getDashboardData().then(students=>renderDashList(students, filter));
+}
+
+/* ✅ [신규] 닉네임 비밀번호 초기화 — 학생이 비밀번호를 잊어버렸을 때 교사가 풀어준다.
+   초기화하면 mdj_nick_pw 맵에서 해당 닉네임 항목만 지워지고, 다음 로그인 시
+   학생이 입력하는 비밀번호로 새로 등록된다 (confirmNick()의 '처음 쓰는 이름' 경로와 동일). */
+async function resetStudentNickPassword(nick) {
+  if (!confirm(`'${nick}' 학생의 비밀번호를 초기화할까요?\n\n초기화 후 다음 로그인 시 입력하는 비밀번호로 새로 등록됩니다.`)) return;
+  try {
+    const pwMap = (await lsGet('mdj_nick_pw')) || {};
+    if (!(nick in pwMap)) { toast(`'${nick}'은 아직 비밀번호가 등록되지 않았어요.`); return; }
+    delete pwMap[nick];
+    await lsSet('mdj_nick_pw', pwMap);
+    toast(`🔑 '${nick}' 학생의 비밀번호를 초기화했어요!`);
+  } catch(e) {
+    toast('초기화 중 오류가 발생했어요: ' + e.message);
+  }
 }
 
 function openDashComment(nick) {
@@ -191,45 +255,17 @@ function submitTeacherComment() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   💡 AI 피드백 투명화 (Explainable AI)
+   💡 AI 피드백 투명화(Explainable AI)는 04-ieum-diary.js의
+   openXaiModal()/closeXaiModal()이 실제 구현을 담당함
+   (analyzeDiary()가 저장해 둔 _lastAnalysis.richnessBreakdown을
+   그대로 보여주는 정확한 버전).
+   ⚠️ 2026-07: 여기 있던 예전 키워드-매칭 방식의 중복 정의를 제거함 —
+   이 파일이 04보다 나중에 로드되는 바람에, 텍스트에 특정 키워드가
+   있는지만 대충 검사하는 이 예전 버전이 정확한 버전을 항상 덮어쓰고
+   있었음 (같은 이름의 function 재선언은 문법 오류 없이 조용히
+   마지막 정의로 교체되기 때문에 지금까지 눈에 띄지 않았음). 학생이
+   보는 유일한 "💡 왜?" 버튼은 이제 정확한 04번 구현으로 연결됨.
 ═══════════════════════════════════════════════════════════ */
-function openXaiModal() {
-  const score = curRich || 0;
-  $('xaiScoreBig').textContent = score;
-  // 채점 기준 항목별 평가
-  const text = ($('diary').value || '').toLowerCase();
-  const criteria = [
-    { label: '오감 표현 (보이는 것·소리·냄새·맛·느낌)', max: 3, keywords: ['보이','들리','냄새','향기','맛','느낌','느껴','뜨겁','차갑','부드럽','거칠','시끄','조용','밝','어두','빨강','파랑','초록','노랗','하얀','검은'], check: (t) => { const k=['보이','들리','냄새','향기','맛','느낌','느껴','뜨겁','차갑','부드럽','거칠','시끄','조용','밝','어두','빛']; return k.some(w=>t.includes(w)); } },
-    { label: '감정 표현 (기뻤다·무서웠다·두근두근)', max: 2, check: (t) => { const k=['기뻤','기분','행복','슬펐','무서','두근','설레','걱정','화가','짜증','즐거','신났','실망','뿌듯']; return k.some(w=>t.includes(w)); } },
-    { label: '비유 표현 (~처럼, ~같이, 마치)', max: 2, check: (t) => t.includes('처럼') || t.includes('같이') || t.includes('마치') || t.includes('인 것 같') || t.includes('ike ') || t.includes(' as ') },
-    { label: '구체적 묘사 (막연한 표현 대신 세밀한 묘사)', max: 2, check: (t) => t.length > 80 },
-    { label: '독특한 관점이나 재미있는 표현', max: 1, check: (t) => t.length > 150 }
-  ];
-  const container = $('xaiCriteria');
-  if (!container) return;
-  let earned = 0;
-  container.innerHTML = criteria.map(c => {
-    const got = c.check(text);
-    if (got) earned += c.max;
-    return `
-    <div class="xai-row">
-      <span style="font-size:16px;">${got?'✅':'⭕'}</span>
-      <span class="xai-row-label">${c.label}</span>
-      <span class="xai-row-score ${got?'earned':'not-earned'}">${got?`+${c.max}점`:`0/${c.max}`}</span>
-    </div>`;
-  }).join('');
-  // 총점 메모
-  container.insertAdjacentHTML('beforeend', `
-    <div style="text-align:center;margin-top:10px;padding:8px;background:#f0fdf9;border-radius:10px;font-size:12px;color:#2a6a4a;">
-      📊 예상 점수: <b>${Math.min(10, earned)}/10점</b> (AI 실제 점수: <b>${score}/10점</b>)<br>
-      <span style="color:#888;font-size:11px;">※ AI는 전체 문맥을 종합적으로 분석하므로 예상치와 약간 다를 수 있어요.</span>
-    </div>`);
-  $('xaiOverlay').classList.add('open');
-  // 트리거 버튼 표시
-  const btn = $('xaiTriggerBtn');
-  if (btn) btn.style.display = 'inline-block';
-}
-function closeXaiModal() { $('xaiOverlay').classList.remove('open'); }
 
 /* ═══════════════════════════════════════════════════════════
    📝 자기 평가 (Self-Assessment) 루틴
