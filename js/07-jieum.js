@@ -11,6 +11,33 @@
  * ============================================================ */
 
 /* ────────────────────────────────────────────────────────────
+   한글 → 영어 장면 묘사 변환
+   ⚠️ generateDalle() 내부의 sanitizePrompt()가 한글(CJK) 문자를
+      전부 제거하므로(Together AI FLUX가 글자를 깨진 형태로 그리는
+      것을 막기 위함), 한글 원문을 그대로 프롬프트에 넣으면 내용이
+      통째로 사라진다. 반드시 이 함수로 영어 장면 묘사로 바꾼 뒤
+      generateDalle에 넘겨야 한다. (04-ieum-diary.js의 analyzeDiary
+      가 하는 방식과 동일한 패턴)
+   ──────────────────────────────────────────────────────────── */
+async function translateToScenePrompt(koreanText) {
+  try {
+    const raw = await callClaude({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 200,
+      messages: [{
+        role: 'user',
+        content: `Translate this Korean text into a short English scene description for an image generator (who + what action + where + one key detail). English ONLY, no art style words, no quotes, no explanation — output only the scene description itself.\n\nKorean text: "${koreanText}"`
+      }]
+    });
+    return raw.trim();
+  } catch (e) {
+    console.warn('[translateToScenePrompt]', e);
+    // 번역 실패 시에도 최소한의 장면은 나오도록 안전한 기본값 반환
+    return 'Korean child in a heartwarming daily life scene';
+  }
+}
+
+/* ────────────────────────────────────────────────────────────
    그림책(Book)
    ──────────────────────────────────────────────────────────── */
 let currentBookPages = [];   // [{ b64, text }, ...] — 지금 만들고 있는 책
@@ -56,7 +83,8 @@ async function addBookPage() {
   const origLabel = label ? label.textContent : '';
   if (label) label.textContent = '그림 그리는 중... 🎨';
   try {
-    const prompt = `Children's picture book illustration of this scene: "${text}". Show the key characters, action, and setting clearly and vividly. Soft watercolor art, Korean picture book style, warm colors, no text, no letters, no numbers.`;
+    const sceneEn = await translateToScenePrompt(text); // 한글 → 영어 장면 묘사 (sanitizePrompt가 한글을 지우므로 필수)
+    const prompt = `Children's picture book illustration of this scene: ${sceneEn}. Show the key characters, action, and setting clearly and vividly. Soft watercolor art, Korean picture book style, warm colors, no text, no letters, no numbers.`;
     const b64 = await generateDalle(prompt, 8); // 지음은 완성작 단계이므로 항상 풍성한 수채화 톤
     currentBookPages.push({ b64, text });
     renderBookViewer();
@@ -185,7 +213,8 @@ async function createPoemArt() {
   if ($('pLoading')) $('pLoading').style.display = 'flex';
   if ($('poemCanvas')) $('poemCanvas').style.display = 'none';
   try {
-    const prompt = `Dreamy atmospheric background illustration matching the mood and imagery of this Korean poem: "${text.slice(0, 200)}". Soft watercolor style, gentle blended colors, purely atmospheric scenery, no text, no letters, no numbers, no characters, no people's faces close up.`;
+    const sceneEn = await translateToScenePrompt(text.slice(0, 200)); // 한글 → 영어 장면 묘사 (sanitizePrompt가 한글을 지우므로 필수)
+    const prompt = `Dreamy atmospheric background illustration matching this mood and imagery: ${sceneEn}. Soft watercolor style, gentle blended colors, purely atmospheric scenery, no text, no letters, no numbers, no characters, no people's faces close up.`;
     const b64 = await generateDalle(prompt, 9);
     currentPoemBgB64 = b64;
     $('poemCanvas').src = b64;
