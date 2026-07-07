@@ -720,5 +720,32 @@ async function goHome(){
 }
 
 /* ═══════════════════════════════════════════════
+   🌐 한글 → 이미지 프롬프트용 영어 장면 요약 (공용)
+   ⚠️ generateDalle()(01-core-init.js) 내부의 sanitizePrompt()가
+   한글(CJK) 문자를 전부 제거하므로, 한글 텍스트를 영어 문장 속에
+   그대로 끼워 넣으면 실제 내용이 사라지고 스타일 지시문만 남아
+   "장면과 무관한 그림"이 나온다. 반드시 이 함수로 먼저 영어 요약을
+   만든 뒤 그 결과를 이미지 프롬프트에 사용할 것.
+   (지음-그림책/시화, 이음-일기 그림 생성 폴백 경로에서 공용으로 사용)
+═══════════════════════════════════════════════ */
+async function translateToScenePrompt(koreanText) {
+  try {
+    const raw = await callClaude({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 200,
+      messages: [{
+        role: 'user',
+        content: `Translate this Korean text into a short English scene description for an image generator (who + what action + where + one key detail). English ONLY, no art style words, no quotes, no explanation — output only the scene description itself.\n\nKorean text: "${koreanText}"`
+      }]
+    });
+    return raw.trim();
+  } catch (e) {
+    console.warn('[translateToScenePrompt]', e);
+    // 번역 실패 시에도 최소한의 장면은 나오도록 안전한 기본값 반환
+    return 'Korean child in a heartwarming daily life scene';
+  }
+}
+
+/* ═══════════════════════════════════════════════
    1단계: 돋움 — 탭 전환 로직
 ═══════════════════════════════════════════════ */

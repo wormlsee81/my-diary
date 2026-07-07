@@ -40,7 +40,12 @@ async function generateImage(){
       const excerpt = fullDiary.length > 300
         ? fullDiary.slice(0, 150) + ' ... ' + fullDiary.slice(-150)
         : fullDiary;
-      imagePrompt = `Children's picture book illustration of the most vivid scene from this Korean diary: "${excerpt}". Show the key emotional moment, specific character and setting. Soft watercolor art, Korean picture book style, warm colors, no text, no letters, no numbers.`;
+      // ⚠️ [수정] 한글 excerpt를 영어 문장에 그대로 끼워넣으면 generateDalle()의
+      // sanitizePrompt()가 한글을 전부 지워버려 "장면과 무관한 그림"이 나온다.
+      // (지음-그림책에서 겪은 것과 동일한 버그. translateToScenePrompt()는
+      // 02-core-utils.js의 공용 함수.)
+      const sceneEn = await translateToScenePrompt(excerpt);
+      imagePrompt = `Children's picture book illustration: ${sceneEn}. Show the key emotional moment, specific character and setting. Soft watercolor art, Korean picture book style, warm colors, no text, no letters, no numbers.`;
     }
     const b64=await generateDalle(imagePrompt, a.richness, msg=>{$('loadingMsg').textContent=msg;});
     curImgB64=b64;

@@ -8,6 +8,12 @@
  *     adjustPoemFontSize 등)는 프로젝트 전체 어디에도 정의돼 있지
  *     않았음 — 즉 지음 4단계의 그림책/시화 기능은 실제로 동작하지
  *     않는 상태였음. 이 파일이 그 실제 구현을 담당한다.
+ * ⚠️ 2026-07 추가 수정: 한글 장면 설명을 영어 프롬프트에 그대로
+ *    끼워 넣으면 generateDalle()의 sanitizePrompt()가 한글을 전부
+ *    제거해버려 "장면과 무관한 그림"이 나오는 문제 발견 → 번역
+ *    전처리 함수 translateToScenePrompt()를 02-core-utils.js로
+ *    옮기고(이음-일기 폴백 경로에서도 재사용하기 위해), 여기서는
+ *    그 공용 함수를 그대로 사용한다.
  * ============================================================ */
 
 /* ────────────────────────────────────────────────────────────
@@ -19,24 +25,6 @@
       generateDalle에 넘겨야 한다. (04-ieum-diary.js의 analyzeDiary
       가 하는 방식과 동일한 패턴)
    ──────────────────────────────────────────────────────────── */
-async function translateToScenePrompt(koreanText) {
-  try {
-    const raw = await callClaude({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 200,
-      messages: [{
-        role: 'user',
-        content: `Translate this Korean text into a short English scene description for an image generator (who + what action + where + one key detail). English ONLY, no art style words, no quotes, no explanation — output only the scene description itself.\n\nKorean text: "${koreanText}"`
-      }]
-    });
-    return raw.trim();
-  } catch (e) {
-    console.warn('[translateToScenePrompt]', e);
-    // 번역 실패 시에도 최소한의 장면은 나오도록 안전한 기본값 반환
-    return 'Korean child in a heartwarming daily life scene';
-  }
-}
-
 /* ────────────────────────────────────────────────────────────
    그림책(Book)
    ──────────────────────────────────────────────────────────── */
