@@ -9,7 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
-<link rel="stylesheet" href="css/base.css?v=2">
+<link rel="stylesheet" href="css/base.css?v=3">
 <link rel="stylesheet" href="css/components.css">
 <style>
 /* ════════════════════════════════════════════════════════════
@@ -72,36 +72,39 @@
       <button class="lang-btn active" id="langKo" onclick="setLang('ko')">🇰🇷 한국어</button>
       <button class="lang-btn" id="langEn" onclick="setLang('en')">🇺🇸 English</button>
     </div>
-    <div class="home-logo" id="homeLogo">💡</div>
-    <h1 id="homeTitle">지음 프로젝트</h1>
-    <div class="creator-label">제작: 이재근 선생님 👨‍🏫</div>
+    <!-- ✅ [수정] 로고+제목+제작자 라벨을 1줄로 배치 -->
+    <div class="home-title-row">
+      <span class="home-logo" id="homeLogo">💡</span>
+      <h1 id="homeTitle">지음 프로젝트</h1>
+      <span class="creator-label">제작: 이재근 선생님 👨‍🏫</span>
+    </div>
     <p id="homeDesc">AI와 함께 상상력을 키우고 나만의 책을 완성해요!</p>
-    <!-- ✅ [신규] 로그인 모드 토글: 자유 닉네임 / 익명 계정(Zero PII) -->
-    <div class="login-mode-toggle">
-      <button class="login-mode-btn active" id="loginModeNick" onclick="switchLoginMode('nick')">✏️ 자유 닉네임</button>
-      <button class="login-mode-btn" id="loginModeAnon" onclick="switchLoginMode('anon')">🔐 익명 계정 로그인</button>
-    </div>
+    <!-- ✅ [수정] 로그인 영역 1줄 배치: 모드 토글 + 입력칸 + 확인 버튼 -->
+    <div class="login-inline-row">
+      <div class="login-mode-toggle">
+        <button class="login-mode-btn active" id="loginModeNick" onclick="switchLoginMode('nick')">✏️ 자유 닉네임</button>
+        <button class="login-mode-btn" id="loginModeAnon" onclick="switchLoginMode('anon')">🔐 익명 계정 로그인</button>
+      </div>
 
-    <!-- 자유 닉네임 모드 -->
-    <div id="loginPanelNick" style="width:100%;max-width:400px;display:flex;flex-direction:column;gap:6px;">
-      <div class="home-nick-label" id="homeNickLabel">내 이름:</div>
-      <div class="home-nick-row">
-        <input class="nick-input" id="nickInput" maxlength="10" placeholder="이름을 입력해주세요">
+      <!-- 자유 닉네임 모드 (1줄) -->
+      <div id="loginPanelNick" style="flex:1;min-width:260px;display:flex;flex-direction:row;align-items:center;gap:6px;">
+        <span class="home-nick-label" id="homeNickLabel" style="margin:0;">내 이름:</span>
+        <input class="nick-input" id="nickInput" maxlength="10" placeholder="이름을 입력해주세요" style="flex:1.1;">
         <input class="nick-input" id="nickPwInput" type="password" maxlength="12" autocomplete="off" placeholder="비밀번호" style="flex:0.85;">
+        <button class="nick-confirm-btn" onclick="confirmNick()">확인 ✓</button>
       </div>
-      <button class="nick-confirm-btn" onclick="confirmNick()" style="width:100%;padding:12px;">확인 ✓</button>
-      <div class="anon-hint" id="nickPwHint">🔐 처음 쓰는 이름이면 지금 비밀번호로 새로 등록돼요. 다음에도 같은 이름 + 비밀번호로 들어와주세요!</div>
+
+      <!-- 익명 계정 모드 (Zero PII, 1줄) -->
+      <div id="loginPanelAnon" style="flex:1;min-width:260px;display:none;flex-direction:row;align-items:center;gap:6px;">
+        <input class="anon-code-input" id="anonCodeInput" maxlength="12" placeholder="학급 코드 (예: LION-42)" autocomplete="off" autocorrect="off" spellcheck="false" style="flex:1.1;">
+        <input class="anon-pw-input" id="anonPwInput" type="password" maxlength="12" placeholder="비밀번호" autocomplete="current-password" style="flex:0.85;">
+        <button class="anon-login-btn" onclick="loginAnonymous()">🔓 로그인</button>
+      </div>
     </div>
 
-    <!-- 익명 계정 모드 (Zero PII) -->
-    <div id="loginPanelAnon" style="width:100%;max-width:400px;display:none;flex-direction:column;gap:8px;">
-      <div class="anon-hint">🔒 선생님이 나눠준 코드와 비밀번호로 로그인해요.<br>이름, 학교, 이메일은 절대 입력하지 않아요!</div>
-      <div class="anon-input-row">
-        <input class="anon-code-input" id="anonCodeInput" maxlength="12" placeholder="학급 코드 (예: LION-42)" autocomplete="off" autocorrect="off" spellcheck="false">
-        <input class="anon-pw-input" id="anonPwInput" type="password" maxlength="12" placeholder="비밀번호" autocomplete="current-password">
-      </div>
-      <button class="anon-login-btn" onclick="loginAnonymous()" style="width:100%;padding:12px;">🔓 로그인하기</button>
-      <div class="anon-hint" style="color:var(--mint);">💡 코드를 잃어버렸다면 선생님께 문의하세요!</div>
+    <!-- 로그인 안내 문구 (아래 1줄, 모드에 따라 전환) -->
+    <div class="login-hints">
+      <div class="anon-hint" id="nickPwHint">🔐 처음 쓰는 이름이면 지금 비밀번호로 새로 등록돼요. 다음에도 같은 이름 + 비밀번호로 들어와주세요!</div>
     </div>
 
     <div class="setup-error" id="setupError"></div>
@@ -1276,7 +1279,7 @@
 <script src="js/11-teacher-extras.js?v=4"></script>
 <script src="js/12-ieum-review.js?v=4"></script>
 <!-- ✅ [신규] 글쓰기 게이미피케이션 (반드시 마지막 로드) -->
-<script src="js/13-writing-games.js?v=4"></script>
+<script src="js/13-writing-games.js?v=5"></script>
 <!-- ✅ [신규] 스캐폴딩 힌트 팝업 (SOS 버튼 누를 때) -->
 <div class="scaffolding-hint-popup" id="scaffoldingHintPopup">
   <div class="scaffolding-hint-card">
