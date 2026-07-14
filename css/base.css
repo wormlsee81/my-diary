@@ -21,7 +21,7 @@ body { background:var(--bg); font-family:'Jua',sans-serif; color:var(--text); he
   #homeScreen { align-items: flex-start; padding: 10px 20px; }
   .home-card { max-height: calc(100vh - 20px); overflow-y: auto; }
 }
-.home-card { background:white; border-radius:32px; padding: clamp(20px, 5vw, 36px) clamp(20px, 5vw, 44px); text-align:center; box-shadow:0 24px 64px rgba(0,0,0,.22); width: 100%; max-width:800px; display:flex; flex-direction:column; align-items:center; gap:10px; }
+.home-card { background:white; border-radius:32px; padding: clamp(20px, 5vw, 36px) clamp(20px, 5vw, 44px); text-align:center; box-shadow:0 24px 64px rgba(0,0,0,.22); width: 100%; max-width:800px; min-width:0; margin:auto; display:flex; flex-direction:column; align-items:center; gap:10px; }
 .home-logo { font-size: clamp(40px, 10vw, 60px); line-height:1; margin-bottom:4px; }
 .home-card h1 { font-size: clamp(24px, 6vw, 32px); color:var(--mint); margin-bottom:2px; }
 .creator-label { font-size: clamp(14px, 4vw, 18px); color:var(--mint); background:var(--mint-light); padding:4px 16px; border-radius:20px; font-weight:bold; border:2px dashed var(--mint); margin-bottom:8px; word-break: keep-all; }
@@ -32,8 +32,8 @@ body { background:var(--bg); font-family:'Jua',sans-serif; color:var(--text); he
 .nick-confirm-btn { padding:12px 18px; background:var(--mint); color:white; border:none; border-radius:12px; font-family:inherit; font-size:17px; cursor:pointer; white-space: nowrap; }
 .setup-error { font-size:14px; color:var(--red); min-height:18px; }
 
-.app-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; width:100%; margin-top:6px; }
-@media (max-width: 650px) { .app-grid { grid-template-columns: repeat(2, 1fr); } }
+.app-grid { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:12px; width:100%; margin-top:6px; min-width:0; }
+@media (max-width: 650px) { .app-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* 홈 카드: 태블릿 가로 모드에서 컴팩트하게 */
 @media (min-width: 768px) and (orientation: landscape) {
@@ -47,11 +47,11 @@ body { background:var(--bg); font-family:'Jua',sans-serif; color:var(--text); he
   .app-card .ac-icon { font-size: clamp(22px, 3.5vw, 30px); }
 }
 
-.app-card { background:linear-gradient(135deg,var(--c1),var(--c2)); border-radius:18px; padding:18px 8px; display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; transition:transform .18s; border:none; font-family:inherit; color:white; box-shadow:0 4px 16px rgba(0,0,0,.12); }
+.app-card { background:linear-gradient(135deg,var(--c1),var(--c2)); border-radius:18px; padding:18px 8px; display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; transition:transform .18s; border:none; font-family:inherit; color:white; box-shadow:0 4px 16px rgba(0,0,0,.12); min-width:0; }
 .app-card:hover { transform:translateY(-4px) scale(1.04); }
 .app-card .ac-step { font-size:12px; background:rgba(255,255,255,.25); padding:3px 10px; border-radius:12px; white-space:nowrap; }
 .app-card .ac-icon { font-size:clamp(28px, 5vw, 38px); }
-.app-card .ac-name { font-size:clamp(15px, 3vw, 19px); font-weight:bold; white-space:nowrap; }
+.app-card .ac-name { font-size:clamp(15px, 3vw, 19px); font-weight:bold; white-space:normal; word-break:keep-all; overflow-wrap:break-word; line-height:1.25; }
 .app-card .ac-desc { font-size:11px; opacity:.9; line-height:1.4; text-align:center; word-break:keep-all; }
 .app-card.dodum{--c1:#4a90e2;--c2:#357abd;}.app-card.ieum{--c1:#62b3a4;--c2:#4e9a8c;}.app-card.ttieum{--c1:#8a7ce8;--c2:#6a5cc8;}.app-card.jieum{--c1:#ff8e8b;--c2:#ff6b68;}
 
