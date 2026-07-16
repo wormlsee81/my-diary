@@ -338,8 +338,15 @@
     st.id = 'wgStyles';
     st.textContent = [
       /* ── v2 기존 스타일 ── */
-      '#wgBingoWrap { margin: 12px 0; padding: 12px; border: 2px dashed #b8a; border-radius: 12px; background: #fffdf5; }',
-      '#wgBingoWrap h4 { margin: 0 0 8px; font-size: 14px; }',
+      /* ── 오감 빙고: 우하단 플로팅 팝업 (접기/펼치기) ── */
+      '#wgBingoWrap { position: fixed; right: 16px; bottom: 120px; z-index: 235; width: 300px; max-width: calc(100vw - 32px); background: #fffdf5; border: 2px solid #f4c430; border-radius: 14px; box-shadow: 0 6px 20px rgba(0,0,0,.18); overflow: hidden; transition: all .25s ease; }',
+      '#wgBingoWrap.collapsed { width: auto; }',
+      '#wgBingoHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; cursor: pointer; background: #ffe98a; user-select: none; }',
+      '#wgBingoHead h4 { margin: 0; font-size: 13px; line-height: 1.3; }',
+      '#wgBingoToggle { flex: 0 0 auto; font-size: 13px; font-weight: 700; color: #7a5c00; background: rgba(255,255,255,.6); border-radius: 8px; padding: 2px 8px; }',
+      '#wgBingoBody { padding: 12px; }',
+      '#wgBingoWrap.collapsed #wgBingoBody { display: none; }',
+      '#wgBingoWrap.collapsed #wgBingoHead h4 .wg-bingo-sub { display: none; }',
       '#wgBingoBoard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }',
       '.wg-cell { padding: 8px 4px; text-align: center; font-size: 12px; border-radius: 8px; background: #f0ede4; color: #999; border: 1px solid #ddd; transition: all .3s; }',
       '.wg-cell.filled { background: #ffe066; color: #333; border-color: #f4c430; font-weight: 700; transform: scale(1.04); }',
@@ -461,17 +468,26 @@
     const ta = wg$('diary');
     if (!ta || document.getElementById('wgBingoWrap')) return;
 
+    // 접힘 상태 복원 (기본: 펼침)
+    const collapsed = wgLoad('bingoCollapsed', false);
+
     const wrap = document.createElement('div');
     wrap.id = 'wgBingoWrap';
+    if (collapsed) wrap.classList.add('collapsed');
     wrap.innerHTML =
-      '<h4>🎯 오감 빙고 — 글 속에 표현이 들어가면 칸에 불이 켜져요!</h4>' +
-      '<div id="wgBingoBoard">' +
-      WG_BINGO_CELLS.map(function (c) {
-        return '<div class="wg-cell" id="wg_cell_' + c.id + '">' + c.label + '</div>';
-      }).join('') +
+      '<div id="wgBingoHead" onclick="wgToggleBingo()">' +
+        '<h4>🎯 오감 빙고<span class="wg-bingo-sub"> — 표현이 들어가면 불이 켜져요!</span></h4>' +
+        '<span id="wgBingoToggle">' + (collapsed ? '펼치기 ▲' : '접기 ▼') + '</span>' +
       '</div>' +
-      '<div id="wgBingoStatus">빙고 줄 0개 · 한 줄마다 잉크 +30, 다 채우면 +100!</div>';
-    ta.insertAdjacentElement('afterend', wrap);
+      '<div id="wgBingoBody">' +
+        '<div id="wgBingoBoard">' +
+        WG_BINGO_CELLS.map(function (c) {
+          return '<div class="wg-cell" id="wg_cell_' + c.id + '">' + c.label + '</div>';
+        }).join('') +
+        '</div>' +
+        '<div id="wgBingoStatus">빙고 줄 0개 · 한 줄마다 잉크 +30, 다 채우면 +100!</div>' +
+      '</div>';
+    document.body.appendChild(wrap);   // 일기 아래가 아니라 화면에 고정(플로팅)
 
     wgBingoRender(ta.value || '', true);   // 기존 글은 기준선만 설정
 
@@ -481,6 +497,27 @@
     });
     // 옛 일기 불러오기·붙여넣기로 잉크를 받는 경로 차단: 포커스 시 기준선 재동기화
     ta.addEventListener('focus', function () { wgBingoRender(ta.value || '', true); });
+  }
+
+  /** 오감 빙고 팝업 접기/펼치기 토글 */
+  function wgToggleBingo() {
+    const wrap = document.getElementById('wgBingoWrap');
+    if (!wrap) return;
+    const nowCollapsed = wrap.classList.toggle('collapsed');
+    wgSave('bingoCollapsed', nowCollapsed);
+    const t = document.getElementById('wgBingoToggle');
+    if (t) t.textContent = nowCollapsed ? '펼치기 ▲' : '접기 ▼';
+  }
+  window.wgToggleBingo = wgToggleBingo;
+
+  /** 일기 입력칸이 실제 화면에 보일 때만 빙고 팝업 노출 (다른 탭에선 숨김) */
+  function wgSyncBingoVisibility() {
+    const wrap = document.getElementById('wgBingoWrap');
+    if (!wrap) return;
+    const ta = wg$('diary');
+    // offsetParent가 null이면 화면에서 숨겨진 상태(다른 탭/화면)
+    const visible = !!(ta && ta.offsetParent !== null);
+    wrap.style.display = visible ? '' : 'none';
   }
 
   function wgBingoRender(text, baselineOnly) {
@@ -2401,6 +2438,7 @@
     setInterval(function () {
       try {
         wgInjectBingo();
+        wgSyncBingoVisibility();
         wgPatchSaveDiary();
         wgRegisterBadges();
         wgInjectDiaryBar();
