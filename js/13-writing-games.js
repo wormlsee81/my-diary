@@ -338,19 +338,21 @@
     st.id = 'wgStyles';
     st.textContent = [
       /* ── v2 기존 스타일 ── */
-      /* ── 오감 빙고: 우하단 플로팅 팝업 (접기/펼치기) ── */
-      '#wgBingoWrap { position: fixed; right: 16px; bottom: 120px; z-index: 235; width: 300px; max-width: calc(100vw - 32px); background: #fffdf5; border: 2px solid #f4c430; border-radius: 14px; box-shadow: 0 6px 20px rgba(0,0,0,.18); overflow: hidden; transition: all .25s ease; }',
-      '#wgBingoWrap.collapsed { width: auto; }',
+      /* ── 오감 빙고: 좌하단 플로팅 팝업 (SOS·펫 위젯과 반대편, 접으면 완전히 숨김) ── */
+      '#wgBingoWrap { position: fixed; left: 14px; bottom: 84px; z-index: 232; width: 290px; max-width: calc(100vw - 28px); background: #fffdf5; border: 2px solid #f4c430; border-radius: 14px; box-shadow: 0 6px 20px rgba(0,0,0,.18); overflow: hidden; transition: opacity .2s ease; }',
+      '#wgBingoWrap.collapsed { display: none; }',   /* 접으면 팝업 자체가 사라짐 */
       '#wgBingoHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; cursor: pointer; background: #ffe98a; user-select: none; }',
       '#wgBingoHead h4 { margin: 0; font-size: 13px; line-height: 1.3; }',
       '#wgBingoToggle { flex: 0 0 auto; font-size: 13px; font-weight: 700; color: #7a5c00; background: rgba(255,255,255,.6); border-radius: 8px; padding: 2px 8px; }',
       '#wgBingoBody { padding: 12px; }',
-      '#wgBingoWrap.collapsed #wgBingoBody { display: none; }',
-      '#wgBingoWrap.collapsed #wgBingoHead h4 .wg-bingo-sub { display: none; }',
       '#wgBingoBoard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }',
       '.wg-cell { padding: 8px 4px; text-align: center; font-size: 12px; border-radius: 8px; background: #f0ede4; color: #999; border: 1px solid #ddd; transition: all .3s; }',
       '.wg-cell.filled { background: #ffe066; color: #333; border-color: #f4c430; font-weight: 700; transform: scale(1.04); }',
       '#wgBingoStatus { margin-top: 6px; font-size: 12px; color: #776; }',
+      /* 접혔을 때 다시 펼치는 작은 칩 (좌하단, 런처 바로 위) */
+      '#wgBingoChip { position: fixed; left: 76px; bottom: 24px; z-index: 232; display: none; align-items: center; gap: 5px; padding: 8px 12px; background: #ffe98a; border: 2px solid #f4c430; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,.18); cursor: pointer; font-size: 13px; font-weight: 700; color: #7a5c00; user-select: none; }',
+      '#wgBingoChip.show { display: inline-flex; }',
+      '#wgBingoChip:hover { background: #ffe066; }',
       '#wgLauncher { position: fixed; left: 14px; bottom: 22px; z-index: 240; width: 52px; height: 52px; border-radius: 50%; border: none; background: #6c5ce7; color: #fff; font-size: 24px; cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,.25); }',
       '#wgLauncher:hover { transform: scale(1.08); }',
       '#wgOverlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 9991; display: none; align-items: center; justify-content: center; }',
@@ -477,7 +479,7 @@
     wrap.innerHTML =
       '<div id="wgBingoHead" onclick="wgToggleBingo()">' +
         '<h4>🎯 오감 빙고<span class="wg-bingo-sub"> — 표현이 들어가면 불이 켜져요!</span></h4>' +
-        '<span id="wgBingoToggle">' + (collapsed ? '펼치기 ▲' : '접기 ▼') + '</span>' +
+        '<span id="wgBingoToggle">접기 ✕</span>' +
       '</div>' +
       '<div id="wgBingoBody">' +
         '<div id="wgBingoBoard">' +
@@ -489,6 +491,14 @@
       '</div>';
     document.body.appendChild(wrap);   // 일기 아래가 아니라 화면에 고정(플로팅)
 
+    // 접혔을 때 다시 펼치는 작은 칩 (게임 런처 옆)
+    const chip = document.createElement('div');
+    chip.id = 'wgBingoChip';
+    if (collapsed) chip.classList.add('show');
+    chip.setAttribute('onclick', 'wgToggleBingo()');
+    chip.innerHTML = '🎯 오감 빙고';
+    document.body.appendChild(chip);
+
     wgBingoRender(ta.value || '', true);   // 기존 글은 기준선만 설정
 
     ta.addEventListener('input', function () {
@@ -499,25 +509,35 @@
     ta.addEventListener('focus', function () { wgBingoRender(ta.value || '', true); });
   }
 
-  /** 오감 빙고 팝업 접기/펼치기 토글 */
+  /** 오감 빙고 접기/펼치기: 접으면 팝업이 완전히 사라지고 작은 칩만 남음 */
   function wgToggleBingo() {
     const wrap = document.getElementById('wgBingoWrap');
-    if (!wrap) return;
+    const chip = document.getElementById('wgBingoChip');
+    if (!wrap || !chip) return;
     const nowCollapsed = wrap.classList.toggle('collapsed');
+    chip.classList.toggle('show', nowCollapsed);
     wgSave('bingoCollapsed', nowCollapsed);
-    const t = document.getElementById('wgBingoToggle');
-    if (t) t.textContent = nowCollapsed ? '펼치기 ▲' : '접기 ▼';
   }
   window.wgToggleBingo = wgToggleBingo;
 
-  /** 일기 입력칸이 실제 화면에 보일 때만 빙고 팝업 노출 (다른 탭에선 숨김) */
+  /** 일기 입력칸이 실제 화면에 보일 때만 빙고 노출 (다른 탭에선 팝업·칩 모두 숨김) */
   function wgSyncBingoVisibility() {
     const wrap = document.getElementById('wgBingoWrap');
+    const chip = document.getElementById('wgBingoChip');
     if (!wrap) return;
     const ta = wg$('diary');
     // offsetParent가 null이면 화면에서 숨겨진 상태(다른 탭/화면)
     const visible = !!(ta && ta.offsetParent !== null);
-    wrap.style.display = visible ? '' : 'none';
+    const collapsed = wrap.classList.contains('collapsed');
+    if (!visible) {
+      // 일기 화면이 아니면 둘 다 감춤
+      wrap.style.display = 'none';
+      if (chip) chip.style.display = 'none';
+    } else {
+      // 일기 화면이면 접힘 상태에 따라 팝업/칩 표시 (CSS 클래스가 실제 표시를 결정)
+      wrap.style.display = collapsed ? 'none' : '';
+      if (chip) chip.style.display = '';
+    }
   }
 
   function wgBingoRender(text, baselineOnly) {
@@ -712,7 +732,67 @@
     /* 띄어쓰기 */
     { wrong: '나도 자전거를 탈수 있다.',           right: '나도 자전거를 탈 수 있다.',          hint: '"-ㄹ 수 있다"의 "수"는 띄어 써요.' },
     { wrong: '이 연필은 내꺼야.',                  right: '이 연필은 내 거야.',                 hint: '"거"는 "것"을 뜻하는 낱말이라 띄어 쓰고, "꺼"가 아니라 "거"예요.' },
-    { wrong: '주말에 친구가 우리집에 놀러 왔다.',  right: '주말에 친구가 우리 집에 놀러 왔다.', hint: '"우리"와 "집"은 띄어 써요.' }
+    { wrong: '주말에 친구가 우리집에 놀러 왔다.',  right: '주말에 친구가 우리 집에 놀러 왔다.', hint: '"우리"와 "집"은 띄어 써요.' },
+
+     /* ═══ 확충: 되/돼 보강 ═══ */
+     { wrong: '준비가 다 됫어요.',                  right: '준비가 다 됐어요.',                  hint: '"되었어요"의 준말은 "됐어요"예요.' },
+     { wrong: '그렇게 하면 안 되.',                 right: '그렇게 하면 안 돼.',                 hint: '"되어"로 바꿀 수 있으면 "돼"를 써요.' },
+     { wrong: '이제 집에 가도 되죠?',               right: '이제 집에 가도 되죠?',               hint: '"되죠"는 바른 표기예요. 이미 맞으면 그대로 쓰면 돼요!' },
+
+     /* ═══ 확충: 안/않 보강 ═══ */
+     { wrong: '숙제를 아직 끝내지 안았어.',          right: '숙제를 아직 끝내지 않았어.',          hint: '"-지 않았어"가 한 묶음이에요.' },
+     { wrong: '오늘은 별로 안 춥다.',               right: '오늘은 별로 안 춥다.',               hint: '"아니"로 바꿀 수 있으니 "안"이 맞아요. 이미 바른 문장!' },
+     { wrong: '아무리 불러도 대답을 안 한다.',       right: '아무리 불러도 대답을 안 한다.',       hint: '"안 한다"가 바른 표기예요.' },
+
+     /* ═══ 확충: 가르치다/가리키다 보강 ═══ */
+     { wrong: '엄마가 젓가락질을 가리켜 주셨다.',    right: '엄마가 젓가락질을 가르쳐 주셨다.',    hint: '방법을 알려 주는 것은 "가르치다"예요.' },
+     { wrong: '시곗바늘이 세 시를 가르치고 있다.',   right: '시곗바늘이 세 시를 가리키고 있다.',   hint: '어떤 것을 집어 보이는 것은 "가리키다"예요.' },
+     { wrong: '선생님이 칠판의 글자를 가르켰다.',    right: '선생님이 칠판의 글자를 가리켰다.',    hint: '방향이나 대상을 집을 땐 "가리키다"예요.' },
+
+     /* ═══ 확충: 낫다/낳다/낮다 보강 ═══ */
+     { wrong: '약을 먹었더니 감기가 다 낳았다.',     right: '약을 먹었더니 감기가 다 나았다.',     hint: '병이 좋아지는 것은 "낫다"예요.' },
+     { wrong: '이 연필이 저 연필보다 낮다.',         right: '이 연필이 저 연필보다 낫다.',         hint: '더 좋다는 뜻은 "낫다", 높이가 아래인 건 "낮다"예요.' },
+     { wrong: '암탉이 알을 다섯 개나 낫았다.',       right: '암탉이 알을 다섯 개나 낳았다.',       hint: '알이나 새끼는 "낳다"를 써요.' },
+
+     /* ═══ 확충: 새 유형 — 든/던 ═══ */
+     { wrong: '얼마나 빨리 뛰든지 숨이 찼다.',       right: '얼마나 빨리 뛰던지 숨이 찼다.',       hint: '지난 일을 떠올릴 땐 "-던지"를 써요.' },
+     { wrong: '물이던 주스던 아무거나 좋아.',        right: '물이든 주스든 아무거나 좋아.',        hint: '고르는 것일 땐 "-든"을 써요.' },
+     { wrong: '네가 가던지 내가 가던지 정하자.',     right: '네가 가든지 내가 가든지 정하자.',     hint: '선택할 땐 "-든지"를 써요.' },
+
+     /* ═══ 확충: 새 유형 — 채/체/째 ═══ */
+     { wrong: '자는 채 하지 말고 얼른 일어나.',      right: '자는 체 하지 말고 얼른 일어나.',      hint: '거짓으로 그런 척하는 건 "체"예요.' },
+     { wrong: '사과를 껍질째 먹었다.',              right: '사과를 껍질째 먹었다.',              hint: '"통째로"의 "-째"가 맞아요. 이미 바른 문장!' },
+     { wrong: '불을 켠 째로 잠이 들었다.',          right: '불을 켠 채로 잠이 들었다.',          hint: '그 상태 그대로일 땐 "채"를 써요.' },
+
+     /* ═══ 확충: 새 유형 — 로서/로써 ═══ */
+     { wrong: '학생으로써 최선을 다하겠다.',        right: '학생으로서 최선을 다하겠다.',        hint: '지위나 자격은 "로서"를 써요.' },
+     { wrong: '대화로서 오해를 풀었다.',            right: '대화로써 오해를 풀었다.',            hint: '수단·방법은 "로써"를 써요.' },
+
+     /* ═══ 확충: 새 유형 — 이따가/있다가 ═══ */
+     { wrong: '있다가 다시 전화할게.',              right: '이따가 다시 전화할게.',              hint: '시간이 조금 지난 뒤는 "이따가"예요.' },
+     { wrong: '집에 이따가 학원에 갔다.',           right: '집에 있다가 학원에 갔다.',           hint: '어떤 곳에 머무는 건 "있다가"예요.' },
+
+     /* ═══ 확충: 새 유형 — 담다/담그다, 잠그다 ═══ */
+     { wrong: '김치를 맛있게 담궜다.',              right: '김치를 맛있게 담갔다.',              hint: '기본형이 "담그다"라서 "담갔다"예요.' },
+     { wrong: '나갈 때 문을 꼭 잠궈라.',            right: '나갈 때 문을 꼭 잠가라.',            hint: '기본형이 "잠그다"라서 "잠가라"예요.' },
+
+     /* ═══ 확충: 자주 틀리는 낱말 보강 ═══ */
+     { wrong: '오늘 날씨가 정말 덥든지 땀이 났다.',  right: '오늘 날씨가 정말 덥던지 땀이 났다.',  hint: '지난 일을 떠올릴 땐 "-던지"예요.' },
+     { wrong: '동생이 자꾸 트집을 잡는다.',         right: '동생이 자꾸 트집을 잡는다.',         hint: '"트집"이 바른 표기예요. 이미 맞는 문장!' },
+     { wrong: '깜빡하고 우산을 안 가져왔다.',       right: '깜빡하고 우산을 안 가져왔다.',       hint: '"깜빡"이 바른 표기예요. 이미 맞는 문장!' },
+     { wrong: 'friend를 우리말로 하면 친구다.',     right: '친구와 사이좋게 지냈다.',            hint: '일기에는 우리말로 써요.' },
+     { wrong: '창피해서 얼굴이 빨개졌다.',          right: '창피해서 얼굴이 빨개졌다.',          hint: '"창피"가 바른 표기예요. 이미 맞는 문장!' },
+     { wrong: '나는 김치찌개를 제일 조아한다.',      right: '나는 김치찌개를 제일 좋아한다.',      hint: '"좋아한다"에는 받침 "ㅎ"이 있어요.' },
+     { wrong: '어름이 꽁꽁 얼어붙었다.',            right: '얼음이 꽁꽁 얼어붙었다.',            hint: '"얼다"에서 온 말이라 "얼음"이에요.' },
+     { wrong: '일찌기 일어나 운동을 했다.',         right: '일찍이 일어나 운동을 했다.',         hint: '"일찍"에 "-이"가 붙어 "일찍이"예요.' },
+     { wrong: '설겆이를 도와드렸다.',              right: '설거지를 도와드렸다.',              hint: '"설거지"가 바른 표기예요.' },
+     { wrong: '떡을 한 입에 널름 삼켰다.',          right: '떡을 한 입에 냉큼 삼켰다.',          hint: '"냉큼"이 표준어예요.' },
+     { wrong: '발자국 소리가 들렸다.',              right: '발자국 소리가 들렸다.',              hint: '"발자국"이 바른 표기예요. 이미 맞는 문장!' },
+     { wrong: '베게에 머리를 대자마자 잠들었다.',    right: '베개에 머리를 대자마자 잠들었다.',    hint: '베는 물건은 "베개"예요.' },
+     { wrong: '숙제를 깜박 잊어버렸다.',            right: '숙제를 깜박 잊어버렸다.',            hint: '기억이 안 나는 건 "잊어버리다"예요. 이미 맞는 문장!' },
+     { wrong: '우리는 금세 친해졌다.',              right: '우리는 금세 친해졌다.',              hint: '"금시에"의 준말 "금세"가 맞아요. 이미 바른 문장!' },
+     { wrong: '눈꼽이 껴서 눈이 뻑뻑했다.',         right: '눈곱이 껴서 눈이 뻑뻑했다.',         hint: '눈에 끼는 건 "눈곱"이에요.' },
+     { wrong: '문을 두드리는 소리가 났다.',         right: '문을 두드리는 소리가 났다.',         hint: '"두드리다"가 바른 표기예요. 이미 맞는 문장!' }
   ];
 
   const WG_HUNT_SIZE = 4;          // 한 판에 나오는 몬스터 수
@@ -765,86 +845,16 @@
     return wgPickN(pool, n);
   }
 
-  /** 저장된 일기에서 spellingAdvice 수집 (localforage 기반 getEntries) */
-  async function wgCollectSpellingData() {
-    try {
-      if (typeof getEntries === 'function') {
-        const entries = await getEntries();
-        return (entries || []).slice(-10)
-          .map(function (e) { return (e && typeof e.spellingAdvice === 'string') ? e.spellingAdvice.trim() : ''; })
-          .filter(Boolean);
-      }
-    } catch (e) {}
-    return [];
-  }
-
-  /** AI 문제 검증: 형식·길이·정오 구분이 온전한 것만 통과 */
-  function wgValidateAIQuestions(parsed) {
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(function (q) {
-      return q && typeof q.wrong === 'string' && typeof q.right === 'string' &&
-        q.wrong.trim() && q.right.trim() &&
-        wgNorm(q.wrong, true) !== wgNorm(q.right, true) &&
-        q.wrong.length <= 60 && q.right.length <= 60 &&
-        /[가-힣]/.test(q.wrong);
-    }).map(function (q) {
-      return { wrong: q.wrong.trim(), right: q.right.trim(), hint: String(q.hint || '').trim() };
-    });
-  }
-
-  /** v2: AI 출제를 항상 시도 (개인화 or 무작위 유형×소재) + 은행 보충 */
-  async function wgBuildMonsters() {
-    const advice = await wgCollectSpellingData();
-    const types = wgPickN(WG_MONSTER_TYPES, 4);
-    const topics = wgPickN(WG_MONSTER_TOPICS, 3);
-    const recent = wgRecentList();
-
-    let userPrompt;
-    if (advice.length) {
-      userPrompt =
-        '아래는 이 학생이 실제로 받았던 맞춤법 교정 조언이야:\n' +
-        advice.map(function (a) { return '- ' + a; }).join('\n') +
-        '\n\n위 조언에 나온 오류 유형을 우선으로 하되, 부족하면 다음 유형에서 골라 줘: ' +
-        types.join(', ') + '\n' +
-        '문장 소재는 "' + topics.join('", "') + '" 중에서 다양하게 골라 줘.';
-    } else {
-      userPrompt =
-        '다음 오류 유형에서 하나씩 골라 문제를 만들어 줘: ' + types.join(', ') + '\n' +
-        '문장 소재는 "' + topics.join('", "') + '" 중에서 다양하게 골라 줘.';
-    }
-    userPrompt +=
-      '\n\n초등학생 맞춤법 게임용으로, 맞춤법이 틀린 짧은 문장 ' + WG_HUNT_SIZE + '개를 만들어 줘.\n' +
-      '규칙:\n' +
-      '- 문장은 초등학생의 일상 이야기, 오류는 문장당 정확히 1개\n' +
-      '- 욕설·폭력·죽음 소재 금지\n' +
-      '- 다음 문장들과 겹치지 않게: ' + (recent.slice(-8).join(' / ') || '(없음)') + '\n' +
-      '반드시 아래 JSON 배열만 출력해:\n' +
-      '[{"wrong":"틀린 문장","right":"고친 문장","hint":"초등학생 눈높이 힌트 한 문장"}]';
-
-    const raw = await wgCallAI(
-      '너는 한국 초등학생을 위한 맞춤법 게임 문제 출제자야. 국립국어원 표준 맞춤법을 정확히 따르고, 반드시 JSON만 출력해.',
-      userPrompt, 700
-    );
-    let questions = wgValidateAIQuestions(wgParseJSON(raw));
-
-    // 최근 출제와 겹치는 AI 문제 제거
-    questions = questions.filter(function (q) {
-      return recent.indexOf(wgNorm(q.wrong, true)) === -1;
-    }).slice(0, WG_HUNT_SIZE);
-
-    // 부족분은 문제은행에서 보충
-    if (questions.length < WG_HUNT_SIZE) {
-      const usedKeys = questions.map(function (q) { return wgNorm(q.wrong, true); });
-      questions = questions.concat(wgPickFromBank(WG_HUNT_SIZE - questions.length, usedKeys));
-    }
-
+  /** 검증된 문제은행에서만 문제 추출 (AI 출제 제거 — 맞춤법 정확성 보장).
+      최근 24문항 반복 차단은 wgPickFromBank가 처리한다. */
+  function wgBuildMonsters() {
+    const questions = wgPickFromBank(WG_HUNT_SIZE, []);
     wgRemember(questions);
     return questions;
   }
 
-  async function wgStartMonsterHunt() {
-    wgOpenModal('<h3>⚔️ 맞춤법 몬스터 사냥</h3><p>몬스터를 불러오는 중… 잠깐만요! 🔮</p>');
-    _wgMonsters = await wgBuildMonsters();
+  function wgStartMonsterHunt() {
+    _wgMonsters = wgBuildMonsters();
     _wgMonsterIdx = 0;
     _wgMonsterFails = 0;
     wgRenderMonster();
