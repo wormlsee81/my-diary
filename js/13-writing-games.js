@@ -1980,7 +1980,7 @@
   }
 
   function wgTruthSaveShared(list) {
-    try { localStorage.setItem(WG_TRUTH_SHARED_KEY, JSON.stringify(list.slice(-15))); } catch (e) {}
+    try { localStorage.setItem(WG_TRUTH_SHARED_KEY, JSON.stringify(list.slice(-30))); } catch (e) {}
   }
 
   function wgStartTruth() {
@@ -2080,13 +2080,14 @@
 
   function wgTruthFriends() {
     const list = wgTruthLoadShared();
-    const mine = list.filter(function (p) { return p.nick === wgNick(); })[0];
-    _wgTruthList = list.filter(function (p) { return p.nick !== wgNick(); });
+    // 옵션1: 모든 문제를 퀴즈로 표시 (기기를 돌려가며 푸는 방식)
+    _wgTruthList = list.slice();
 
     const cards = _wgTruthList.length
       ? _wgTruthList.map(function (p, pi) {
           const myVote = p.votes ? p.votes[wgNick()] : undefined;
           const voted = (typeof myVote === 'number');
+          const isMine = (p.nick === wgNick());
           const stHtml = p.st.map(function (stmt, k) {
             let cls = 'wg-vote';
             if (voted) {
@@ -2102,24 +2103,28 @@
               (voted ? ' <span class="wg-note">(' + tally + '표' + (k + 1 === p.lie ? ' · 정답!' : '') + ')</span>' : '') +
               '</button>';
           }).join('');
-          return '<div class="wg-sentence"><b>' + wgEsc(p.nick) + '</b>의 문제 — 거짓은 몇 번?<br>' + stHtml +
+          const totalVotes = p.votes ? Object.keys(p.votes).length : 0;
+          return '<div class="wg-sentence"><b>' + wgEsc(p.nick) + '</b>의 문제 — 거짓은 몇 번?' +
+            (isMine ? ' <span class="wg-note">(내가 낸 문제 · 총 ' + totalVotes + '명 도전)</span>' : '') +
+            '<br>' + stHtml +
             (voted ? '<div class="wg-note">' + (myVote === p.lie ? '🎉 명탐정! 맞혔어요' : '😅 아쉽! 정답은 ' + p.lie + '번') + '</div>' : '') +
             '</div>';
         }).join('')
-      : '<p class="wg-note">아직 친구들의 문제가 없어요. 첫 문제를 올려 볼까요?</p>';
+      : '<p class="wg-note">아직 낸 문제가 없어요. 위에서 첫 문제를 올려 볼까요? 👆</p>';
 
     wgOpenModal(
       '<h3>👥 진실 둘, 거짓 하나 — 친구들과</h3>' +
       '<p class="wg-note">📝 내 문제 올리기 (한 사람당 1문제, 새로 올리면 교체돼요)</p>' +
-      '<input class="wg-input" id="wgTf1" placeholder="1번 이야기" value="' + wgEsc(mine ? mine.st[0] : '') + '">' +
-      '<input class="wg-input" id="wgTf2" placeholder="2번 이야기" value="' + wgEsc(mine ? mine.st[1] : '') + '">' +
-      '<input class="wg-input" id="wgTf3" placeholder="3번 이야기" value="' + wgEsc(mine ? mine.st[2] : '') + '">' +
+      '<input class="wg-input" id="wgTf1" placeholder="1번 이야기">' +
+      '<input class="wg-input" id="wgTf2" placeholder="2번 이야기">' +
+      '<input class="wg-input" id="wgTf3" placeholder="3번 이야기">' +
       '<p class="wg-note">거짓은? <select id="wgTfLie" class="wg-input" style="width:auto;display:inline-block;">' +
       '<option value="1">1번</option><option value="2">2번</option><option value="3">3번</option></select> ' +
       '<button class="wg-btn" style="padding:8px 12px;" onclick="wgTruthPost()">올리기</button></p>' +
       '<hr style="border:none;border-top:1px solid #eee;margin:12px 0;">' +
+      '<p class="wg-note">🕵️ 아래 문제의 거짓을 맞혀 보세요! (기기를 다음 친구에게 넘겨 풀게 해도 좋아요)</p>' +
       cards +
-      '<p class="wg-note">※ 같은 기기(교실 공용 컴퓨터)에서만 서로의 문제가 보여요.</p>' +
+      '<p class="wg-note">※ 같은 기기(교실 공용 컴퓨터)에서 서로의 문제가 쌓여요.</p>' +
       '<button class="wg-btn gray" onclick="wgStartTruth()">뒤로</button>' +
       '<button class="wg-btn gray" onclick="wgCloseModal()">닫기</button>',
       true
@@ -2134,10 +2139,12 @@
     if (a.length < 8 || b.length < 8 || c.length < 8) { wgToast('세 문장 모두 8자 이상으로!'); return; }
     if (!wgClean(a + b + c)) { wgToast('고운 말로 써 주세요!'); return; }
 
-    let list = wgTruthLoadShared().filter(function (p) { return p.nick !== wgNick(); });
-    list.push({ nick: wgNick(), date: wgToday(), st: [a, b, c], lie: lie, votes: {} });
+    // 기기 돌려쓰기: 항상 새 문제로 추가(교체 아님) + 고유 id 부여
+    const list = wgTruthLoadShared();
+    const id = 'q' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    list.push({ id: id, nick: wgNick(), date: wgToday(), st: [a, b, c], lie: lie, votes: {} });
     wgTruthSaveShared(list);
-    wgToast('문제를 올렸어요! 친구들이 추리하러 올 거예요 🕵️');
+    wgToast('문제를 올렸어요! 이제 아래에서 풀 수 있어요 🕵️');
     wgTruthFriends();
   }
   window.wgTruthPost = wgTruthPost;
@@ -2146,13 +2153,22 @@
     const target = _wgTruthList[pi];
     if (!target) return;
     const list = wgTruthLoadShared();
-    const p = list.filter(function (x) { return x.nick === target.nick && x.date === target.date; })[0];
+    // 고유 id로 매칭 (구 데이터엔 id가 없으므로 nick+date로 폴백)
+    const p = list.filter(function (x) {
+      return target.id ? (x.id === target.id) : (x.nick === target.nick && x.date === target.date);
+    })[0];
     if (!p) return;
     if (!p.votes) p.votes = {};
     if (typeof p.votes[wgNick()] === 'number') { wgToast('이미 투표했어요!'); return; }
     p.votes[wgNick()] = choice;
     wgTruthSaveShared(list);
-    if (choice === p.lie) wgAddInk(5, '(명탐정!)');
+    // 자기가 낸 문제는 정답을 이미 알고 있으므로 잉크를 주지 않음 (악용 방지)
+    const isMine = (p.nick === wgNick());
+    if (choice === p.lie && !isMine) {
+      wgAddInk(5, '(명탐정!)');
+    } else if (choice === p.lie && isMine) {
+      wgToast('내가 낸 문제라 잉크는 없지만, 정답이에요! 😊');
+    }
     wgTruthFriends();
   }
   window.wgTruthVote = wgTruthVote;
