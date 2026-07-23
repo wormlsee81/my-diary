@@ -151,7 +151,9 @@
     { name: '상상력 온도조절사', el: 'badge_wg11' },
     { name: '모두의 친구',       el: 'badge_wg12' },
     { name: '흐림을 걷은 아이',  el: 'badge_wg13' },
-    { name: '이야기의 주인',     el: 'badge_wg14' }
+    { name: '이야기의 주인',     el: 'badge_wg14' },
+    { name: '대충이 퇴치사',     el: 'badge_wg15' },
+    { name: '지움을 배웅한 아이', el: 'badge_wg16' }
   ];
 
   function wgRegisterBadges() {
@@ -439,7 +441,9 @@
       '.wg-dex-em { font-size: 24px; line-height: 1.2; }',
       '.wg-dex-nm { font-size: 10.5px; color: #6b6255; margin-top: 2px; }',
       '.wg-weather { display: flex; align-items: center; gap: 10px; margin: 4px 0 10px; padding: 10px 12px; border-radius: 12px; background: linear-gradient(135deg,#eef6ff,#fff8ec); border: 1px solid #cfe0f5; font-size: 13px; }',
-      '.wg-w-em { font-size: 28px; flex: 0 0 auto; }'
+      '.wg-w-em { font-size: 28px; flex: 0 0 auto; }',
+      '.wg-artbox { width: 132px; height: 132px; margin: 6px auto 8px; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 40%, #ffffff, #f3f0e8); border-radius: 50%; box-shadow: inset 0 0 0 2px #eae5d8; }',
+      '.wg-artbox.dark { background: radial-gradient(circle at 50% 40%, #f2f2f8, #dcdce8); box-shadow: inset 0 0 0 2px #cfcfe0; }'
     ].join('\n');
     document.head.appendChild(st);
   }
@@ -2927,6 +2931,12 @@
     { id: 'robot',   em: '🤖', name: '고장난 로봇',    home: '틔움',
       lost: '차례(순서)',
       intro: '삐빅. 저는 시킨 것만, 시킨 그대로만 합니다. 하나라도 빠뜨리면… 이상한 일이 벌어져요.' },
+    { id: 'lazy',    em: '😶‍🌫️', name: '대충이',          home: '네 마음속', art: 'daechung',
+      lost: '(흐림이 아니라 게으름에서 태어남)',
+      intro: '이만하면 됐잖아~ 누가 본다고. 나랑 놀자, 응?' },
+    { id: 'jium',    em: '🖤', name: '지움',            home: '안개 너머', art: 'jium',
+      lost: '아주 소중했던 무언가',
+      intro: '적어 두면 나중에 더 아파. …나는 아프지 않게 해 주는 거야.' },
     { id: 'editor',  em: '🔍', name: '기록 검사관',    home: '지음',
       lost: '흐려진 옛 기록들',
       intro: '사실과 의견이 뒤엉킨 기록에는 흐림이 스며. 무엇이 일어난 일이고 무엇이 네 생각인지 가려 두게.' }
@@ -2952,7 +2962,7 @@
     _wgMeetThen = thenFn || null;
     wgOpenModal(
       '<div class="wg-note" style="text-align:center;">✨ 새로운 만남</div>' +
-      '<div style="text-align:center;font-size:56px;margin:6px 0;">' + c.em + '</div>' +
+      (c.art ? '<div class="wg-artbox">' + WG_ART[c.art] + '</div>' : '<div style="text-align:center;font-size:56px;margin:6px 0;">' + c.em + '</div>') +
       '<h3 style="text-align:center;margin:0 0 4px;">' + wgEsc(c.name) + '</h3>' +
       '<div class="wg-note" style="text-align:center;">사는 곳: ' + wgEsc(c.home) +
         ' · 흐림에 빼앗긴 것: ' + wgEsc(c.lost) + '</div>' +
@@ -2987,7 +2997,7 @@
     const c = wgCastById(id);
     if (!c) return;
     wgOpenModal(
-      '<div style="text-align:center;font-size:56px;margin:6px 0;">' + c.em + '</div>' +
+      (c.art ? '<div class="wg-artbox">' + WG_ART[c.art] + '</div>' : '<div style="text-align:center;font-size:56px;margin:6px 0;">' + c.em + '</div>') +
       '<h3 style="text-align:center;margin:0 0 4px;">' + wgEsc(c.name) + '</h3>' +
       '<div class="wg-note" style="text-align:center;">사는 곳: ' + wgEsc(c.home) +
         ' · 흐림에 빼앗긴 것: ' + wgEsc(c.lost) + '</div>' +
@@ -3111,6 +3121,7 @@
         const e = WG_ENDINGS[i];
         if (seen.indexOf(e.id) !== -1) continue;
         if (!e.cond()) continue;
+        if (e.id === 'true' && wgCheckJiumFinal()) return true;   // 떠남 먼저
         seen.push(e.id);
         wgSave('endings', seen);
         if (e.badge) wgAddBadge(e.badge);
@@ -3371,6 +3382,209 @@
     } catch (e) {}
   }
 
+  /* ══════════════════════════════════════════════════════════
+     16.9 악역 [v9 신규] — 대충이 & 지움
+
+     설계 원칙: 「흐림은 악당이 아니다」는 원래 설정을 깨지 않는다.
+       · 대충이 = 아이 안의 '이만하면 됐지' 하는 마음을 밖으로 꺼낸 것
+                  (외부의 적이 아니라 자기 유혹의 의인화)
+       · 지움   = 흐림을 퍼뜨리지만 악의가 아니라 '상실의 아픔' 때문
+                  물리치지 않고 설득한다. 결말은 화해가 아니라 '떠남'.
+     그림은 인라인 SVG (외부 이미지 의존 없음)
+     ══════════════════════════════════════════════════════════ */
+
+  const WG_ART = {
+    /* 대충이 — 축 늘어진 잿빛 덩어리, 졸린 눈, 하품 */
+    daechung:
+      '<svg viewBox="0 0 140 130" width="100%" height="100%" role="img" aria-label="대충이">' +
+      '<ellipse cx="70" cy="112" rx="44" ry="8" fill="#00000014"/>' +
+      '<path d="M26 92 q-4 -46 44 -48 q48 2 44 48 q2 16 -14 17 h-60 q-16 -1 -14 -17 z" fill="#c9c2b4"/>' +
+      '<path d="M34 86 q-3 -38 36 -40 q39 2 36 40 q2 13 -11 14 h-50 q-13 -1 -11 -14 z" fill="#ddd7cb"/>' +
+      '<path d="M50 66 q8 7 16 0" stroke="#6b6355" stroke-width="4" fill="none" stroke-linecap="round"/>' +
+      '<path d="M74 66 q8 7 16 0" stroke="#6b6355" stroke-width="4" fill="none" stroke-linecap="round"/>' +
+      '<ellipse cx="70" cy="86" rx="8" ry="10" fill="#8a8175"/>' +
+      '<ellipse cx="70" cy="89" rx="5" ry="6" fill="#6b6355"/>' +
+      '<circle cx="44" cy="78" r="5" fill="#00000010"/><circle cx="96" cy="78" r="5" fill="#00000010"/>' +
+      '<path d="M104 44 q7 -5 5 -12" stroke="#c9c2b4" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8"/>' +
+      '<path d="M112 34 q6 -4 4 -10" stroke="#c9c2b4" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".55"/>' +
+      '<text x="118" y="26" font-size="13" fill="#a89f90" opacity=".8">z</text>' +
+      '<text x="126" y="17" font-size="10" fill="#a89f90" opacity=".55">z</text>' +
+      '</svg>',
+
+    /* 지움 — 후드를 쓴 긴 형체, 얼굴이 비어 있고 발밑은 안개. 무섭기보다 쓸쓸하게 */
+    jium:
+      '<svg viewBox="0 0 140 150" width="100%" height="100%" role="img" aria-label="지움">' +
+      '<defs><linearGradient id="wgJiumG" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="#4a4a5e"/><stop offset="100%" stop-color="#2e2e3c"/>' +
+      '</linearGradient>' +
+      '<linearGradient id="wgFogG" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="#cfcfe0" stop-opacity="0"/><stop offset="100%" stop-color="#cfcfe0" stop-opacity=".85"/>' +
+      '</linearGradient></defs>' +
+      '<path d="M70 16 q30 0 34 40 l8 62 q-18 10 -42 10 t-42 -10 l8 -62 q4 -40 34 -40 z" fill="url(#wgJiumG)"/>' +
+      '<path d="M70 24 q22 0 25 30 q-11 12 -25 12 t-25 -12 q3 -30 25 -30 z" fill="#20202c"/>' +
+      '<path d="M56 52 q14 -9 28 0" stroke="#8f8fa8" stroke-width="2" fill="none" opacity=".5" stroke-linecap="round"/>' +
+      '<circle cx="70" cy="50" r="3.5" fill="#b9b9d4" opacity=".55"/>' +
+      '<path d="M18 116 q22 -10 52 -10 t52 10 v22 q-24 10 -52 10 t-52 -10 z" fill="url(#wgFogG)"/>' +
+      '<path d="M40 90 h26" stroke="#7b7b96" stroke-width="3" opacity=".35" stroke-linecap="round"/>' +
+      '<path d="M46 100 h34" stroke="#7b7b96" stroke-width="3" opacity=".22" stroke-linecap="round"/>' +
+      '<path d="M52 108 h18" stroke="#7b7b96" stroke-width="3" opacity=".12" stroke-linecap="round"/>' +
+      '<path d="M108 42 q10 6 12 16" stroke="#cfcfe0" stroke-width="2" fill="none" opacity=".35" stroke-linecap="round"/>' +
+      '<path d="M22 46 q-9 7 -10 17" stroke="#cfcfe0" stroke-width="2" fill="none" opacity=".3" stroke-linecap="round"/>' +
+      '</svg>'
+  };
+
+  /* ── 대충이: 짧게 쓰고 저장할 때 나타나는 유혹 (하루 1회) ── */
+  const WG_LAZY_LINES = [
+    '이만하면 됐잖아~ 누가 본다고.',
+    '오~ 짧게 끝냈네! 역시 똑똑해. 놀러 가자!',
+    '자세히 쓰면 손만 아파. 그치?',
+    '어차피 아무도 자세히 안 읽어. 대충 하자~'
+  ];
+
+  function wgLazyAppear() {
+    try {
+      const s = wgLoad('lazy', { date: '', shown: false, beaten: 0 });
+      if (s.date !== wgToday()) { s.date = wgToday(); s.shown = false; }
+      if (s.shown) return;
+      s.shown = true;
+      wgSave('lazy', s);
+
+      const line = WG_LAZY_LINES[Math.floor(Math.random() * WG_LAZY_LINES.length)];
+      setTimeout(function () {
+        wgOpenModal(
+          '<div class="wg-note" style="text-align:center;">😶‍🌫️ 누군가 나타났다</div>' +
+          '<div class="wg-artbox">' + WG_ART.daechung + '</div>' +
+          '<h3 style="text-align:center;margin:4px 0;">대충이</h3>' +
+          '<div class="wg-saga-story">' + wgEsc(line) + '</div>' +
+          '<div class="wg-saga-story" style="background:#f6f2ff;margin-top:8px;">🧚 …쟤 말 듣지 마. 근데 진짜로, 딱 <b>한 문장만</b> 더 쓰면 대충이는 사라져.</div>' +
+          '<button class="wg-btn" onclick="wgLazyFight()">✍️ 한 문장 더 써 볼래</button>' +
+          '<button class="wg-btn gray" onclick="wgLazyLet()">오늘은 이만</button>'
+        );
+      }, 600);
+    } catch (e) {}
+  }
+
+  function wgLazyFight() {
+    wgCloseModal();
+    const ta = wg$('diary');
+    if (ta) { ta.focus(); try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch (e) {} }
+    const s = wgLoad('lazy', { date: wgToday(), shown: true, beaten: 0 });
+    s.beaten = (s.beaten || 0) + 1;
+    wgSave('lazy', s);
+    wgPetSay('좋아! 대충이가 스르륵 사라졌어. 한 문장이면 충분했지? ✨');
+    if (s.beaten >= 5) wgAddBadge('대충이 퇴치사');
+  }
+  window.wgLazyFight = wgLazyFight;
+
+  function wgLazyLet() {
+    wgCloseModal();
+    wgPetSay('그래, 오늘은 여기까지도 좋아. 쓴 것만으로 이미 잉크가 생겼어 🌱');
+  }
+  window.wgLazyLet = wgLazyLet;
+
+  /* ── 지움: 3막 서사 (챕터 2 → 챕터 4 → 진 엔딩 직전) ── */
+  const WG_JIUM_ACTS = {
+    act1: {
+      title: '먼발치의 그림자',
+      scenes: [
+        { art: 'jium', text: '갑자기 요정이 말을 멈췄어.<br><br>🧚 "…누가 보고 있어."' },
+        { art: 'jium', text: '안개 속에 검은 형체가 서 있었어.<br>아무 말도 하지 않고, 그저 우리를 보고만 있었어.' },
+        { art: 'jium', text: '그러다 스르륵— 안개에 섞여 사라졌어.<br><br>🧚 "…저건 <b>지움</b>이야. 흐림을 <b>일부러</b> 퍼뜨리고 다니는 존재."' }
+      ]
+    },
+    act2: {
+      title: '지움의 말',
+      scenes: [
+        { art: 'jium', text: '이번엔 지움이 먼저 말을 걸었어.<br><br>🖤 "왜 자꾸 적지?"' },
+        { art: 'jium', text: '🖤 "적어 두면 나중에 더 아파.<br>나도 예전엔 전부 적어 뒀어. 하나도 빠짐없이."' },
+        { art: 'jium', text: '🖤 "…그런데 그게 전부 사라졌을 때,<br>차라리 <b>처음부터 없었으면</b> 했어."' },
+        { art: 'jium', text: '🧚 "그래서 세상의 이름을 지우고 다니는 거야?"<br><br>🖤 "아프지 않게 해 주는 거야. 이건 친절이야."' },
+        { art: 'jium', text: '지움은 대답을 기다리지 않고 돌아섰어.<br>발밑에서 안개가 더 짙게 번졌어.' }
+      ]
+    },
+    act3: {
+      title: '떠남',
+      scenes: [
+        { art: 'jium', text: '지움이 네 책 앞에 서 있었어.<br>손을 뻗어 첫 장을 펼쳤어.' },
+        { art: 'jium', text: '🖤 "…이 글씨. 서툴러."<br><br>🖤 "그런데 왜… <b>지워지지가 않지?</b>"' },
+        { art: 'jium', text: '🧚 "이 아이는 <b>진짜로 본 것</b>만 적었거든.<br>진짜는 잘 안 지워져."' },
+        { art: 'jium', text: '지움이 아주 오래 말이 없었어.<br><br>🖤 "…적어 두면, 정말 사라지지 않아?"' },
+        { art: 'jium', text: '🖤 "그럼… 나도 언젠가 적어 볼까.<br>내가 <b>잃어버린 것</b>에 대해서."' },
+        { art: 'jium', text: '지움이 돌아섰어.<br>그리고 처음으로 — <b>아무것도 지우지 않고</b> 안개 속으로 걸어갔어.<br><br>🧚 "…쫓아낸 게 아니야. 스스로 간 거야."' }
+      ]
+    }
+  };
+
+  let _wgAct = null, _wgActIdx = 0;
+
+  function wgPlayAct(key) {
+    const a = WG_JIUM_ACTS[key];
+    if (!a) return;
+    _wgAct = a; _wgActIdx = 0;
+    wgRenderAct();
+  }
+  window.wgPlayAct = wgPlayAct;
+
+  function wgRenderAct() {
+    const a = _wgAct;
+    if (!a) return;
+    const sc = a.scenes[_wgActIdx];
+    const last = (_wgActIdx >= a.scenes.length - 1);
+    wgOpenModal(
+      '<div class="wg-note" style="text-align:center;letter-spacing:2px;">— ' + wgEsc(a.title) + ' —</div>' +
+      '<div class="wg-artbox dark">' + (WG_ART[sc.art] || '') + '</div>' +
+      '<div class="wg-saga-story" style="font-size:14px;min-height:92px;line-height:1.9;">' + sc.text + '</div>' +
+      '<div class="wg-note" style="text-align:center;">' + (_wgActIdx + 1) + ' / ' + a.scenes.length + '</div>' +
+      '<button class="wg-btn" onclick="wgActNext()">' + (last ? '…' : '다음 →') + '</button>' +
+      (last ? '' : '<button class="wg-btn gray" onclick="wgActSkip()">건너뛰기</button>')
+    );
+  }
+
+  function wgActNext() {
+    if (!_wgAct) { wgCloseModal(); return; }
+    if (_wgActIdx >= _wgAct.scenes.length - 1) { wgActSkip(); return; }
+    _wgActIdx++;
+    wgRenderAct();
+  }
+  window.wgActNext = wgActNext;
+
+  function wgActSkip() {
+    _wgAct = null;
+    wgCloseModal();
+    setTimeout(function () { wgCheckEnding(); }, 500);
+  }
+  window.wgActSkip = wgActSkip;
+
+  /** 챕터 진행에 맞춰 지움의 막을 재생 */
+  function wgCheckJium(clearedChapters) {
+    try {
+      const seen = wgLoad('jium', []);
+      let key = null;
+      if (clearedChapters >= 2 && seen.indexOf('act1') === -1) key = 'act1';
+      else if (clearedChapters >= 4 && seen.indexOf('act2') === -1) key = 'act2';
+      if (!key) return false;
+      seen.push(key);
+      wgSave('jium', seen);
+      if (key === 'act1') { const m = wgLoad('cast', []); if (m.indexOf('jium') === -1) { m.push('jium'); wgSave('cast', m); } }
+      setTimeout(function () { wgPlayAct(key); }, 1100);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  /** 진 엔딩 직전 3막(떠남) */
+  function wgCheckJiumFinal() {
+    try {
+      const seen = wgLoad('jium', []);
+      if (seen.indexOf('act3') !== -1) return false;
+      if (seen.indexOf('act2') === -1) return false;
+      seen.push('act3');
+      wgSave('jium', seen);
+      wgAddBadge('지움을 배웅한 아이');
+      setTimeout(function () { wgPlayAct('act3'); }, 700);
+      return true;
+    } catch (e) { return false; }
+  }
+
   /* ── Phase 2: 퀘스트 카운터 (챕터 목표 추적) ── */
   function wgQuestAll() {
     return wgLoad('quest', {});
@@ -3563,6 +3777,7 @@
         const chs = wgChapters();
         const next = chs[Math.min(now, chs.length - 1)];
         wgFireworks();
+        if (wgCheckJium(now)) return;   // 지움 서사가 우선
         if (now >= 5) { setTimeout(function () { wgCheckEnding(); }, 1200); return; }
         setTimeout(function () {
           wgOpenModal(
@@ -3649,6 +3864,7 @@
           wgQuestBump('diary');
           wgLoreSay('diary');
           wgCheckMilestone();
+          try { const _t = wgDiaryText(); if (_t && _t.length < 80) wgLazyAppear(); } catch (e2) {}
           wgCheckChapterUp();
         } catch (e) {}
         return r;
