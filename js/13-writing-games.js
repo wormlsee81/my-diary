@@ -401,7 +401,25 @@
       '.wg-vote.wrong { background: #fde8e8; border-color: #e17055; }',
       '@keyframes wgPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(108,92,231,.45); } 50% { box-shadow: 0 0 0 9px rgba(108,92,231,0); } }',
       '.wg-pulse { animation: wgPulse 1.4s ease-in-out 6; }',
-      '#wgDetBtn { margin: 6px 0; display: block; }'
+      '#wgDetBtn { margin: 6px 0; display: block; }',
+      /* ── 1순위: 게임별 진행바 ── */
+      '.wg-prog { margin-top: 5px; height: 7px; border-radius: 6px; background: #ece8dd; overflow: hidden; }',
+      '.wg-prog-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg,#7ed6a5,#6c5ce7); transition: width .4s ease; }',
+      '.wg-prog-fill.done { background: linear-gradient(90deg,#ffd166,#f4c430); }',
+      '.wg-prog-label { font-size: 11px; color: #999; margin-top: 2px; }',
+      /* ── 2순위: 오늘의 미션 위젯 ── */
+      '.wg-daily { margin: 4px 0 12px; padding: 12px 14px; border-radius: 12px; background: linear-gradient(135deg,#f4f1ff,#fff5ec); border: 2px solid #d7cff5; }',
+      '.wg-daily-head { display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 800; color: #6c5ce7; margin-bottom: 8px; }',
+      '.wg-daily-bar { height: 9px; border-radius: 6px; background: #e5e0f5; overflow: hidden; margin-bottom: 10px; }',
+      '.wg-daily-bar-fill { height: 100%; background: linear-gradient(90deg,#7ed6a5,#6c5ce7); border-radius: 6px; transition: width .5s ease; }',
+      '.wg-mission { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 5px 0; }',
+      '.wg-mission .mk { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }',
+      '.wg-mission.on .mk { background: #7ed6a5; color: #fff; }',
+      '.wg-mission.off .mk { background: #ddd; color: #fff; }',
+      '.wg-mission.on { color: #555; }',
+      '.wg-mission.off { color: #888; }',
+      '.wg-mission .mgo { margin-left: auto; font-size: 11px; color: #6c5ce7; cursor: pointer; text-decoration: underline; }',
+      '.wg-daily-done { text-align: center; font-size: 13px; font-weight: 700; color: #00b894; padding: 4px; }'
     ].join('\n');
     document.head.appendChild(st);
   }
@@ -938,6 +956,7 @@
     const s = wgLoad('monster', { kills: 0 });
     s.kills = (s.kills || 0) + 1;
     wgSave('monster', s);
+    wgBumpDaily('monster');
     wgAddInk(15, '(몬스터 처치!)');
     if (s.kills >= 10) wgAddBadge('몬스터 헌터');
     wgNextMonster();
@@ -1045,6 +1064,7 @@
 
     _wgCombo.current = next;
     _wgCombo.level += 1;
+    if (_wgCombo.level === 2) wgBumpDaily('combo');   // 2단계 도달 시 미션 달성
 
     const reward = WG_COMBO_REWARDS[_wgCombo.level];
     if (reward && !_wgCombo.rewarded[_wgCombo.level]) {
@@ -1180,6 +1200,7 @@
       const s = wgLoad('tele', { wins: 0 });
       s.wins = (s.wins || 0) + 1;
       wgSave('tele', s);
+      wgBumpDaily('tele');
       wgAddInk(reward, '(텔레파시 성공!)');
       if (s.wins >= 5) wgAddBadge('텔레파시 마스터');
       wgPetSay('통했다! 네 설명이 그림처럼 생생했나 봐 📡✨');
@@ -1310,6 +1331,7 @@
     const s = wgLoad('diet', { wins: 0 });
     s.wins = (s.wins || 0) + 1;
     wgSave('diet', s);
+    wgBumpDaily('diet');
     wgAddInk(15, '(다이어트 성공!)');
     if (s.wins >= 5) wgAddBadge('문장 요리사');
     wgOpenModal(
@@ -2163,6 +2185,7 @@
     if (typeof p.votes[wgNick()] === 'number') { wgToast('이미 투표했어요!'); return; }
     p.votes[wgNick()] = choice;
     wgTruthSaveShared(list);
+    wgBumpDaily('truth');
     // 자기가 낸 문제는 정답을 이미 알고 있으므로 잉크를 주지 않음 (악용 방지)
     const isMine = (p.nick === wgNick());
     if (choice === p.lie && !isMine) {
@@ -2329,6 +2352,7 @@
     s.plays = (s.plays || 0) + 1;
     if (diff > (s.bestDiff || 0)) s.bestDiff = diff;
     wgSave('temp', s);
+    wgBumpDaily('temp');
     wgAddInk(reward, '(온도 조절!)');
     if (s.plays >= 5) wgAddBadge('상상력 온도조절사');
     if (diff >= 40) wgFireworks();
@@ -2577,6 +2601,117 @@
     document.body.appendChild(btn);
   }
 
+  /* ── 1순위: 게임별 진행바 HTML 생성 (현재값/목표) ── */
+  function wgProgBar(cur, goal, unit) {
+    const c = Math.max(0, cur);
+    const g = Math.max(1, goal);
+    const pct = Math.min(100, Math.round((c / g) * 100));
+    const done = c >= g;
+    const label = done
+      ? '🏆 뱃지 획득 완료!'
+      : (unit || '') + ' ' + c + ' / ' + g + ' — ' + (g - c) + '번 더!';
+    return '<div class="wg-prog"><div class="wg-prog-fill' + (done ? ' done' : '') +
+      '" style="width:' + pct + '%"></div></div>' +
+      '<div class="wg-prog-label">' + label + '</div>';
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     2순위: 오늘의 미션 — 매일 3개, 날짜 시드로 선정.
+     보상은 절제(완수 시 보너스 20💧, 일일 상한 내). 성취감 위주.
+     각 게임의 '오늘 진척'을 자체 통계로 판정한다.
+     ══════════════════════════════════════════════════════════ */
+
+  // 미션 후보 풀: {키, 라벨, 목표, 진척함수, 게임진입함수}
+  function wgMissionPool() {
+    return [
+      { id: 'bingo', label: '오감 빙고 한 줄 이상 켜기', goal: 1,
+        prog: function () { const s = wgLoad('bingo', { date: '', maxRewarded: 0 }); return (s.date === wgToday()) ? Math.min(1, s.maxRewarded) : 0; },
+        go: null, hint: '일기 화면에서 표현 쓰기' },
+      { id: 'monster', label: '맞춤법 몬스터 2마리 처치', goal: 2,
+        prog: function () { const s = wgLoad('monsterDaily', { date: '', n: 0 }); return (s.date === wgToday()) ? s.n : 0; },
+        go: 'wgStartMonsterHunt' },
+      { id: 'tele', label: '텔레파시 1번 성공', goal: 1,
+        prog: function () { const s = wgLoad('teleDaily', { date: '', n: 0 }); return (s.date === wgToday()) ? s.n : 0; },
+        go: 'wgStartTelepathy' },
+      { id: 'diet', label: '문장 다이어트 1번 성공', goal: 1,
+        prog: function () { const s = wgLoad('dietDaily', { date: '', n: 0 }); return (s.date === wgToday()) ? s.n : 0; },
+        go: 'wgStartDiet' },
+      { id: 'temp', label: '상상력 온도 다이얼 1번', goal: 1,
+        prog: function () { const s = wgLoad('tempDaily', { date: '', n: 0 }); return (s.date === wgToday()) ? s.n : 0; },
+        go: 'wgStartTemp' },
+      { id: 'combo', label: '문장 늘리기 2단계 이상', goal: 1,
+        prog: function () { const s = wgLoad('comboDaily', { date: '', n: 0 }); return (s.date === wgToday()) ? s.n : 0; },
+        go: 'wgStartCombo' },
+      { id: 'truth', label: '진실게임 1문제 도전', goal: 1,
+        prog: function () { const s = wgLoad('truthDaily', { date: '', n: 0 }); return (s.date === wgToday()) ? s.n : 0; },
+        go: 'wgStartTruth' }
+    ];
+  }
+
+  /** 오늘의 미션 3개 선정 (날짜 시드로 고정) */
+  function wgTodayMissions() {
+    return wgSeedPick(wgMissionPool(), 3, 'mission-' + wgToday());
+  }
+
+  /** 일일 진척 카운터 증가 (각 게임 성공 시 호출) */
+  function wgBumpDaily(key) {
+    const s = wgLoad(key + 'Daily', { date: '', n: 0 });
+    if (s.date !== wgToday()) { s.date = wgToday(); s.n = 0; }
+    s.n += 1;
+    wgSave(key + 'Daily', s);
+  }
+
+  /** 오늘의 미션 위젯 HTML */
+  function wgDailyMissionHtml() {
+    const missions = wgTodayMissions();
+    let doneCount = 0;
+    const rows = missions.map(function (m) {
+      const cur = m.prog();
+      const done = cur >= m.goal;
+      if (done) doneCount++;
+      return '<div class="wg-mission ' + (done ? 'on' : 'off') + '">' +
+        '<span class="mk">' + (done ? '✓' : '○') + '</span>' +
+        '<span>' + wgEsc(m.label) + ' <span style="color:#aaa">(' + Math.min(cur, m.goal) + '/' + m.goal + ')</span></span>' +
+        (!done && m.go ? '<span class="mgo" onclick="' + m.go + '()">하러가기</span>' : '') +
+        '</div>';
+    }).join('');
+
+    const allDone = (doneCount >= missions.length);
+    const claimed = wgLoad('missionClaim', { date: '' }).date === wgToday();
+    const pct = Math.round((doneCount / missions.length) * 100);
+
+    let footer;
+    if (allDone && !claimed) {
+      footer = '<div class="wg-daily-done"><button class="wg-btn" style="padding:7px 16px;" onclick="wgClaimMission()">🎁 완주 보너스 받기 (+20💧)</button></div>';
+    } else if (allDone && claimed) {
+      footer = '<div class="wg-daily-done">🎉 오늘 미션 완주! 내일 새 미션이 기다려요</div>';
+    } else {
+      footer = '';
+    }
+
+    return '<div class="wg-daily">' +
+      '<div class="wg-daily-head"><span>📋 오늘의 미션</span><span style="font-size:12px;color:#888;">' + doneCount + '/' + missions.length + ' 완료</span></div>' +
+      '<div class="wg-daily-bar"><div class="wg-daily-bar-fill" style="width:' + pct + '%"></div></div>' +
+      rows + footer +
+      '</div>';
+  }
+
+  /** 미션 완주 보너스 지급 (하루 1회) */
+  function wgClaimMission() {
+    const claim = wgLoad('missionClaim', { date: '' });
+    if (claim.date === wgToday()) { wgToast('오늘 보너스는 이미 받았어요!'); return; }
+    // 실제로 다 완료했는지 재확인
+    const missions = wgTodayMissions();
+    const allDone = missions.every(function (m) { return m.prog() >= m.goal; });
+    if (!allDone) { wgToast('아직 미션이 남았어요!'); return; }
+    claim.date = wgToday();
+    wgSave('missionClaim', claim);
+    wgAddInk(20, '(오늘의 미션 완주!)');
+    wgFireworks();
+    wgOpenHub();   // 허브 새로고침
+  }
+  window.wgClaimMission = wgClaimMission;
+
   function wgOpenHub() {
     const inkUsed = wgInkStatus();
     const craving = wgTodayCraving();
@@ -2600,14 +2735,15 @@
     wgOpenModal(
       '<h3>🎮 글쓰기 게임 센터</h3>' +
       '<p class="wg-note">오늘 게임 잉크: <b>' + inkUsed + ' / ' + WG_INK_DAILY_CAP + '</b> · 잉크보다 값진 건 늘어나는 표현력!</p>' +
+      wgDailyMissionHtml() +
 
       '<div class="wg-stage">🌱 돋움 — 표현·문장 훈련</div>' +
-      '<button class="wg-menu-btn" onclick="wgStartTelepathy()">📡 텔레파시 (사물/감정)' + star('tele') + ' <span class="wg-note">— 이름 없이 설명만으로 전달 · 성공 ' + teleWins + '번</span></button>' +
-      '<button class="wg-menu-btn" onclick="wgStartMonsterHunt()">⚔️ 맞춤법 몬스터 사냥' + star('monster') + ' <span class="wg-note">— 매판 새 문제 · 처치 ' + kills + '마리</span></button>' +
+      '<button class="wg-menu-btn" onclick="wgStartTelepathy()">📡 텔레파시 (사물/감정)' + star('tele') + ' <span class="wg-note">— 이름 없이 설명만으로 전달 · 성공 ' + teleWins + '번</span>' + wgProgBar(teleWins, 5, '성공') + '</button>' +
+      '<button class="wg-menu-btn" onclick="wgStartMonsterHunt()">⚔️ 맞춤법 몬스터 사냥' + star('monster') + ' <span class="wg-note">— 매판 새 문제 · 처치 ' + kills + '마리</span>' + wgProgBar(kills, 10, '처치') + '</button>' +
       '<button class="wg-menu-btn" onclick="wgStartCombo()">🪄 문장 늘리기 콤보' + star('combo') + ' <span class="wg-note">— 문장을 6겹까지 키우기</span></button>' +
-      '<button class="wg-menu-btn" onclick="wgStartDiet()">✂️ 문장 다이어트' + star('diet') + ' <span class="wg-note">— 군더더기 빼고 핵심만 · 성공 ' + dietWins + '번</span></button>' +
+      '<button class="wg-menu-btn" onclick="wgStartDiet()">✂️ 문장 다이어트' + star('diet') + ' <span class="wg-note">— 군더더기 빼고 핵심만 · 성공 ' + dietWins + '번</span>' + wgProgBar(dietWins, 5, '성공') + '</button>' +
       '<button class="wg-menu-btn" onclick="wgOpenAuction()">🔨 오늘의 낱말 경매' + star('auction') + ' <span class="wg-note">— ' + wgEsc(auState) + '</span></button>' +
-      '<button class="wg-menu-btn" onclick="wgStartTemp()">🌡️ 상상력 온도 다이얼' + star('temp') + ' <span class="wg-note">— 뻔하게 vs 참신하게, 두 온도로 이어 쓰기 · 도전 ' + tempPlays + '번</span></button>' +
+      '<button class="wg-menu-btn" onclick="wgStartTemp()">🌡️ 상상력 온도 다이얼' + star('temp') + ' <span class="wg-note">— 뻔하게 vs 참신하게, 두 온도로 이어 쓰기 · 도전 ' + tempPlays + '번</span>' + wgProgBar(tempPlays, 5, '도전') + '</button>' +
 
       '<div class="wg-stage">✍️ 이음 — 그림일기와 함께</div>' +
       '<button class="wg-menu-btn" onclick="wgStartSmuggle()">🕵️ 비밀 단어 밀수꾼' + star('smuggle') + ' <span class="wg-note">— ' + wgEsc(smState) + '</span></button>' +
