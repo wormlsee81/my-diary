@@ -147,7 +147,8 @@
     { name: '로봇 조련사',     el: 'badge_wg7' },
     { name: '슬쩍 넣기 달인',  el: 'badge_wg8' },
     { name: '명탐정 기자',     el: 'badge_wg9' },
-    { name: '진실 탐정',       el: 'badge_wg10' }
+    { name: '진실 탐정',       el: 'badge_wg10' },
+    { name: '상상력 온도조절사', el: 'badge_wg11' }
   ];
 
   function wgRegisterBadges() {
@@ -2174,6 +2175,183 @@
   window.wgTruthVote = wgTruthVote;
 
   /* ══════════════════════════════════════════════════════════
+     13.5 게임 ⑬ 상상력 온도 다이얼 [v4 신규 — 돋움(표현 훈련) 계열]
+         AI의 'temperature(창의성 조절)' 원리를 눈에 보이는 다이얼로.
+         같은 문장 시작을 ❄️차갑게(뻔하게) / 🔥뜨겁게(참신하게) 두 번
+         이어 써서, 상투적 표현을 '알고' 벗어나는 발산적 사고 훈련.
+         [6국03-04] 창의적 표현 · 상투성 탈피와 연결.
+         · AI는 각 버전의 '예상 가능도'를 0~100°로 판정(temperature 0)
+         · 두 버전의 온도 차가 클수록(둘 다 잘 구사) 보너스
+         · 판정 점수는 다소 흔들릴 수 있어 '방향(차/뜨)'에 무게를 둠
+     ══════════════════════════════════════════════════════════ */
+
+  const WG_TEMP_STARTERS = [
+    '학교 가는 길에 갑자기',
+    '교실 문을 열었더니',
+    '내 짝꿍이 오늘따라',
+    '급식 시간에 국을 뜨는데',
+    '운동장에 나갔더니 하늘에서',
+    '가방을 열어 보니 그 안에',
+    '집에 돌아와 냉장고를 열자',
+    '창밖을 봤더니 놀랍게도',
+    '친구가 내 귀에 대고 속삭였다,',
+    '체육 시간에 공을 찼는데 그 공이',
+    '아침에 눈을 뜨자 내 방이',
+    '할머니 댁에 갔더니 마당에',
+    '길에서 주운 상자를 열었더니',
+    '수업 중에 갑자기 창문으로',
+    '내가 기르는 강아지가 오늘',
+    '도서관에서 책을 펼쳤더니 글자가',
+    '엘리베이터 문이 열리자',
+    '숙제를 하려고 연필을 들었는데',
+    '놀이터 미끄럼틀을 타고 내려오니',
+    '비가 그친 뒤 웅덩이를 들여다보니'
+  ];
+
+  let _wgTemp = { starter: '', phase: 'cold', cold: '', hot: '' };
+  let _wgTempBusy = false;
+
+  function wgStartTemp() {
+    const starter = WG_TEMP_STARTERS[Math.floor(Math.random() * WG_TEMP_STARTERS.length)];
+    _wgTemp = { starter: starter, phase: 'cold', cold: '', hot: '' };
+    wgTempRenderCold('');
+  }
+  window.wgStartTemp = wgStartTemp;
+
+  /** 온도 게이지 SVG (0~100°) */
+  function wgTempGauge(deg) {
+    const d = Math.max(0, Math.min(100, deg));
+    const pct = d / 100;
+    // 색: 낮으면 파랑, 높으면 빨강
+    const hue = Math.round(210 - pct * 210);   // 210(파랑)→0(빨강)
+    return '<div style="margin:8px 0;">' +
+      '<div style="height:16px;border-radius:10px;background:linear-gradient(90deg,#4a90e2,#7ed6a5,#ffd166,#ff6b6b);position:relative;">' +
+        '<div style="position:absolute;top:-4px;left:calc(' + d + '% - 3px);width:6px;height:24px;background:#333;border-radius:3px;"></div>' +
+      '</div>' +
+      '<div style="text-align:center;font-weight:800;font-size:18px;color:hsl(' + hue + ',70%,45%);margin-top:4px;">' + d + '°</div>' +
+    '</div>';
+  }
+
+  function wgTempRenderCold(msg) {
+    wgOpenModal(
+      '<h3>🌡️ 상상력 온도 다이얼</h3>' +
+      '<p class="wg-note">AI는 "온도"로 글의 상상력을 조절해요. 낮으면 뻔하게, 높으면 엉뚱하게!<br>같은 문장을 <b>두 가지 온도</b>로 이어 써 볼까요?</p>' +
+      '<div class="wg-target" style="font-size:17px;">' + wgEsc(_wgTemp.starter) + ' …</div>' +
+      '<p class="wg-note">❄️ <b>1단계 — 차가운 버전</b><br>누구나 예상할 만한, <b>가장 뻔한</b> 다음 이야기를 이어 써 보세요. (일부러 평범하게!)</p>' +
+      '<input class="wg-input" id="wgTempInput" placeholder="예) 비가 내리기 시작했다">' +
+      '<div id="wgTempMsg" class="wg-note">' + wgEsc(msg || '') + '</div>' +
+      '<button class="wg-btn" id="wgTempBtn" onclick="wgTempSubmitCold()">❄️ 차가운 버전 완성!</button>' +
+      '<button class="wg-btn gray" onclick="wgCloseModal()">닫기</button>'
+    );
+    const inp = document.getElementById('wgTempInput');
+    if (inp) { inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') wgTempSubmitCold(); }); inp.focus(); }
+  }
+
+  function wgTempSubmitCold() {
+    const inp = document.getElementById('wgTempInput');
+    const msg = document.getElementById('wgTempMsg');
+    const v = inp ? inp.value.trim() : '';
+    if (v.length < 4) { if (msg) msg.textContent = '조금만 더 써 볼까요? (4자 이상)'; return; }
+    if (!wgClean(v)) { if (msg) msg.textContent = '고운 말로 써 주세요!'; return; }
+    _wgTemp.cold = v;
+    _wgTemp.phase = 'hot';
+    wgTempRenderHot('');
+  }
+  window.wgTempSubmitCold = wgTempSubmitCold;
+
+  function wgTempRenderHot(msg) {
+    wgOpenModal(
+      '<h3>🌡️ 상상력 온도 다이얼</h3>' +
+      '<div class="wg-target" style="font-size:17px;">' + wgEsc(_wgTemp.starter) + ' …</div>' +
+      '<div class="wg-sentence" style="background:#eef6ff;">❄️ 차가운 버전: ' + wgEsc(_wgTemp.cold) + '</div>' +
+      '<p class="wg-note">🔥 <b>2단계 — 뜨거운 버전</b><br>이번엔 <b>아무도 예상 못 할</b> 엉뚱하고 놀라운 전개로 이어 써 보세요! (마음껏 상상!)</p>' +
+      '<input class="wg-input" id="wgTempInput" placeholder="예) 하늘에서 알록달록한 우산이 쏟아졌다">' +
+      '<div id="wgTempMsg" class="wg-note">' + wgEsc(msg || '') + '</div>' +
+      '<button class="wg-btn green" id="wgTempBtn" onclick="wgTempSubmitHot()">🔥 뜨거운 버전 완성!</button>' +
+      '<button class="wg-btn gray" onclick="wgCloseModal()">닫기</button>'
+    );
+    const inp = document.getElementById('wgTempInput');
+    if (inp) { inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') wgTempSubmitHot(); }); inp.focus(); }
+  }
+
+  async function wgTempSubmitHot() {
+    if (_wgTempBusy) return;
+    const inp = document.getElementById('wgTempInput');
+    const msg = document.getElementById('wgTempMsg');
+    const btn = document.getElementById('wgTempBtn');
+    const v = inp ? inp.value.trim() : '';
+    if (v.length < 4) { if (msg) msg.textContent = '조금만 더 써 볼까요? (4자 이상)'; return; }
+    if (!wgClean(v)) { if (msg) msg.textContent = '고운 말로 써 주세요!'; return; }
+    _wgTemp.hot = v;
+
+    _wgTempBusy = true;
+    if (btn) { btn.disabled = true; btn.textContent = '🌡️ 온도 측정 중…'; }
+
+    // AI가 두 버전의 '예상 가능도'를 0~100°로 판정 (temperature 0 → 재현성)
+    const parsed = wgParseJSON(await wgCallAI(
+      '너는 문장의 "예상 가능도"를 재는 온도계야. 뻔하고 예측되는 전개일수록 낮은 온도(0에 가까움), 참신하고 놀라운 전개일수록 높은 온도(100에 가까움)를 매겨. 반드시 JSON만 출력해.',
+      '문장 시작: "' + _wgTemp.starter + ' …"\n\n' +
+      'A안(차갑게 쓴 것): "' + _wgTemp.cold + '"\n' +
+      'B안(뜨겁게 쓴 것): "' + _wgTemp.hot + '"\n\n' +
+      '각 안이 문장 시작 뒤에 얼마나 예상 가능한지/참신한지를 0~100도로 매겨 줘.\n' +
+      '- coldDeg: A안의 온도 (뻔할수록 낮게)\n' +
+      '- hotDeg: B안의 온도 (참신할수록 높게)\n' +
+      '- comment: 초등학생 눈높이로, 두 버전의 차이를 칭찬하는 한 문장\n' +
+      '출력: {"coldDeg": 숫자, "hotDeg": 숫자, "comment": "한 문장"}',
+      300, 0
+    ));
+    _wgTempBusy = false;
+
+    let coldDeg, hotDeg, comment;
+    if (parsed && typeof parsed.coldDeg === 'number' && typeof parsed.hotDeg === 'number') {
+      coldDeg = Math.max(0, Math.min(100, Math.round(parsed.coldDeg)));
+      hotDeg = Math.max(0, Math.min(100, Math.round(parsed.hotDeg)));
+      comment = parsed.comment || '';
+    } else {
+      // AI 실패 시 폴백: 길이·감탄부호 등 간단 휴리스틱
+      coldDeg = 30; hotDeg = 70;
+      comment = '두 가지 온도로 잘 써 봤어요!';
+    }
+
+    const diff = hotDeg - coldDeg;   // 차가/뜨거 방향을 잘 구사했는가
+    let reward, verdict;
+    if (diff >= 40) {
+      reward = 25; verdict = '🎉 완벽한 온도 조절! 뻔함과 참신함을 자유자재로 오갔어요!';
+    } else if (diff >= 15) {
+      reward = 15; verdict = '👍 좋아요! 두 버전의 온도 차이가 느껴져요.';
+    } else if (diff > 0) {
+      reward = 8; verdict = '🙂 방향은 맞아요! 뜨거운 버전을 조금 더 과감하게 상상해 볼까요?';
+    } else {
+      reward = 5; verdict = '💡 두 버전이 비슷한 온도네요. 차가운 건 더 평범하게, 뜨거운 건 더 엉뚱하게!';
+    }
+
+    const s = wgLoad('temp', { plays: 0, bestDiff: 0 });
+    s.plays = (s.plays || 0) + 1;
+    if (diff > (s.bestDiff || 0)) s.bestDiff = diff;
+    wgSave('temp', s);
+    wgAddInk(reward, '(온도 조절!)');
+    if (s.plays >= 5) wgAddBadge('상상력 온도조절사');
+    if (diff >= 40) wgFireworks();
+
+    wgOpenModal(
+      '<h3>🌡️ 온도 측정 결과!</h3>' +
+      '<div class="wg-sentence" style="background:#eef6ff;">❄️ ' + wgEsc(_wgTemp.cold) + '</div>' +
+      wgTempGauge(coldDeg) +
+      '<div class="wg-sentence" style="background:#fff0ee;">🔥 ' + wgEsc(_wgTemp.hot) + '</div>' +
+      wgTempGauge(hotDeg) +
+      '<p style="text-align:center;font-weight:700;">온도 차이: ' + diff + '° · 잉크 +' + reward + '</p>' +
+      '<p class="wg-note">' + wgEsc(verdict) + '</p>' +
+      (comment ? '<p class="wg-note">🤖 온도계의 한마디: ' + wgEsc(comment) + '</p>' : '') +
+      '<p class="wg-note">💡 좋은 이야기는 온도를 마음대로 조절해요 — 뻔하게 안심시키다가, 확 놀라게!' +
+      (s.plays < 5 ? ' (5번 하면 뱃지!)' : '') + '</p>' +
+      '<button class="wg-btn" onclick="wgStartTemp()">새 문장으로 또!</button>' +
+      '<button class="wg-btn gray" onclick="wgCloseModal()">닫기</button>'
+    );
+  }
+  window.wgTempSubmitHot = wgTempSubmitHot;
+
+
+  /* ══════════════════════════════════════════════════════════
      14. 게임 ⑫ 기자 검증 게임 [v3 신규 — 지음(출판) 관문]
          내가 쓴 독서 신문 기사를 문장 카드로 나눠
          사실/의견을 가려낸다. [6국02-04]·[6국06-02] 대응.
@@ -2409,12 +2587,13 @@
     const dietWins = wgLoad('diet', { wins: 0 }).wins || 0;
     const robotClears = (wgLoad('robot', { clears: [] }).clears || []).length;
     const speedBest = wgLoad('speed', { best: 0 }).best || 0;
+    const tempPlays = wgLoad('temp', { plays: 0 }).plays || 0;
     const sm = wgLoad('smuggle', { date: '', done: false });
     const smState = (sm.date === wgToday() && sm.done) ? '오늘 완료 ✅' : '오늘의 임무 도착!';
     const au = wgAucState();
     const auState = au.refunded ? '오늘 정산 완료 ✅' : (au.items.length ? '낙찰 ' + au.items.length + '개 — 일기에 쓰면 환급!' : '단어 6개 경매 중');
 
-    const RECO = ['tele', 'monster', 'combo', 'diet', 'auction', 'smuggle', 'speed', 'truth', 'robot', 'det'];
+    const RECO = ['tele', 'monster', 'combo', 'diet', 'temp', 'auction', 'smuggle', 'speed', 'truth', 'robot', 'det'];
     const reco = wgSeedPick(RECO, 1, 'reco-' + wgToday())[0];
     const star = function (k) { return (k === reco) ? ' <b style="color:#f4c430">⭐오늘의 추천</b>' : ''; };
 
@@ -2428,6 +2607,7 @@
       '<button class="wg-menu-btn" onclick="wgStartCombo()">🪄 문장 늘리기 콤보' + star('combo') + ' <span class="wg-note">— 문장을 6겹까지 키우기</span></button>' +
       '<button class="wg-menu-btn" onclick="wgStartDiet()">✂️ 문장 다이어트' + star('diet') + ' <span class="wg-note">— 군더더기 빼고 핵심만 · 성공 ' + dietWins + '번</span></button>' +
       '<button class="wg-menu-btn" onclick="wgOpenAuction()">🔨 오늘의 낱말 경매' + star('auction') + ' <span class="wg-note">— ' + wgEsc(auState) + '</span></button>' +
+      '<button class="wg-menu-btn" onclick="wgStartTemp()">🌡️ 상상력 온도 다이얼' + star('temp') + ' <span class="wg-note">— 뻔하게 vs 참신하게, 두 온도로 이어 쓰기 · 도전 ' + tempPlays + '번</span></button>' +
 
       '<div class="wg-stage">✍️ 이음 — 그림일기와 함께</div>' +
       '<button class="wg-menu-btn" onclick="wgStartSmuggle()">🕵️ 비밀 단어 밀수꾼' + star('smuggle') + ' <span class="wg-note">— ' + wgEsc(smState) + '</span></button>' +
