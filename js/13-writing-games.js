@@ -153,7 +153,13 @@
     { name: '흐림을 걷은 아이',  el: 'badge_wg13' },
     { name: '이야기의 주인',     el: 'badge_wg14' },
     { name: '대충이 퇴치사',     el: 'badge_wg15' },
-    { name: '지움을 배웅한 아이', el: 'badge_wg16' }
+    { name: '지움을 배웅한 아이', el: 'badge_wg16' },
+    { name: '얼굴을 되찾아 준 아이', el: 'badge_wg17' },
+    { name: '말의 밭 주인',      el: 'badge_wg18' },
+    { name: '하루의 방 주인',    el: 'badge_wg19' },
+    { name: '숲을 깨운 아이',    el: 'badge_wg20' },
+    { name: '서고의 주인',       el: 'badge_wg21' },
+    { name: '고쳐 쓰는 사람',    el: 'badge_wg22' }
   ];
 
   function wgRegisterBadges() {
@@ -443,7 +449,10 @@
       '.wg-weather { display: flex; align-items: center; gap: 10px; margin: 4px 0 10px; padding: 10px 12px; border-radius: 12px; background: linear-gradient(135deg,#eef6ff,#fff8ec); border: 1px solid #cfe0f5; font-size: 13px; }',
       '.wg-w-em { font-size: 28px; flex: 0 0 auto; }',
       '.wg-artbox { width: 132px; height: 132px; margin: 6px auto 8px; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 40%, #ffffff, #f3f0e8); border-radius: 50%; box-shadow: inset 0 0 0 2px #eae5d8; }',
-      '.wg-artbox.dark { background: radial-gradient(circle at 50% 40%, #f2f2f8, #dcdce8); box-shadow: inset 0 0 0 2px #cfcfe0; }'
+      '.wg-artbox.dark { background: radial-gradient(circle at 50% 40%, #f2f2f8, #dcdce8); box-shadow: inset 0 0 0 2px #cfcfe0; }',
+      '.wg-board { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }',
+      '.wg-board-cell { text-align: center; padding: 8px; background: #faf8f2; border: 1px solid #e8e2d5; border-radius: 12px; }',
+      '.wg-board-art { width: 88px; height: 88px; margin: 0 auto 4px; }'
     ].join('\n');
     document.head.appendChild(st);
   }
@@ -472,6 +481,7 @@
   function wgCloseModal() {
     const ov = document.getElementById('wgOverlay');
     if (ov) ov.classList.remove('open');
+    try { wgQRelease(); } catch (e) {}   // 큐에 대기 중인 다음 이야기로
   }
   window.wgCloseModal = wgCloseModal;
 
@@ -2871,7 +2881,7 @@
         const cross = wgCrossRefLine(key);
         if (cross) line += ' ' + cross;
       }
-      wgPetSay(line);
+      wgSayQueued(line);
     } catch (e) {}
   }
 
@@ -2931,6 +2941,15 @@
     { id: 'robot',   em: '🤖', name: '고장난 로봇',    home: '틔움',
       lost: '차례(순서)',
       intro: '삐빅. 저는 시킨 것만, 시킨 그대로만 합니다. 하나라도 빠뜨리면… 이상한 일이 벌어져요.' },
+    { id: 'scale',   em: '🎚️', name: '저울잡이',       home: '이음·틔움',
+      lost: '한쪽으로만 기울던 저울',
+      intro: '주장은 무게가 있어. 근거 없이 던진 말은 가볍게 날아가 버리지. 네 말을 저울에 올려 볼까?' },
+    { id: 'trimmer', em: '✂️', name: '다듬는 이',      home: '이음',
+      lost: '처음 쓴 원고들',
+      intro: '고쳐 쓰는 건 못 써서가 아니야. 더 잘 쓸 수 있어서야. …그걸 아는 데 오래 걸렸어.' },
+    { id: 'picker',  em: '🕯️', name: '고르는 이',      home: '돋움',
+      lost: '자기가 고른 낱말들',
+      intro: '시에 쓸 말은 아무거나 되는 게 아니야. 많이 쓴다고 시가 되지도 않아. 딱 맞는 하나를 골라내는 거지.' },
     { id: 'lazy',    em: '😶‍🌫️', name: '대충이',          home: '네 마음속', art: 'daechung',
       lost: '(흐림이 아니라 게으름에서 태어남)',
       intro: '이만하면 됐잖아~ 누가 본다고. 나랑 놀자, 응?' },
@@ -2960,15 +2979,17 @@
       return true;
     }
     _wgMeetThen = thenFn || null;
-    wgOpenModal(
+    wgNarrate(WG_PRI.meet, 'meet_' + id, function (remain) {
+    wgQOpen(
       '<div class="wg-note" style="text-align:center;">✨ 새로운 만남</div>' +
       (c.art ? '<div class="wg-artbox">' + WG_ART[c.art] + '</div>' : '<div style="text-align:center;font-size:56px;margin:6px 0;">' + c.em + '</div>') +
       '<h3 style="text-align:center;margin:0 0 4px;">' + wgEsc(c.name) + '</h3>' +
       '<div class="wg-note" style="text-align:center;">사는 곳: ' + wgEsc(c.home) +
         ' · 흐림에 빼앗긴 것: ' + wgEsc(c.lost) + '</div>' +
       '<div class="wg-saga-story" style="margin-top:10px;">' + wgEsc(c.intro) + '</div>' +
-      '<button class="wg-btn" onclick="wgMeetGo()">만나러 가기 →</button>'
-    );
+      '<button class="wg-btn" onclick="wgMeetGo()">만나러 가기 →</button>',
+      remain);
+    });
     return true;
   }
   let _wgMeetThen = null;
@@ -3026,7 +3047,7 @@
       if (s.seen.indexOf(mod) !== -1) return;   // 하루 1회만
       s.seen.push(mod);
       wgSave('place', s);
-      setTimeout(function () { wgPetSay(p.line); }, 1400);
+      wgSayQueued(p.line);
     } catch (e) {}
   }
 
@@ -3048,6 +3069,35 @@
       };
       window._wgPlacePatched = true;
     }
+    // 틔움: 이야기 주고받기 → 숲의 안개가 걷힘
+    if (!window._wgStoryPatched && typeof window.sendStory === 'function') {
+      const _os = window.sendStory;
+      window.sendStory = async function () {
+        const r = await _os.apply(this, arguments);
+        try { wgQuestBump('ttieum'); wgForestProgress(); } catch (e) {}
+        return r;
+      };
+      window._wgStoryPatched = true;
+    }
+    // 지음: 그림책 저장 → 서고에 책이 꽂힘
+    if (!window._wgBookPatched && typeof window.saveCurrentBook === 'function') {
+      const _ob = window.saveCurrentBook;
+      window.saveCurrentBook = async function () {
+        const r = await _ob.apply(this, arguments);
+        try { wgQuestBump('book'); wgLibraryProgress(); wgCheckEnding(); } catch (e) {}
+        return r;
+      };
+      window._wgBookPatched = true;
+    }
+    if (!window._wgPoemPickPatched && typeof window.dodumGetPoeticWords === 'function') {
+      const _op = window.dodumGetPoeticWords;
+      window.dodumGetPoeticWords = async function () {
+        const r = await _op.apply(this, arguments);
+        try { wgPickerSay(); } catch (e) {}
+        return r;
+      };
+      window._wgPoemPickPatched = true;
+    }
     if (!window._wgDodumTabPatched && typeof window.switchDodumTab === 'function') {
       const _o2 = window.switchDodumTab;
       window.switchDodumTab = function (tab) {
@@ -3058,7 +3108,7 @@
           if (s.date !== wgToday()) { s.date = wgToday(); s.seen = []; }
           if (line && s.seen.indexOf(tab) === -1) {
             s.seen.push(tab); wgSave('dodumTabLore', s);
-            setTimeout(function () { wgPetSay(line); }, 700);
+            wgSayQueued(line);
           }
         } catch (e) {}
         return r;
@@ -3126,7 +3176,7 @@
         wgSave('endings', seen);
         if (e.badge) wgAddBadge(e.badge);
         wgFireworks();
-        setTimeout(function () { wgPlayEnding(e.id); }, 700);
+        wgNarrate(WG_PRI.ending, 'end_' + e.id, function () { wgPlayEnding(e.id); });
         return true;
       }
     } catch (err) {}
@@ -3276,7 +3326,7 @@
       s.last = today;
       s.greeted = today;
       wgSave('visit', s);
-      setTimeout(function () { wgPetSay(line); }, 2000);
+      wgSayQueued(line);
     } catch (e) {}
   }
 
@@ -3299,14 +3349,14 @@
       seen.push(n);
       wgSave('milestone', seen);
       wgFireworks();
-      setTimeout(function () {
-        wgOpenModal(
+      wgNarrate(WG_PRI.milestone, 'ms' + n, function (remain) {
+        wgQOpen(
           '<div class="wg-note" style="text-align:center;letter-spacing:2px;">— 일기 ' + n + '편 —</div>' +
           '<div style="text-align:center;font-size:58px;margin:10px 0;">' + m.art + '</div>' +
           '<div class="wg-saga-story" style="font-size:14px;line-height:1.9;">' + m.text + '</div>' +
-          '<button class="wg-btn" onclick="wgCloseModal()">고마워 🌱</button>'
-        );
-      }, 1000);
+          '<button class="wg-btn" onclick="wgCloseModal()">고마워 🌱</button>',
+          remain);
+      });
     } catch (e) {}
   }
 
@@ -3450,17 +3500,17 @@
       wgSave('lazy', s);
 
       const line = WG_LAZY_LINES[Math.floor(Math.random() * WG_LAZY_LINES.length)];
-      setTimeout(function () {
-        wgOpenModal(
+      wgNarrate(WG_PRI.lazy, 'lazy', function (remain) {
+        wgQOpen(
           '<div class="wg-note" style="text-align:center;">😶‍🌫️ 누군가 나타났다</div>' +
           '<div class="wg-artbox">' + WG_ART.daechung + '</div>' +
           '<h3 style="text-align:center;margin:4px 0;">대충이</h3>' +
           '<div class="wg-saga-story">' + wgEsc(line) + '</div>' +
           '<div class="wg-saga-story" style="background:#f6f2ff;margin-top:8px;">🧚 …쟤 말 듣지 마. 근데 진짜로, 딱 <b>한 문장만</b> 더 쓰면 대충이는 사라져.</div>' +
           '<button class="wg-btn" onclick="wgLazyFight()">✍️ 한 문장 더 써 볼래</button>' +
-          '<button class="wg-btn gray" onclick="wgLazyLet()">오늘은 이만</button>'
-        );
-      }, 600);
+          '<button class="wg-btn gray" onclick="wgLazyLet()">오늘은 이만</button>',
+          remain);
+      });
     } catch (e) {}
   }
 
@@ -3566,7 +3616,7 @@
       seen.push(key);
       wgSave('jium', seen);
       if (key === 'act1') { const m = wgLoad('cast', []); if (m.indexOf('jium') === -1) { m.push('jium'); wgSave('cast', m); } }
-      setTimeout(function () { wgPlayAct(key); }, 1100);
+      wgNarrate(WG_PRI.jium, 'jium_' + key, function () { wgPlayAct(key); });
       return true;
     } catch (e) { return false; }
   }
@@ -3580,9 +3630,604 @@
       seen.push('act3');
       wgSave('jium', seen);
       wgAddBadge('지움을 배웅한 아이');
-      setTimeout(function () { wgPlayAct('act3'); }, 700);
+      wgNarrate(WG_PRI.jium, 'jium_act3', function () { wgPlayAct('act3'); });
       return true;
     } catch (e) { return false; }
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     16.10 돋움 심화 서사 [v10 신규]
+       ① 몽타주  — 성공할수록 「얼굴을 잃은 이」의 얼굴이 또렷해짐
+                   (4단계 SVG, 5회 성공 시 완전 복원 장면)
+       ② 단어자판기 — 문장을 만들 때마다 「말의 밭」에 싹이 자람
+       ③ 시 단어뽑기 — 새 인물 「고르는 이」 등장
+     핵심: 활동 결과가 세계에 눈에 보이는 변화를 남기게 한다.
+     ══════════════════════════════════════════════════════════ */
+
+  /** 얼굴 복원 SVG — step 0~3 (흐릴수록 blur가 크고 이목구비가 없음) */
+  function wgFaceArt(step) {
+    const blur = [5.5, 3, 1.4, 0][Math.min(3, step)];
+    const op = [0.35, 0.6, 0.85, 1][Math.min(3, step)];
+    let feat = '';
+    if (step >= 1) {   // 눈
+      feat += '<ellipse cx="56" cy="62" rx="4.5" ry="5.5" fill="#4a4038"/>' +
+              '<ellipse cx="84" cy="62" rx="4.5" ry="5.5" fill="#4a4038"/>';
+    }
+    if (step >= 2) {   // 코 + 눈썹
+      feat += '<path d="M70 66 q3 10 -3 13" stroke="#8a7a68" stroke-width="3" fill="none" stroke-linecap="round"/>' +
+              '<path d="M48 52 q8 -4 15 -1" stroke="#5d5145" stroke-width="3" fill="none" stroke-linecap="round"/>' +
+              '<path d="M77 51 q7 -3 15 1" stroke="#5d5145" stroke-width="3" fill="none" stroke-linecap="round"/>';
+    }
+    if (step >= 3) {   // 입 (미소)
+      feat += '<path d="M56 88 q14 12 28 0" stroke="#a8583f" stroke-width="3.5" fill="none" stroke-linecap="round"/>' +
+              '<circle cx="45" cy="78" r="6" fill="#f3a89a" opacity=".45"/>' +
+              '<circle cx="95" cy="78" r="6" fill="#f3a89a" opacity=".45"/>';
+    }
+    return '<svg viewBox="0 0 140 140" width="100%" height="100%" role="img" aria-label="얼굴을 잃은 이">' +
+      '<defs><filter id="wgFaceB"><feGaussianBlur stdDeviation="' + blur + '"/></filter></defs>' +
+      '<g filter="url(#wgFaceB)" opacity="' + op + '">' +
+      '<ellipse cx="70" cy="74" rx="40" ry="46" fill="#f0d9c2"/>' +
+      '<path d="M30 62 q6 -34 40 -34 t40 34 q-8 -14 -40 -14 t-40 14 z" fill="#6b5a48"/>' +
+      feat +
+      '</g>' +
+      (step < 3 ? '<path d="M18 108 q26 -8 52 -8 t52 8 v14 q-26 8 -52 8 t-52 -8 z" fill="#d9d9e4" opacity="' + (0.5 - step * 0.15) + '"/>' : '') +
+      '</svg>';
+  }
+
+  /** 말의 밭 SVG — 심은 씨앗 수에 따라 자람 */
+  function wgFieldArt(n) {
+    let plants = '';
+    const spots = [[34, 96], [58, 100], [82, 98], [106, 95], [46, 108], [94, 108]];
+    for (let i = 0; i < Math.min(spots.length, n); i++) {
+      const x = spots[i][0], y = spots[i][1];
+      const big = (n >= 5 && i < 2);
+      if (big) {
+        plants += '<path d="M' + x + ' ' + y + ' v-30" stroke="#6b8f4e" stroke-width="4" stroke-linecap="round"/>' +
+          '<circle cx="' + x + '" cy="' + (y - 36) + '" r="13" fill="#8fc46a"/>' +
+          '<circle cx="' + (x - 8) + '" cy="' + (y - 28) + '" r="9" fill="#7db457"/>' +
+          '<circle cx="' + (x + 8) + '" cy="' + (y - 28) + '" r="9" fill="#a3d47f"/>';
+      } else {
+        plants += '<path d="M' + x + ' ' + y + ' v-14" stroke="#6b8f4e" stroke-width="3" stroke-linecap="round"/>' +
+          '<path d="M' + x + ' ' + (y - 12) + ' q-9 -4 -10 -12 q9 1 10 12" fill="#8fc46a"/>' +
+          '<path d="M' + x + ' ' + (y - 8) + ' q9 -4 10 -12 q-9 1 -10 12" fill="#a3d47f"/>';
+      }
+    }
+    return '<svg viewBox="0 0 140 130" width="100%" height="100%" role="img" aria-label="말의 밭">' +
+      '<path d="M10 100 q60 -14 120 0 v22 q-60 12 -120 0 z" fill="#c9a678"/>' +
+      '<path d="M10 100 q60 -14 120 0 v6 q-60 12 -120 0 z" fill="#a8845a"/>' +
+      plants +
+      (n === 0 ? '<text x="70" y="60" font-size="12" fill="#b0a48f" text-anchor="middle">아직 아무것도 심지 않았어</text>' : '') +
+      '</svg>';
+  }
+
+  /* ── ① 몽타주: 단계별 대사 + 실패 위로 + 완전 복원 ── */
+  function wgFaceStep() {
+    const n = wgQuestGet('montage');
+    return (n >= 5) ? 3 : (n >= 3) ? 2 : (n >= 1) ? 1 : 0;
+  }
+
+  const WG_FACE_LINES = {
+    1: '👤 "…눈이 보여. 네가 눈 이야기를 해 줬거든. 조금만 더."',
+    2: '👤 "코와 눈썹도 돌아왔어! 이제 거의 다 왔어. 한 번만 더 봐 줄래?"',
+    3: '👤 "웃을 수 있게 됐어. …고마워. 나, 이렇게 생겼었구나."'
+  };
+
+  function wgMontageProgress(success) {
+    try {
+      if (!success) {
+        wgPetSay('👤 "아직 흐릿해… 괜찮아. 다음엔 색이나 모양을 하나만 더 얹어 줘."');
+        return;
+      }
+      const step = wgFaceStep();
+      const seen = wgLoad('faceStep', { s: 0 });
+      if (step > (seen.s || 0)) {
+        seen.s = step;
+        wgSave('faceStep', seen);
+        if (step >= 3) {
+          wgAddBadge('얼굴을 되찾아 준 아이');
+          wgFireworks();
+          wgNarrate(WG_PRI.place, 'faceFull', function (remain) {
+            wgQOpen(
+              '<div class="wg-note" style="text-align:center;letter-spacing:2px;">— 되찾은 얼굴 —</div>' +
+              '<div class="wg-artbox">' + wgFaceArt(3) + '</div>' +
+              '<div class="wg-saga-story">👤 "웃을 수 있게 됐어.<br><br>…고마워. 나, <b>이렇게 생겼었구나.</b>"</div>' +
+              '<div class="wg-saga-story" style="background:#f6f2ff;margin-top:8px;">🧚 "봤지? 특별한 마법이 아니었어. 네가 <b>자세히 봐 준 것</b>뿐이야."</div>' +
+              '<button class="wg-btn" onclick="wgCloseModal()">🌱 좋아</button>',
+              remain);
+          });
+        } else {
+          wgSayQueued(WG_FACE_LINES[step]);
+        }
+      }
+    } catch (e) {}
+  }
+
+  /* ── ② 단어자판기: 밭에 씨앗이 쌓임 ── */
+  function wgFieldProgress() {
+    try {
+      const n = wgQuestGet('poemword');
+      const seen = wgLoad('fieldSeen', { n: 0 });
+      if (n <= (seen.n || 0)) return;
+      seen.n = n;
+      wgSave('fieldSeen', seen);
+      if (n === 1 || n === 3 || n === 5) {
+        const msg = (n === 1) ? '🎰 "첫 씨앗이 심겼어. 저기 봐, 벌써 싹이 텄어."'
+                  : (n === 3) ? '🎰 "세 알째. 밭이 제법 초록해졌군."'
+                  : '🎰 "다섯 알… 이제 <b>나무</b>가 자라기 시작했어. 네 밭이야."';
+        if (n >= 5) wgAddBadge('말의 밭 주인');
+        wgNarrate(WG_PRI.place, 'field' + n, function (remain) {
+          wgQOpen(
+            '<div class="wg-note" style="text-align:center;letter-spacing:2px;">— 말의 밭 —</div>' +
+            '<div class="wg-artbox">' + wgFieldArt(n) + '</div>' +
+            '<div class="wg-saga-story">' + msg + '</div>' +
+            '<p class="wg-note" style="text-align:center;">심은 씨앗 ' + n + '알</p>' +
+            '<button class="wg-btn" onclick="wgCloseModal()">🌱 좋아</button>',
+            remain);
+        });
+      }
+    } catch (e) {}
+  }
+
+  /* ── ③ 시 단어뽑기: 새 인물 「고르는 이」 ── */
+  const WG_PICKER_LINES = [
+    '🕯️ "시에 쓸 말은 아무거나 되는 게 아니야. 골라야 해."',
+    '🕯️ "많이 쓴다고 시가 되진 않아. <b>딱 맞는 하나</b>를 찾는 거야."',
+    '🕯️ "마음에 걸리는 낱말이 있으면, 그게 네 시의 씨앗이야."'
+  ];
+
+  function wgPickerSay() {
+    try {
+      const s = wgLoad('picker', { date: '', n: 0 });
+      if (s.date !== wgToday()) { s.date = wgToday(); s.n = 0; }
+      s.n += 1;
+      wgSave('picker', s);
+      wgQuestBump('poempick');
+      if (s.n === 1) {
+        wgMeetCast('picker');
+        wgSayQueued(WG_PICKER_LINES[Math.floor(Math.random() * WG_PICKER_LINES.length)]);
+      }
+    } catch (e) {}
+  }
+
+  /* ── 돋움 상태판: 지금까지의 변화를 한눈에 (성장 일지에 표시) ── */
+  function wgDodumBoardHtml() {
+    const face = wgFaceStep();
+    const seeds = wgQuestGet('poemword');
+    return '<div class="wg-saga-head" style="margin-top:14px;">🌱 말의 밭 — 돋움의 기록</div>' +
+      '<div class="wg-board">' +
+        '<div class="wg-board-cell"><div class="wg-board-art">' + wgFaceArt(face) + '</div>' +
+          '<div class="wg-note" style="margin:0;">얼굴 복원 ' + face + ' / 3</div></div>' +
+        '<div class="wg-board-cell"><div class="wg-board-art">' + wgFieldArt(Math.min(6, seeds)) + '</div>' +
+          '<div class="wg-note" style="margin:0;">심은 씨앗 ' + seeds + '알</div></div>' +
+      '</div>';
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     16.11 이음·틔움·지음 심화 서사 [v11 신규]
+       이음  「하루의 방」   — 일기를 쓸수록 방에 불이 켜지고 채워짐
+       틔움  「말문의 숲」   — 이야기를 주고받을수록 안개가 걷힘
+       지음  「기록의 서고」 — 작품을 낼수록 책장이 채워짐
+     돋움과 같은 원리: 활동이 세계에 눈에 보이는 흔적을 남긴다.
+     ══════════════════════════════════════════════════════════ */
+
+  /** 하루의 방 — step 0~3 (일기 0 / 1+ / 5+ / 10+) */
+  function wgRoomArt(step) {
+    const s = Math.min(3, step);
+    const dark = [0.62, 0.4, 0.2, 0][s];
+    let stuff = '';
+    if (s >= 1) {  // 램프
+      stuff += '<path d="M104 96 v-16" stroke="#8a7a68" stroke-width="3"/>' +
+        '<path d="M94 80 h20 l-5 -12 h-10 z" fill="#f4c430"/>' +
+        '<circle cx="104" cy="80" r="22" fill="#ffe9a8" opacity=".45"/>';
+    }
+    if (s >= 2) {  // 책상 + 공책
+      stuff += '<rect x="26" y="86" width="56" height="6" rx="2" fill="#a8845a"/>' +
+        '<rect x="30" y="92" width="5" height="18" fill="#8a6a44"/>' +
+        '<rect x="73" y="92" width="5" height="18" fill="#8a6a44"/>' +
+        '<rect x="40" y="76" width="26" height="10" rx="2" fill="#fdfbf4"/>' +
+        '<path d="M44 80 h18 M44 83 h14" stroke="#c9c2b4" stroke-width="1.5"/>';
+    }
+    if (s >= 3) {  // 액자(요정이 그린 그림)
+      stuff += '<rect x="34" y="26" width="34" height="28" rx="3" fill="#fdfbf4" stroke="#c9a678" stroke-width="3"/>' +
+        '<circle cx="45" cy="36" r="5" fill="#ffd166"/>' +
+        '<path d="M37 50 q9 -14 16 -4 t13 4 z" fill="#8fc46a"/>';
+    }
+    return '<svg viewBox="0 0 140 120" role="img" aria-label="하루의 방">' +
+      '<rect x="8" y="8" width="124" height="104" rx="8" fill="#f3ead9"/>' +
+      '<rect x="84" y="20" width="34" height="34" rx="3" fill="#bfd8ef" stroke="#9db9d4" stroke-width="2"/>' +
+      '<path d="M101 20 v34 M84 37 h34" stroke="#9db9d4" stroke-width="2"/>' +
+      '<rect x="8" y="100" width="124" height="12" fill="#d9c6a8"/>' +
+      stuff +
+      '<rect x="8" y="8" width="124" height="104" rx="8" fill="#1e1e2e" opacity="' + dark + '"/>' +
+      '</svg>';
+  }
+
+  /** 말문의 숲 — step 0~3 (주고받은 횟수 0 / 1+ / 5+ / 12+) */
+  function wgForestArt(step) {
+    const s = Math.min(3, step);
+    const fog = [0.82, 0.55, 0.28, 0.05][s];
+    let extra = '';
+    if (s >= 2) {  // 새
+      extra += '<path d="M96 34 q6 -5 11 0 q5 -5 11 0" stroke="#5d5145" stroke-width="2.5" fill="none" stroke-linecap="round"/>';
+    }
+    if (s >= 3) {  // 햇살
+      extra += '<circle cx="26" cy="26" r="12" fill="#ffd166" opacity=".8"/>' +
+        '<path d="M26 8 v6 M26 38 v6 M8 26 h6 M38 26 h6" stroke="#ffd166" stroke-width="2.5" stroke-linecap="round"/>';
+    }
+    function tree(x, y, h, c) {
+      return '<path d="M' + x + ' ' + y + ' v-' + h + '" stroke="#7a5c3a" stroke-width="5" stroke-linecap="round"/>' +
+        '<circle cx="' + x + '" cy="' + (y - h - 8) + '" r="17" fill="' + c + '"/>' +
+        '<circle cx="' + (x - 12) + '" cy="' + (y - h + 2) + '" r="12" fill="' + c + '" opacity=".9"/>' +
+        '<circle cx="' + (x + 12) + '" cy="' + (y - h + 2) + '" r="12" fill="' + c + '" opacity=".85"/>';
+    }
+    return '<svg viewBox="0 0 140 120" role="img" aria-label="말문의 숲">' +
+      '<rect x="0" y="0" width="140" height="120" fill="#e8f2e4"/>' +
+      tree(38, 100, 32, '#6fa855') + tree(96, 104, 26, '#82ba63') + tree(68, 96, 40, '#5d9448') +
+      '<rect x="0" y="98" width="140" height="22" fill="#c9b98f"/>' +
+      extra +
+      '<rect x="0" y="0" width="140" height="120" fill="#dcdce8" opacity="' + fog + '"/>' +
+      '</svg>';
+  }
+
+  /** 기록의 서고 — 낸 작품 수만큼 책이 꽂힘 */
+  function wgLibraryArt(n) {
+    const colors = ['#e07a5f', '#81b29a', '#f2cc8f', '#8a7ce8', '#6fa855', '#d98cb3', '#5b9bd5', '#e5a663'];
+    let books = '';
+    const perShelf = 6;
+    for (let i = 0; i < Math.min(12, n); i++) {
+      const shelf = Math.floor(i / perShelf);
+      const idx = i % perShelf;
+      const x = 24 + idx * 16;
+      const y = 40 + shelf * 40;
+      const h = 26 + (i % 3) * 4;
+      books += '<rect x="' + x + '" y="' + (y + (30 - h)) + '" width="12" height="' + h + '" rx="2" fill="' + colors[i % colors.length] + '"/>' +
+        '<rect x="' + x + '" y="' + (y + (30 - h) + 4) + '" width="12" height="2" fill="#ffffff88"/>';
+    }
+    return '<svg viewBox="0 0 140 120" role="img" aria-label="기록의 서고">' +
+      '<rect x="10" y="10" width="120" height="104" rx="6" fill="#8a6a44"/>' +
+      '<rect x="16" y="16" width="108" height="92" rx="4" fill="#c9a678"/>' +
+      '<rect x="16" y="68" width="108" height="6" fill="#8a6a44"/>' +
+      '<rect x="16" y="102" width="108" height="6" fill="#8a6a44"/>' +
+      books +
+      (n === 0 ? '<text x="70" y="60" font-size="11" fill="#8a6a44" text-anchor="middle">아직 비어 있어</text>' : '') +
+      '</svg>';
+  }
+
+  /* ── 진행 단계 계산 ── */
+  function wgRoomStep()   { const n = wgQuestGet('diary');  return n >= 10 ? 3 : n >= 5 ? 2 : n >= 1 ? 1 : 0; }
+  function wgForestStep() { const n = wgQuestGet('ttieum'); return n >= 12 ? 3 : n >= 5 ? 2 : n >= 1 ? 1 : 0; }
+
+  /* ── 이정표 장면 공통 ── */
+  function wgPlaceMilestone(key, art, title, text, badge) {
+    const seen = wgLoad('placeMs', []);
+    if (seen.indexOf(key) !== -1) return;
+    seen.push(key);
+    wgSave('placeMs', seen);
+    if (badge) wgAddBadge(badge);
+    wgFireworks();
+    wgNarrate(WG_PRI.place, 'pm_' + key, function (remain) {
+      wgQOpen(
+        '<div class="wg-note" style="text-align:center;letter-spacing:2px;">— ' + wgEsc(title) + ' —</div>' +
+        '<div class="wg-artbox">' + art + '</div>' +
+        '<div class="wg-saga-story">' + text + '</div>' +
+        '<button class="wg-btn" onclick="wgCloseModal()">🌱 좋아</button>',
+        remain);
+    });
+  }
+
+  /* ── 이음: 하루의 방이 밝아짐 ── */
+  function wgRoomProgress() {
+    try {
+      const st = wgRoomStep();
+      const prev = wgLoad('roomStep', { s: 0 });
+      if (st <= (prev.s || 0)) return;
+      prev.s = st; wgSave('roomStep', prev);
+      const texts = {
+        1: '🧚 "방에 불이 하나 켜졌어.<br>네가 하루를 적었더니 이 방이 생긴 거야."',
+        2: '🧚 "책상이 생겼어! 이제 여기서 마음 놓고 쓸 수 있겠다.<br>다섯 편이나 쌓였거든."',
+        3: '🧚 "벽에 <b>내가 그린 그림</b>을 걸었어.<br>이제 여긴 진짜 <b>네 방</b>이야. 흐림은 여기 못 들어와."'
+      };
+      wgPlaceMilestone('room' + st, wgRoomArt(st), '하루의 방', texts[st], st >= 3 ? '하루의 방 주인' : null);
+    } catch (e) {}
+  }
+
+  /* ── 틔움: 숲의 안개가 걷힘 ── */
+  function wgForestProgress() {
+    try {
+      const st = wgForestStep();
+      const prev = wgLoad('forestStep', { s: 0 });
+      if (st <= (prev.s || 0)) return;
+      prev.s = st; wgSave('forestStep', prev);
+      const texts = {
+        1: '🧚 "안개가 조금 옅어졌어.<br>말을 주고받으면 이렇게 걷히는구나."',
+        2: '🧚 "나무가 보여! 새소리도 들리고.<br>여기 이렇게 넓은 숲이었어?"',
+        3: '🧚 "해가 들어왔어.<br>네가 말을 걸어 준 만큼 <b>숲이 깨어난 거야.</b>"'
+      };
+      wgPlaceMilestone('forest' + st, wgForestArt(st), '말문의 숲', texts[st], st >= 3 ? '숲을 깨운 아이' : null);
+    } catch (e) {}
+  }
+
+  /* ── 지음: 서고가 채워짐 ── */
+  function wgLibraryProgress() {
+    try {
+      const n = wgQuestGet('book');
+      const prev = wgLoad('bookSeen', { n: 0 });
+      if (n <= (prev.n || 0)) return;
+      prev.n = n; wgSave('bookSeen', prev);
+      if (n !== 1 && n !== 3 && n !== 6) return;
+      const texts = {
+        1: '🧚 "네 <b>첫 책</b>이 꽂혔어.<br>이 책장에 놓인 건 영영 사라지지 않아. 약속할게."',
+        3: '🧚 "세 권째. 책장이 제법 그럴듯해졌는걸?"',
+        6: '🧚 "여섯 권…<br>이제 누가 물으면 이렇게 말해도 돼. <b>\'나 책 쓰는 사람이야\'</b>라고."'
+      };
+      wgPlaceMilestone('book' + n, wgLibraryArt(n), '기록의 서고', texts[n], n >= 6 ? '서고의 주인' : null);
+    } catch (e) {}
+  }
+
+  /* ── 세계 상태판: 네 장소를 한눈에 (성장 일지) ── */
+  function wgWorldBoardHtml() {
+    const face = wgFaceStep();
+    const seeds = wgQuestGet('poemword');
+    return '<div class="wg-saga-head" style="margin-top:14px;">🗺️ 내가 바꾼 세계</div>' +
+      '<div class="wg-board">' +
+        '<div class="wg-board-cell"><div class="wg-board-art">' + wgFaceArt(face) + '</div>' +
+          '<div class="wg-note" style="margin:0;">돋움 · 얼굴 ' + face + '/3</div></div>' +
+        '<div class="wg-board-cell"><div class="wg-board-art">' + wgFieldArt(Math.min(6, seeds)) + '</div>' +
+          '<div class="wg-note" style="margin:0;">돋움 · 씨앗 ' + seeds + '알</div></div>' +
+        '<div class="wg-board-cell"><div class="wg-board-art">' + wgRoomArt(wgRoomStep()) + '</div>' +
+          '<div class="wg-note" style="margin:0;">이음 · 하루의 방 ' + wgRoomStep() + '/3</div></div>' +
+        '<div class="wg-board-cell"><div class="wg-board-art">' + wgForestArt(wgForestStep()) + '</div>' +
+          '<div class="wg-note" style="margin:0;">틔움 · 말문의 숲 ' + wgForestStep() + '/3</div></div>' +
+        '<div class="wg-board-cell" style="grid-column:1/-1;"><div class="wg-board-art" style="width:110px;height:94px;">' + wgLibraryArt(wgQuestGet('book')) + '</div>' +
+          '<div class="wg-note" style="margin:0;">지음 · 기록의 서고 ' + wgQuestGet('book') + '권</div></div>' +
+      '</div>';
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     16.12 활동별 서사 보강 [v12 신규]
+       그동안 비어 있던 활동에 이야기를 채운다.
+         이음 — 논설문 / 퇴고 / 감상문 생각그물
+         틔움 — 토론
+         지음 — 시화
+       신규 인물: 🎚️ 저울잡이(주장) · ✂️ 다듬는 이(퇴고)
+       원칙: 대부분 펫 말풍선으로 (팝업 피로 방지),
+             첫 경험만 인물 소개 장면.
+     ══════════════════════════════════════════════════════════ */
+
+  const WG_ACT_LORE = {
+    essay: [
+      '🎚️ "주장은 무게가 있어. 근거 없이 던진 말은 가볍게 날아가 버리지."',
+      '🎚️ "네 주장을 저울에 올려 봤어. …제법 묵직한데?"',
+      '🎚️ "왜 그렇게 생각하는지를 붙이면, 말이 갑자기 무거워져."'
+    ],
+    revise: [
+      '✂️ "처음 쓴 글이 완벽한 사람은 없어. 나도, 요정도, 어른들도."',
+      '✂️ "고쳐 쓰는 건 <b>못 써서</b>가 아니야. <b>더 잘 쓸 수 있어서</b>야."',
+      '✂️ "한 번 더 읽는 사람만 볼 수 있는 게 있어. 방금 네가 봤잖아."',
+      '✂️ "흐림은 대충 쓴 글보다 <b>고치다 만 글</b>에 더 잘 스며. 끝까지 다듬자."'
+    ],
+    brain: [
+      '🧚 "흩어져 있던 생각이 그물처럼 이어졌어. 이 순간이 제일 좋아."',
+      '🧚 "머릿속에만 있던 게 밖으로 나오니까 보이지? 이게 첫걸음이야."'
+    ],
+    debate: [
+      '🎚️ "맞서는 말도 필요해. 부딪혀야 진짜 생각이 나오거든."',
+      '🎚️ "상대 말을 끝까지 듣는 사람이 결국 이기더라. 이상하지?"',
+      '🎚️ "이기려고 하는 말과 <b>알아내려고 하는 말</b>은 달라."'
+    ],
+    poem: [
+      '🕯️ "시는 덜어내는 글이야. 짧을수록 더 오래 남지."',
+      '🕯️ "설명하지 마. <b>보여 줘.</b> 그게 시야."',
+      '🕯️ "한 줄에 하루를 담을 수 있다면, 그건 마법이야."'
+    ]
+  };
+
+  /** 활동 서사: 첫 경험이면 인물 소개, 이후엔 말풍선 (하루 1회) */
+  function wgActLore(key, castId) {
+    try {
+      const pool = WG_ACT_LORE[key];
+      if (!pool) return;
+      wgQuestBump('act_' + key);
+      const n = wgQuestGet('act_' + key);
+
+      if (n === 1 && castId) {          // 첫 경험 → 인물 등장
+        wgMeetCast(castId);
+        return;
+      }
+      const s = wgLoad('actLore', { date: '', seen: [] });
+      if (s.date !== wgToday()) { s.date = wgToday(); s.seen = []; }
+      if (s.seen.indexOf(key) !== -1) return;   // 하루 1회
+      s.seen.push(key);
+      wgSave('actLore', s);
+      wgSayQueued(pool[Math.floor(Math.random() * pool.length)]);
+    } catch (e) {}
+  }
+
+  /* ── 퇴고 이정표: 고쳐 쓰기는 따로 크게 기린다 ── */
+  function wgReviseMilestone() {
+    try {
+      const n = wgQuestGet('act_revise');
+      if (n !== 1 && n !== 5 && n !== 15) return;
+      const texts = {
+        1:  '✂️ "처음으로 <b>고쳐 썼구나.</b><br><br>있잖아, 글을 잘 쓰는 사람과 못 쓰는 사람의 차이는<br>재능이 아니라 <b>몇 번 고쳐 썼느냐</b>래."',
+        5:  '✂️ "다섯 번째 퇴고야.<br><br>이제 알겠지? 처음 쓴 글은 <b>재료</b>일 뿐이라는 걸."',
+        15: '✂️ "열다섯 번…<br><br>너는 이제 <b>고쳐 쓸 줄 아는 사람</b>이야.<br>그건 쓸 줄 아는 것보다 훨씬 드문 능력이야."'
+      };
+      if (n >= 15) wgAddBadge('고쳐 쓰는 사람');
+      wgFireworks();
+      wgNarrate(WG_PRI.milestone, 'rev' + n, function (remain) {
+        wgQOpen(
+          '<div class="wg-note" style="text-align:center;letter-spacing:2px;">— 다듬는 손 —</div>' +
+          '<div style="text-align:center;font-size:54px;margin:8px 0;">✂️</div>' +
+          '<div class="wg-saga-story">' + texts[n] + '</div>' +
+          '<button class="wg-btn" onclick="wgCloseModal()">🌱 좋아</button>',
+          remain);
+      });
+    } catch (e) {}
+  }
+
+  /* ── 활동 훅 ── */
+  function wgPatchActivities() {
+    // 이음 · 논설문 저장
+    if (!window._wgEssayPatched && typeof window.saveEssay === 'function') {
+      const _o = window.saveEssay;
+      window.saveEssay = async function () {
+        const r = await _o.apply(this, arguments);
+        try { wgActLore('essay', 'scale'); } catch (e) {}
+        return r;
+      };
+      window._wgEssayPatched = true;
+    }
+    // 이음 · 퇴고 (교육적 핵심)
+    if (!window._wgRevisePatched && typeof window.reviseEssayWithAI === 'function') {
+      const _o2 = window.reviseEssayWithAI;
+      window.reviseEssayWithAI = async function () {
+        const r = await _o2.apply(this, arguments);
+        try { wgActLore('revise', 'trimmer'); wgReviseMilestone(); } catch (e) {}
+        return r;
+      };
+      window._wgRevisePatched = true;
+    }
+    // 이음 · 감상문 생각그물 / 벤다이어그램
+    if (!window._wgBrainPatched && typeof window.rvSubmitBrainMap === 'function') {
+      const _o3 = window.rvSubmitBrainMap;
+      window.rvSubmitBrainMap = async function () {
+        const r = await _o3.apply(this, arguments);
+        try { wgActLore('brain'); } catch (e) {}
+        return r;
+      };
+      window._wgBrainPatched = true;
+    }
+    if (!window._wgVennPatched && typeof window.rvSubmitVenn === 'function') {
+      const _o4 = window.rvSubmitVenn;
+      window.rvSubmitVenn = async function () {
+        const r = await _o4.apply(this, arguments);
+        try { wgActLore('brain'); } catch (e) {}
+        return r;
+      };
+      window._wgVennPatched = true;
+    }
+    // 틔움 · 토론
+    if (!window._wgDebatePatched && typeof window.drawDebateTopic === 'function') {
+      const _o5 = window.drawDebateTopic;
+      window.drawDebateTopic = function () {
+        const r = _o5.apply(this, arguments);
+        try { wgActLore('debate', 'scale'); } catch (e) {}
+        return r;
+      };
+      window._wgDebatePatched = true;
+    }
+    // 지음 · 시화
+    if (!window._wgPoemSavePatched && typeof window.savePoem === 'function') {
+      const _o6 = window.savePoem;
+      window.savePoem = async function () {
+        const r = await _o6.apply(this, arguments);
+        try {
+          wgActLore('poem', 'picker');
+          wgQuestBump('book');            // 시화도 서고에 꽂힌다
+          wgLibraryProgress();
+        } catch (e) {}
+        return r;
+      };
+      window._wgPoemSavePatched = true;
+    }
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     16.13 서사 우선순위 큐 [v13 신규]
+
+     문제: 일기 한 편을 저장하면 이정표·장소진행·챕터·대충이 등이
+           동시에 wgOpenModal을 호출해 서로 <b>덮어써서 사라졌다.</b>
+     해결: 모든 서사 팝업을 큐에 넣고 <b>하나씩 순서대로</b> 재생.
+           · 중요한 이야기가 먼저 (엔딩 > 지움 > 챕터 > 이정표 > …)
+           · 한 번에 최대 3개까지만, 나머지는 다음 기회로 대기
+           · 펫 말풍선도 최소 간격을 두고 차례로
+     ══════════════════════════════════════════════════════════ */
+
+  const WG_PRI = {
+    ending:  100,   // 엔딩
+    jium:     90,   // 지움 3막
+    chapter:  80,   // 챕터 승급
+    milestone:70,   // 일기·퇴고 이정표
+    place:    60,   // 장소 진행(얼굴·밭·방·숲·서고)
+    meet:     50,   // 인물 첫 만남
+    lazy:     40    // 대충이
+  };
+  const WG_Q_BURST_MAX = 3;   // 한 번에 연달아 보여 줄 최대 개수
+
+  let _wgQ = [];              // {pri, id, render}
+  let _wgQBusy = false;
+  let _wgQBurst = 0;
+  let _wgQTimer = null;
+
+  /** 서사 팝업을 큐에 등록. render(remain)은 모달을 여는 함수 */
+  function wgNarrate(pri, id, render) {
+    try {
+      if (_wgQ.some(function (x) { return x.id === id; })) return;   // 중복 차단
+      _wgQ.push({ pri: pri, id: id, render: render });
+      _wgQ.sort(function (a, b) { return b.pri - a.pri; });          // 높은 우선순위 먼저
+      clearTimeout(_wgQTimer);
+      _wgQTimer = setTimeout(wgQTick, 650);   // 같은 순간의 호출들을 모아서 정렬
+    } catch (e) {}
+  }
+
+  function wgQTick() {
+    try {
+      if (_wgQBusy) return;
+      if (!_wgQ.length) { _wgQBurst = 0; return; }
+      if (_wgQBurst >= WG_Q_BURST_MAX) {
+        // 이번 묶음은 여기까지 — 남은 이야기는 다음 활동 때 이어서
+        if (_wgQ.length) {
+          wgPetSay('📔 아직 들려줄 이야기가 ' + _wgQ.length + '개 남았어. 조금 이따 마저 해 줄게!');
+        }
+        _wgQBurst = 0;
+        return;
+      }
+      const item = _wgQ.shift();
+      _wgQBusy = true;
+      _wgQBurst += 1;
+      item.render(_wgQ.length);
+    } catch (e) { _wgQBusy = false; }
+  }
+
+  /** 서사 모달이 닫히면 다음 이야기로 */
+  function wgQRelease() {
+    if (!_wgQBusy) return;
+    _wgQBusy = false;
+    clearTimeout(_wgQTimer);
+    _wgQTimer = setTimeout(wgQTick, 420);
+  }
+
+  /** 큐가 여는 모달 — 닫힘이 곧 '다음'이 되도록 */
+  function wgQOpen(html, remain, wide) {
+    const tail = (remain > 0)
+      ? '<div class="wg-note" style="text-align:center;">📔 이어질 이야기 ' + remain + '개</div>'
+      : '';
+    wgOpenModal(html + tail, wide);
+  }
+
+  /* ── 펫 말풍선도 겹치지 않게: 최소 간격을 두고 차례로 ── */
+  let _wgBubQ = [];
+  let _wgBubLast = 0;
+  const WG_BUB_GAP = 4200;    // 말풍선 사이 최소 간격(ms)
+
+  function wgSayQueued(msg) {
+    _wgBubQ.push(msg);
+    if (_wgBubQ.length > 3) _wgBubQ = _wgBubQ.slice(-3);   // 너무 밀리면 최근 것만
+    wgBubTick();
+  }
+
+  function wgBubTick() {
+    if (!_wgBubQ.length) return;
+    const now = Date.now();
+    const wait = Math.max(0, WG_BUB_GAP - (now - _wgBubLast));
+    setTimeout(function () {
+      if (!_wgBubQ.length) return;
+      const m = _wgBubQ.shift();
+      _wgBubLast = Date.now();
+      wgPetSay(m);
+      if (_wgBubQ.length) wgBubTick();
+    }, wait);
   }
 
   /* ── Phase 2: 퀘스트 카운터 (챕터 목표 추적) ── */
@@ -3759,7 +4404,7 @@
       '</div>' +
       '<p class="wg-note">지금은 <b>' + petNow.icon + ' ' + wgEsc(petNow.name) + '</b> — ' +
       cleared + ' / ' + chs.length + '장 완료 · <span style="text-decoration:underline;cursor:pointer;" onclick="wgShowPrologue(true)">처음 이야기 다시 보기</span></p>' +
-      html + wgCastDexHtml() + wgEndingListHtml() +
+      html + wgWorldBoardHtml() + wgCastDexHtml() + wgEndingListHtml() +
       '<button class="wg-btn gray" onclick="wgCloseModal()">닫기</button>',
       true
     );
@@ -3779,16 +4424,16 @@
         wgFireworks();
         if (wgCheckJium(now)) return;   // 지움 서사가 우선
         if (now >= 5) { setTimeout(function () { wgCheckEnding(); }, 1200); return; }
-        setTimeout(function () {
-          wgOpenModal(
+        wgNarrate(WG_PRI.chapter, 'chapter' + now, function (remain) {
+          wgQOpen(
             '<h3>✨ 새로운 장이 열렸어요!</h3>' +
             '<div style="font-size:52px;text-align:center;margin:8px 0;">' + next.icon + '</div>' +
             '<div class="wg-saga-story" style="font-size:14px;">' + wgEsc(next.story) + '</div>' +
             '<p class="wg-note">📔 성장 일지에서 전체 이야기를 볼 수 있어요.</p>' +
             '<button class="wg-btn" onclick="wgOpenSaga()">📔 일지 보기</button>' +
-            '<button class="wg-btn gray" onclick="wgCloseModal()">계속 쓰기</button>'
-          );
-        }, 900);
+            '<button class="wg-btn gray" onclick="wgCloseModal()">계속 쓰기</button>',
+            remain);
+        });
       }
     } catch (e) {}
   }
@@ -3810,10 +4455,15 @@
         const r = await _orig.apply(this, arguments);
         try {
           const stamp = document.getElementById('mArrestStamp');
-          if (stamp && stamp.textContent && stamp.textContent.indexOf('성공') !== -1) {
+          const txt = stamp ? (stamp.textContent || '') : '';
+          if (txt.indexOf('성공') !== -1) {
             wgQuestBump('montage');
             wgMeetCast('montage');
             wgOnWin('montage');
+            wgMontageProgress(true);
+          } else if (txt.indexOf('실패') !== -1) {
+            wgOnLose();
+            wgMontageProgress(false);
           }
         } catch (e) {}
         return r;
@@ -3834,6 +4484,7 @@
             wgQuestBump('poemword');
             wgMeetCast('vending');
             wgOnWin('poemword');
+            wgFieldProgress();
           }
         } catch (e) {}
         return r;
@@ -3864,6 +4515,7 @@
           wgQuestBump('diary');
           wgLoreSay('diary');
           wgCheckMilestone();
+          wgRoomProgress();
           try { const _t = wgDiaryText(); if (_t && _t.length < 80) wgLazyAppear(); } catch (e2) {}
           wgCheckChapterUp();
         } catch (e) {}
@@ -3899,6 +4551,7 @@
         wgPatchRvNews();
         wgPatchExternal();
         wgPatchPlaces();
+        wgPatchActivities();
       } catch (e) {}
     }, 1200);
   }
