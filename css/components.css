@@ -1008,7 +1008,7 @@
 ══════════════════════════════════════════════ */
 #globalSosBtn {
   position: fixed;
-  bottom: 130px; /* 펫 위젯(bottom:22px + 높이~90px) 바로 위 */
+  bottom: 175px; /* 펫 위젯(말풍선 포함 ~150px)보다 확실히 위 */
   right: 14px;
   z-index: 250;
   background: linear-gradient(135deg, #ff6b6b, #ff4444);
@@ -1049,7 +1049,7 @@
 /* 글로벌 SOS 챗봇 패널 */
 #globalSosPanel {
   position: fixed;
-  bottom: 182px; /* 버튼(bottom:130px) + 버튼높이(~40px) + 간격 */
+  bottom: 227px; /* 버튼(bottom:175px) + 버튼높이(~40px) + 간격 */
   right: 14px;
   width: 300px;
   background: white;
