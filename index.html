@@ -994,7 +994,7 @@
       <div class="badge-item" id="badge_50"><div class="badge-icon">🏅</div><div class="badge-name">올라운더</div><div class="badge-desc">모든 앱 5회 이상 활용</div></div>
       <div class="badge-item" id="badge_51"><div class="badge-icon">🌱</div><div class="badge-name">꾸준함의 달인 브론즈</div><div class="badge-desc">3일 연속 달성</div></div>
       <div class="badge-item" id="badge_52"><div class="badge-icon">🌲</div><div class="badge-name">꾸준함의 달인 실버</div><div class="badge-desc">7일 연속 달성</div></div>
-      <!-- ✅ [신규] 글쓰기 게임 뱃지 (13-writing-games.js) -->
+      <!-- ✅ [신규] 글쓰기 게임 뱃지 (13a~13f 계열) -->
       <div class="badge-item" id="badge_wg1"><div class="badge-icon">🎯</div><div class="badge-name">빙고 마스터</div><div class="badge-desc">오감 빙고 9칸 완성</div></div>
       <div class="badge-item" id="badge_wg2"><div class="badge-icon">🍽️</div><div class="badge-name">펫 미식가</div><div class="badge-desc">펫 표현 먹이기 7회</div></div>
       <div class="badge-item" id="badge_wg3"><div class="badge-icon">⚔️</div><div class="badge-name">몬스터 헌터</div><div class="badge-desc">맞춤법 몬스터 10마리 처치</div></div>
@@ -1297,7 +1297,20 @@
 <script src="js/11-teacher-extras.js?v=4"></script>
 <script src="js/12-ieum-review.js?v=4"></script>
 <!-- ✅ [신규] 글쓰기 게이미피케이션 (반드시 마지막 로드) -->
-<script src="js/13-writing-games.js?v=6"></script>
+<!-- ── 글쓰기 게임 모듈 (구 13-writing-games.js 분할본) ────────────────
+     ⚠️ 13a~13f는 하나의 스코프를 공유합니다. 순서대로, 빠짐없이 로드해야
+        합니다. 하나라도 빠지면 ReferenceError로 게임 전체가 멈춥니다.     -->
+<script src="js/13a-games-core.js?v=1"></script>
+<script src="js/13b-games-dodum.js?v=1"></script>
+<script src="js/13c-games-ieum.js?v=1"></script>
+<script src="js/13d-world-hub.js?v=1"></script>
+<script src="js/13e-world-art.js?v=1"></script>
+<script src="js/13f-games-init.js?v=1"></script>
+
+<!-- ── 신규 확장 모듈 (13번 계열의 wg* 유틸을 재사용하므로 반드시 뒤에) ── -->
+<script src="js/14-curriculum.js?v=1"></script>   <!-- 📖 단원 모드 -->
+<script src="js/15-writing-plan.js?v=1"></script> <!-- 🕸️ 계획하기(생각그물) -->
+<script src="js/16-backup-nudge.js?v=1"></script> <!-- 💾 자동 백업 유도 -->
 <!-- ✅ [신규] 스캐폴딩 힌트 팝업 (SOS 버튼 누를 때) -->
 <div class="scaffolding-hint-popup" id="scaffoldingHintPopup">
   <div class="scaffolding-hint-card">
